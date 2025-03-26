@@ -1,4 +1,4 @@
-![image](https://github.com/user-attachments/assets/2c72f4cc-8c42-4d27-8ba6-8f230645f630)# 🎞️ MEMOZY
+# 🎞️ MEMOZY
 <aside>
   
 > ❓ 저희 “MEMOZY”는 기록해두고 싶은 순간(Memory)들이 있지만,
