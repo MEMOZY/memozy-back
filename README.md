@@ -1,4 +1,4 @@
-# 🎞️ MEMOZY
+![image](https://github.com/user-attachments/assets/2c72f4cc-8c42-4d27-8ba6-8f230645f630)# 🎞️ MEMOZY
 <aside>
   
 > ❓ 저희 “MEMOZY”는 기록해두고 싶은 순간(Memory)들이 있지만,
@@ -60,3 +60,72 @@
 ### 3️⃣ 사진 없이 기록
 
 - 사진 없이도 기본적인 기록 기능을 통해 기록을 남길 수 있습니다.
+
+<br>
+
+## 👥 팀원 구성!
+
+<table align="center">
+  <tr align="center">
+        <td>
+            <img src="https://avatars.githubusercontent.com/u/98581610?v=4">
+        </td>
+        <td>
+            <img src="https://avatars.githubusercontent.com/u/66684504?v=4"">
+        </td>
+        <td>
+            <img src="https://avatars.githubusercontent.com/u/120327265?v=4">
+        </td>
+        <td>
+            <img src="">
+        </td>
+    </tr>
+    <tr align="center">
+        <td><a href="https://github.com/uykm">신민규</a></td>
+        <td><a href="https://github.com/seokkkkkk">정윤석</a></td>
+        <td><a href="https://github.com/singsingsing3">이태호</a></td>
+        <td><a href="">??</a></td>
+    </tr>
+    <tr align="center">
+        <td><B>Backend(팀장)</B></td>
+        <td><B>Frontend</B></td>
+        <td><B>AI</B></td>
+        <td><B>??</B></td>
+    </tr>
+</table>
+
+</br>
+
+# 기술 스택
+
+### 🍏 개발 환경
+
+<img src="https://img.shields.io/badge/IntelliJ IDEA-ff6289?style=flat-square&logo=IntelliJ IDEA&logoColor=black&style=flat"/></a>
+<img src="https://img.shields.io/badge/Java21-007396?style=flat-square&logo=Java&logoColor=white&style=flat"/></a>
+<img src="https://img.shields.io/badge/Gradle-02303A?style=flat-square&logo=Gradle&logoColor=white"/></a>
+<img src="https://img.shields.io/badge/Spring Boot 3.2.0-6DB33F?style=flat-square&logo=Spring&logoColor=white&style=flat"/></a>
+<img src="https://img.shields.io/badge/Spring%20Data%20JPA-6DB33F?style=flat-square&logo=Spring-Data-JPA&logoColor=white"></a>
+<img src="https://img.shields.io/badge/Spring Security-6DB33F?style=flat-square&logo=spring-security&logoColor=white&style=flat"/></a>
+<img src="https://img.shields.io/badge/Junit-25A162?style=flat-&logo=JUnit5&logoColor=white&style=flat"/></a>
+<img src="https://img.shields.io/badge/MySQL 9-4479A1?style=flat-square&logo=MySQL&logoColor=white&style=flat"/></a>
+<img src="https://img.shields.io/badge/Lombok-68BC71?style=flat-square&logo=Lombok&logoColor=white"/></a>
+<img src="https://img.shields.io/badge/Flyway-CC0200?style=flat-square&logo=Flyway&logoColor=white"/></a>
+<img src="https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=Docker&logoColor=white"/></a>
+<img src="https://img.shields.io/badge/Github Actions-2088FF?style=flat-square&logo=GithubActions&logoColor=white&style=flat"/></a>
+<img src="https://img.shields.io/badge/Google ML Kit-4285F4?style=flat-square"/></a>
+<img src="https://img.shields.io/badge/AWS-232F3E?style=flat-square&logo=Amazon Web Service&logoColor=white&style=flat"/></a>
+<img src="https://img.shields.io/badge/Amazon S3-569A31?style=flat-square&logo=Amazon S3&logoColor=white&style=flat"/></a>
+<img src="https://img.shields.io/badge/Amazon RDS-527FFF?style=flat-square&logo=Amazon RDS&logoColor=white&style=flat"/></a>
+<img src="https://img.shields.io/badge/Amazon EC2-FF9900?style=flat-square&logo=Amazon EC2&logoColor=white&style=flat"/></a>
+
+<br/>
+
+### 🍏 협업 툴
+<img src="https://img.shields.io/badge/Notion-FFFFFF?style=flat-square&logo=Notion&logoColor=black"/></a>
+<img src="https://img.shields.io/badge/Github-000000?style=flat-square&logo=Github&logoColor=white&style=flat"/></a>
+<img src="https://img.shields.io/badge/Swagger-85EA2D?style=flat-square&logo=Swagger&logoColor=white&style=flat"/></a>
+
+<br/>
+
+### 🍏 코드 컨벤션
+- **Google Java Style Guide**를 기반으로 협업을 진행했습니다.
