@@ -128,4 +128,4 @@
 <br/>
 
 ### 🍏 코드 컨벤션
-- **Google Java Style Guide**를 기반으로 협업을 진행했습니다.
+- **Google Java Style Guide**를 기반으로 코드를 작성했습니다.
