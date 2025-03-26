@@ -1,4 +1,4 @@
-# MEMOZY
+# 🎞️ MEMOZY
 <aside>
   
 > ❓ 저희 “MEMOZY”는 기록해두고 싶은 순간(Memory)들이 있지만,
