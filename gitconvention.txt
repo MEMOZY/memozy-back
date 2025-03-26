@@ -1,0 +1,16 @@
+Conventional Commit 타입 정리
+
+feat     : 새로운 기능을 추가할 때 사용
+fix      : 버그를 수정할 때 사용
+refactor : 코드 리팩토링 (기능 변화 없이 구조 개선)
+style    : 코드 포맷, 들여쓰기, 세미콜론 등 스타일 변경 (동작 영향 없음)
+docs     : 문서 작업 (README, 주석 등 코드 외 문서 관련)
+test     : 테스트 코드 추가 또는 수정할 때 사용
+chore    : 빌드, 설정 파일, 패키지 설치 등 기능/버그와 무관한 작업
+build    : 빌드 시스템 설정 또는 외부 의존성 작업 (예: Gradle, Docker 등)
+ci       : CI/CD 설정 파일 수정 (예: GitHub Actions, Jenkins 등)
+perf     : 성능 개선 작업
+revert   : 이전 커밋을 되돌릴 때 사용
+
+<type>/#<issue-number>-<short-description>
+ex: feat/12-add-login-api : Isuue 12번 - 새로운 로그인 API 추가
