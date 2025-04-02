@@ -60,6 +60,9 @@ dependencies {
 
 	// ✅ 테스트
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
+	// ✅ flyway
+	implementation 'org.flywaydb:flyway-mysql'
 }
 
 tasks.named('test') {
