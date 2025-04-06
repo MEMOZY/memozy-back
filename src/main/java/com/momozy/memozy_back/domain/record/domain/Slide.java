@@ -1,2 +1,4 @@
-package com.momozy.memozy_back.domain.record.domain;public class Slide {
+package com.momozy.memozy_back.domain.record.domain;
+
+public class Slide {
 }

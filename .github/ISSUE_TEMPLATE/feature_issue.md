@@ -4,14 +4,17 @@ about: Suggest an idea for this project
 title: "[Feature] "
 labels: enhancement
 assignees: ''
-
 ---
 
-## 어떤 기능인가요?
+## Feature Issue
+
 > 기능에 대한 간단한 설명을 작성해주세요.
 
-## 작업 상세 내용
-- [ ]
+## ✅ To-Do
+
+- [ ] 완료
+- [x] 미완료
 
 ## 사진
+
 - 스크린샷 첨부
