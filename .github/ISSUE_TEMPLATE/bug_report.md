@@ -2,7 +2,7 @@
 name: Bug report
 about: 버그가 발생했을 때 작성해 주세요
 title: "[fix] "
-labels: bug
+labels: fix
 assignees: ''
 ---
 
