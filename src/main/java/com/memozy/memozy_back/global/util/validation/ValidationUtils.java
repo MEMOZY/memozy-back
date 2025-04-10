@@ -1,7 +1,5 @@
 package com.memozy.memozy_back.global.util.validation;
 
-import static com.memozy.memozy_back.domain.user.domain.Password.PASSWORD_REGXP;
-import static com.memozy.memozy_back.global.util.CommonConstant.MAX_TEXT_LENGTH;
 import static io.micrometer.common.util.StringUtils.isBlank;
 import static io.micrometer.common.util.StringUtils.isNotBlank;
 
