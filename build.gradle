@@ -1,70 +1,80 @@
 plugins {
-	id 'java'
-	id 'org.springframework.boot' version '3.4.4'
-	id 'io.spring.dependency-management' version '1.1.7'
+    id 'java'
+    id 'org.springframework.boot' version '3.3.2'
+    id 'io.spring.dependency-management' version '1.1.7'
 }
 
 group = 'com.momozy'
 version = '0.0.1-SNAPSHOT'
 
 java {
-	toolchain {
-		languageVersion = JavaLanguageVersion.of(21)
-	}
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
 }
 
 configurations {
-	compileOnly {
-		extendsFrom annotationProcessor
-	}
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
 }
 
 repositories {
-	mavenCentral()
+    mavenCentral()
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.cloud:spring-cloud-dependencies:2023.0.1" // Boot 3.2~용
+    }
 }
 
 dependencies {
-	// ✅ 기본 웹 및 REST API
-	implementation 'org.springframework.boot:spring-boot-starter-web'
+    // ✅ 기본 웹 및 REST API
+    implementation 'org.springframework.boot:spring-boot-starter-web'
 
-	// ✅ Spring Security + OAuth2 (소셜 로그인)
-	implementation 'org.springframework.boot:spring-boot-starter-security'
-	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+    // ✅ Spring Security + OAuth2 (소셜 로그인)
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
 
-	// ✅ JPA + MySQL
-	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-	runtimeOnly 'com.mysql:mysql-connector-j'
+    // ✅ JPA + MySQL
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    runtimeOnly 'com.mysql:mysql-connector-j'
 
-	// ✅ Bean Validation
-	implementation 'org.springframework.boot:spring-boot-starter-validation'
+    // ✅ Bean Validation
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
 
-	// ✅ JWT (인증 토큰)
-	implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
-	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
-	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
+    // ✅ JWT (인증 토큰)
+    implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
 
-	// ✅ AWS S3 (이미지/음성 업로드)
-	implementation 'software.amazon.awssdk:s3:2.25.22'
+    // ✅ AWS S3 (이미지/음성 업로드)
+    implementation 'software.amazon.awssdk:s3:2.25.22'
 
-	// ✅ DTO 매핑 (선택)
-	implementation 'org.mapstruct:mapstruct:1.5.5.Final'
-	annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
+    // ✅ DTO 매핑 (선택)
+    implementation 'org.mapstruct:mapstruct:1.5.5.Final'
+    annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
 
-	// ✅ API 문서화 (Swagger)
-	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0'
+    // ✅ API 문서화 (Swagger)
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0'
 
-	// ✅ 개발 편의
-	compileOnly 'org.projectlombok:lombok'
-	annotationProcessor 'org.projectlombok:lombok'
-	developmentOnly 'org.springframework.boot:spring-boot-devtools'
+    // ✅ 개발 편의
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
 
-	// ✅ 테스트
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    // ✅ 테스트
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
 
-	// ✅ flyway
-	implementation 'org.flywaydb:flyway-mysql'
+    // ✅ flyway
+    implementation 'org.flywaydb:flyway-mysql'
+
+    // ✅ OpenFeign (REST Client)
+    implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
+
 }
 
 tasks.named('test') {
-	useJUnitPlatform()
+    useJUnitPlatform()
 }
