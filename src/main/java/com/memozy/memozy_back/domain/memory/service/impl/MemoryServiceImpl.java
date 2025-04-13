@@ -3,7 +3,7 @@ package com.memozy.memozy_back.domain.memory.service.impl;
 import com.memozy.memozy_back.domain.memory.domain.Memory;
 import com.memozy.memozy_back.domain.memory.domain.MemoryItem;
 import com.memozy.memozy_back.domain.memory.domain.MemoryShared;
-import com.memozy.memozy_back.domain.memory.dto.MemoryInfoDto;
+import com.memozy.memozy_back.domain.memory.dto.MemoryDto;
 import com.memozy.memozy_back.domain.memory.dto.MemoryItemDto;
 import com.memozy.memozy_back.domain.memory.dto.request.CreateMemoryRequest;
 import com.memozy.memozy_back.domain.memory.dto.request.UpdateMemoryRequest;
@@ -28,51 +28,55 @@ public class MemoryServiceImpl implements MemoryService {
 
     @Override
     @Transactional
-    public MemoryInfoDto createMemory(Long ownerId, CreateMemoryRequest request) {
+    public MemoryDto createMemory(Long ownerId, CreateMemoryRequest request) {
         User owner = userRepository.findById(ownerId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_USER_EXCEPTION));
 
         Memory memory = Memory.create(
+                owner,
                 request.title(),
                 request.category(),
                 request.startDate(),
                 request.endDate(),
-                owner,
                 request.memoryItems(),
                 request.sharedUsers()
         );
 
-        return MemoryInfoDto.from(memoryRepository.save(memory));
+        return MemoryDto.from(memoryRepository.save(memory));
     }
 
     @Override
     @Transactional(readOnly = true)
     public GetMemoryListResponse getAllByOwnerId(Long userId) {
-        var memoryInfoDtoList = memoryRepository.findAllByUserId(userId).stream()
-                .map(MemoryInfoDto::from)
+        var memoryInfoDtoList = memoryRepository.findAllByOwnerId(userId).stream()
+                .map(MemoryDto::from)
                 .toList();
 
         return GetMemoryListResponse.from(memoryInfoDtoList);
     }
 
+
+    @Override
     @Transactional
-    public MemoryInfoDto updateMemoryInfo(Long memoryId, UpdateMemoryRequest request) {
+    public MemoryDto updateMemory(Long memoryId, UpdateMemoryRequest request) {
         Memory memory = memoryRepository.findById(memoryId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION));
 
         // 기존 MemoryItem 삭제 후 새로 추가
         memory.getMemoryItems().clear();
         for (MemoryItemDto itemDto : request.memoryItems()) {
-            memory.addMemoryItem(MemoryItem.create(
+            memory.addMemoryItem(MemoryItem.of(
+                    memory,
                     itemDto.imageUrl(),
-                    itemDto.description(),
-                    itemDto.sequence(),
-                    memory));
+                    itemDto.content(),
+                    itemDto.sequence()
+                    )
+            );
         }
 
         // sharedUser 변경
         memory.getSharedUsers().clear();
-        List<User> newSharedUsers = userRepository.findAllById(request.sharedUserIds());
+        List<User> newSharedUsers = userRepository.findAllById(request.sharedUsersId());
         for (User user : newSharedUsers) {
             memory.addSharedUser(MemoryShared.of(memory, user));
         }
@@ -85,7 +89,7 @@ public class MemoryServiceImpl implements MemoryService {
                 request.endDate()
         );
 
-        return MemoryInfoDto.from(memory);
+        return MemoryDto.from(memory);
     }
 
     @Override

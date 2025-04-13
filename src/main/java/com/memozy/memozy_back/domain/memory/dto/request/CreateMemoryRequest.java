@@ -11,13 +11,9 @@ import java.util.List;
 public record CreateMemoryRequest(
         @NotBlank
         String title,
-        @NotNull
-        MemoryCategory category,
-        @NotNull
-        LocalDate startDate,
-        @NotNull
-        LocalDate endDate,
-        @NotNull
-        List<MemoryItem> memoryItems,
+        @NotNull MemoryCategory category,
+        @NotNull LocalDate startDate,
+        @NotNull LocalDate endDate,
+        @NotNull List<MemoryItem> memoryItems,
         List<User> sharedUsers
 ) {}

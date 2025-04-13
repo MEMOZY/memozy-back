@@ -41,20 +41,20 @@ public class Memory extends BaseTimeEntity {
     private List<MemoryShared> sharedUsers = new ArrayList<>();
 
     public static Memory create(
+            User owner,
             String title,
             MemoryCategory category,
             LocalDate startDate,
             LocalDate endDate,
-            User owner,
             List<MemoryItem> memoryItems,
             List<User> sharedUsers
     ) {
         Memory memory = Memory.builder()
+                .owner(owner)
                 .title(title)
                 .category(category)
                 .startDate(startDate)
                 .endDate(endDate)
-                .owner(owner)
                 .build();
 
         for (MemoryItem item : memoryItems) {
@@ -86,7 +86,7 @@ public class Memory extends BaseTimeEntity {
     }
 
     public void addSharedUser(MemoryShared memoryShared) {
-        this.sharedUsers.add(memoryShared);
+        sharedUsers.add(memoryShared);
     }
 
 }

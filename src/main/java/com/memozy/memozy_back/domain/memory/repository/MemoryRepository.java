@@ -6,6 +6,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface MemoryRepository extends JpaRepository<Memory, Long> {
 
-    List<Memory> findAllByUserId(Long userId);
+    List<Memory> findAllByOwnerId(Long ownerId);
 
 }

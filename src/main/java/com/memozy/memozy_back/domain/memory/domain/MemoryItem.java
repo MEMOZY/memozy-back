@@ -36,31 +36,18 @@ public class MemoryItem extends BaseTimeEntity {
     private String imageUrl;
 
     @Column(length = 1000)
-    private String description;
+    private String content;
 
     @Column
     private Integer sequence;
 
-    public MemoryItem(Memory memory) {
-        this.memory = memory;
-    }
-
-    public static MemoryItem create(String imageUrl, String description, int sequence, Memory memory) {
+    public static MemoryItem of(Memory memory, String imageUrl, String content, int sequence) {
         return MemoryItem.builder()
                 .imageUrl(imageUrl)
-                .description(description)
+                .content(content)
                 .sequence(sequence)
                 .memory(memory)
                 .build();
     }
 
-    public MemoryItem update(String imageUrl, String description, int sequence) {
-        return MemoryItem.builder()
-                .id(this.id)
-                .memory(this.memory)
-                .imageUrl(imageUrl)
-                .description(description)
-                .sequence(sequence)
-                .build();
-    }
 }
