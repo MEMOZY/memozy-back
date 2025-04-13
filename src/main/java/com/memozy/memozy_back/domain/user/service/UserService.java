@@ -8,9 +8,9 @@ public interface UserService {
     User getById(Long userId);
     User updateUserWithInfo(Long userId, UpdateUserRequest updateUserRequest);
 
-
 //    List<UserPolicyAgreement> getPolicyAgreementList(Long userId);
 //
 //    List<UserPolicyAgreement> updatePolicyAgreement(Long userId, List<PolicyAgreementDto> policyAgreementDtoList);
 
+    void withdrawUser(Long userId);
 }

@@ -3,11 +3,11 @@ package com.memozy.memozy_back.domain.user.facade;
 import com.memozy.memozy_back.domain.user.dto.UserInfoDto;
 import com.memozy.memozy_back.domain.user.dto.request.UpdateUserRequest;
 import com.memozy.memozy_back.domain.user.service.UserService;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+
 
 @Slf4j
 @Component
@@ -42,4 +42,10 @@ public class UserFacadeImpl implements UserFacade {
 //                .toList();
 //    }
 //
+
+    @Override
+    @Transactional
+    public void withdrawUser(Long userId) {
+        userService.withdrawUser(userId);
+    }
 }

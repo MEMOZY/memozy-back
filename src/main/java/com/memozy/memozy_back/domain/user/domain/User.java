@@ -24,8 +24,8 @@ import org.hibernate.annotations.Where;
 @DynamicInsert
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-@Where(clause = "is_deleted = false")
-@SQLDelete(sql = "UPDATE user SET is_deleted = true WHERE user_id = ?")
+//@Where(clause = "is_deleted = false")
+//@SQLDelete(sql = "UPDATE user SET is_deleted = true WHERE user_id = ?")
 public class User extends BaseTimeEntity {
 
     @Id

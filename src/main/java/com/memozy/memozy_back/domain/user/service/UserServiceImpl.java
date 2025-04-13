@@ -62,4 +62,12 @@ public class UserServiceImpl implements UserService {
 //        return userPolicyAgreementRepository.saveAll(policyAgreementListForSave);
 //    }
 
+    @Override
+    @Transactional
+    public void withdrawUser(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_USER_EXCEPTION));
+
+        userRepository.delete(user); // 완전 삭제
+    }
 }

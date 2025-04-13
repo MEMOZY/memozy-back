@@ -1,0 +1,86 @@
+package com.memozy.memozy_back.domain.memory.domain;
+
+import com.memozy.memozy_back.domain.user.domain.User;
+import com.memozy.memozy_back.global.entity.BaseTimeEntity;
+import jakarta.persistence.*;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+import lombok.*;
+
+@Entity
+@Getter
+@Builder
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+public class Memory extends BaseTimeEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "memory_id")
+    private Long id;
+
+    @Column(nullable = false, length = 100)
+    private String title;
+
+    private LocalDate startDate;
+    private LocalDate endDate;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 30)
+    private MemoryCategory category;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "owner_id", nullable = false)
+    private User owner;
+
+    @OneToMany(mappedBy = "memory", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "memory_id", nullable = false)
+    private List<MemoryItem> memoryItems = new ArrayList<>();
+
+    @OneToMany(mappedBy = "memory", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "memory_id", nullable = false)
+    private List<User> sharedUsers = new ArrayList<>();
+
+    public static Memory create(
+            String title,
+            MemoryCategory category,
+            LocalDate startDate,
+            LocalDate endDate,
+            User owner,
+            List<MemoryItem> memoryItems,
+            List<User> sharedUsers
+    ) {
+        Memory memory = Memory.builder()
+                .title(title)
+                .category(category)
+                .startDate(startDate)
+                .endDate(endDate)
+                .owner(owner)
+                .build();
+
+        for (MemoryItem item : memoryItems) {
+            memory.addMemoryItem(item); // ✅ memory 인스턴스를 기준으로 호출
+        }
+
+        memory.sharedUsers.addAll(sharedUsers); // 연관관계 주입 (양방향이면 반대편도 설정 필요)
+
+        return memory;
+    }
+
+    public void update(String title, MemoryCategory category, LocalDate startDate, LocalDate endDate) {
+        this.title = title;
+        this.category = category;
+        this.startDate = startDate;
+        this.endDate = endDate;
+    }
+
+    public void addSharedUsers(User user) {
+        this.sharedUsers.add(user);
+    }
+
+    public void addMemoryItem(MemoryItem item) {
+        memoryItems.add(item);
+    }
+
+}
