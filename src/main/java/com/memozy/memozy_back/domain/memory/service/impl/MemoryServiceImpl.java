@@ -1,4 +1,4 @@
-package com.memozy.memozy_back.domain.memory.service;
+package com.memozy.memozy_back.domain.memory.service.impl;
 
 import com.memozy.memozy_back.domain.memory.domain.Memory;
 import com.memozy.memozy_back.domain.memory.domain.MemoryItem;
@@ -9,6 +9,7 @@ import com.memozy.memozy_back.domain.memory.dto.request.CreateMemoryRequest;
 import com.memozy.memozy_back.domain.memory.dto.request.UpdateMemoryRequest;
 import com.memozy.memozy_back.domain.memory.dto.response.GetMemoryListResponse;
 import com.memozy.memozy_back.domain.memory.repository.MemoryRepository;
+import com.memozy.memozy_back.domain.memory.service.MemoryService;
 import com.memozy.memozy_back.domain.user.domain.User;
 import com.memozy.memozy_back.domain.user.repository.UserRepository;
 import com.memozy.memozy_back.global.exception.BusinessException;

@@ -5,8 +5,6 @@ import com.memozy.memozy_back.domain.memory.dto.request.CreateMemoryRequest;
 import com.memozy.memozy_back.domain.memory.dto.request.UpdateMemoryRequest;
 import com.memozy.memozy_back.domain.memory.dto.response.GetMemoryListResponse;
 import com.memozy.memozy_back.domain.memory.service.MemoryService;
-import com.memozy.memozy_back.global.jwt.JwtResolver;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -39,11 +37,11 @@ public class MemoryController {
         return ResponseEntity.ok(memoryService.getAllByOwnerId(userId));
     }
 
-    // 기록 수정
+    // 기록 정보(제목, 기간, ..) 수정
     @PutMapping("/{memoryId}")
-    public ResponseEntity<MemoryInfoDto> updateMemory(@PathVariable Long memoryId,
+    public ResponseEntity<MemoryInfoDto> updateMemoryInfo(@PathVariable Long memoryId,
             @RequestBody UpdateMemoryRequest request) {
-        return ResponseEntity.ok(memoryService.updateMemory(memoryId, request));
+        return ResponseEntity.ok(memoryService.updateMemoryInfo(memoryId, request));
     }
 
     // 기록 삭제
@@ -53,11 +51,5 @@ public class MemoryController {
         return ResponseEntity.noContent().build();
     }
 
-    // 기록 공유 유저 추가
-    @PostMapping("/{memoryId}/share/{userId}")
-    public ResponseEntity<Void> shareMemoryWithUser(@PathVariable Long memoryId,
-            @PathVariable Long userId) {
-        memoryService.addSharedUsers(memoryId, userId);
-        return ResponseEntity.ok().build();
-    }
+    // 기록 내부 컨텐츠(사진, 글) 수정
 }

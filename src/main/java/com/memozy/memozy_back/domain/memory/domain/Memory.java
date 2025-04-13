@@ -35,12 +35,10 @@ public class Memory extends BaseTimeEntity {
     private User owner;
 
     @OneToMany(mappedBy = "memory", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JoinColumn(name = "memory_id", nullable = false)
     private List<MemoryItem> memoryItems = new ArrayList<>();
 
     @OneToMany(mappedBy = "memory", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JoinColumn(name = "memory_id", nullable = false)
-    private List<User> sharedUsers = new ArrayList<>();
+    private List<MemoryShared> sharedUsers = new ArrayList<>();
 
     public static Memory create(
             String title,
@@ -60,27 +58,35 @@ public class Memory extends BaseTimeEntity {
                 .build();
 
         for (MemoryItem item : memoryItems) {
-            memory.addMemoryItem(item); // ✅ memory 인스턴스를 기준으로 호출
+            memory.addMemoryItem(item);
         }
 
-        memory.sharedUsers.addAll(sharedUsers); // 연관관계 주입 (양방향이면 반대편도 설정 필요)
+        // MemoryShared 연관관계 설정
+        for (User user : sharedUsers) {
+            MemoryShared memoryShared = MemoryShared.builder()
+                    .memory(memory)
+                    .user(user)
+                    .build();
+            memory.addSharedUser(memoryShared);
+        }
 
         return memory;
     }
 
-    public void update(String title, MemoryCategory category, LocalDate startDate, LocalDate endDate) {
+    public void update(String title, MemoryCategory category,
+            LocalDate startDate, LocalDate endDate) {
         this.title = title;
         this.category = category;
         this.startDate = startDate;
         this.endDate = endDate;
     }
 
-    public void addSharedUsers(User user) {
-        this.sharedUsers.add(user);
-    }
-
     public void addMemoryItem(MemoryItem item) {
         memoryItems.add(item);
+    }
+
+    public void addSharedUser(MemoryShared memoryShared) {
+        this.sharedUsers.add(memoryShared);
     }
 
 }

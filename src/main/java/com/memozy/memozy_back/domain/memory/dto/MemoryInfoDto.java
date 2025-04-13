@@ -4,6 +4,7 @@ package com.memozy.memozy_back.domain.memory.dto;
 import com.memozy.memozy_back.domain.memory.domain.Memory;
 import com.memozy.memozy_back.domain.memory.domain.MemoryCategory;
 import com.memozy.memozy_back.domain.memory.domain.MemoryItem;
+import com.memozy.memozy_back.domain.memory.domain.MemoryShared;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -25,7 +26,7 @@ public record MemoryInfoDto(
                 memory.getCategory(),
                 memory.getMemoryItems(),
                 memory.getSharedUsers().stream()
-                        .map(user -> user.getId())
+                        .map(MemoryShared::getId)
                         .toList()
         );
     }
