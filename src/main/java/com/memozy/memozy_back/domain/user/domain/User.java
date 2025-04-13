@@ -59,4 +59,5 @@ public class User extends BaseTimeEntity {
                 .build();
     }
 
+
 }

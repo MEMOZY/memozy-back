@@ -46,7 +46,10 @@ public enum ErrorCode {
      * user-policy-agreement. code prefix: user-policy-agreement-
      */
     DUPLICATED_POLICY_REQUEST_EXCEPTION(HttpStatus.BAD_REQUEST, "user-policy-agreement-1",
-            "같은 약관을 한 번에 여러 번 동의할 수 없습니다.");
+            "같은 약관을 한 번에 여러 번 동의할 수 없습니다."),
+
+    DUPLICATE_RESOURCE_EXCEPTION(HttpStatus.BAD_REQUEST, "user-friendship-1",
+            "이미 친구 요청을 보냈습니다.");
 
 
     private final HttpStatus httpStatus;
