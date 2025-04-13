@@ -24,14 +24,14 @@ import org.hibernate.annotations.Where;
 @DynamicInsert
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-@Where(clause = "is_deleted = false")
-@SQLDelete(sql = "UPDATE user SET is_deleted = true WHERE user_id = ?")
+//@Where(clause = "is_deleted = false")
+//@SQLDelete(sql = "UPDATE user SET is_deleted = true WHERE user_id = ?")
 public class User extends BaseTimeEntity {
 
     @Id
     @Column(name = "user_id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private  Long id;
 
     @Enumerated(value = EnumType.STRING)
     @Column(nullable = false, length = 10)
@@ -50,10 +50,6 @@ public class User extends BaseTimeEntity {
     @Column(length = 20)
     private String phoneNumber;
 
-    @Column(nullable = false)
-    @ColumnDefault("false")
-    private boolean isOpenPhoneNum;
-
     @Column(length = 2048)
     private String email;
 
@@ -62,5 +58,6 @@ public class User extends BaseTimeEntity {
                 .userRole(userRole)
                 .build();
     }
+
 
 }

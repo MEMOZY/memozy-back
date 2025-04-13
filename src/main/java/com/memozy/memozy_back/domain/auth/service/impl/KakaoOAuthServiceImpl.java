@@ -56,7 +56,7 @@ public class KakaoOAuthServiceImpl implements OAuthService {
                 .orElseGet(() -> {
                     // 회원가입
                     User newUser = userRepository.save(
-                            User.from(UserRole.NON_MEMBER));
+                            User.from(UserRole.MEMBER));
 
                     socialUserInfoRepository.save(
                             SocialUserInfo.newInstance(

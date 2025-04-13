@@ -5,6 +5,7 @@ import com.memozy.memozy_back.domain.auth.dto.response.SocialLoginResponse;
 import com.memozy.memozy_back.domain.auth.dto.response.TokenResponse;
 import com.memozy.memozy_back.domain.auth.facade.AuthFacade;
 import com.memozy.memozy_back.domain.user.domain.SocialPlatform;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+@Tag(name = "인증 관련 API", description = "소셜 로그인")
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
@@ -43,7 +45,6 @@ public class AuthController {
                 socialPlatform,
                 request.code());
         return ResponseEntity.ok(response);
-
     }
 
     @GetMapping("/social/{socialPlatform}/login-page")
