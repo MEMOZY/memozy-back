@@ -5,6 +5,7 @@ import com.memozy.memozy_back.domain.memory.dto.request.CreateMemoryRequest;
 import com.memozy.memozy_back.domain.memory.dto.request.UpdateMemoryRequest;
 import com.memozy.memozy_back.domain.memory.dto.response.GetMemoryListResponse;
 import com.memozy.memozy_back.domain.memory.service.MemoryService;
+import com.memozy.memozy_back.global.annotation.CurrentUserId;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -28,20 +29,23 @@ public class MemoryController {
 
     // 기록 생성
     @PostMapping
-    public ResponseEntity<MemoryDto> createMemory(@RequestHeader("X-USER-ID") Long userId,
+    public ResponseEntity<MemoryDto> createMemory(
+            @CurrentUserId Long userId,
             @RequestBody CreateMemoryRequest request) {
         return ResponseEntity.ok(memoryService.createMemory(userId, request));
     }
 
     // 내 기록 전체 조회
     @GetMapping
-    public ResponseEntity<GetMemoryListResponse> getMyMemories(@RequestHeader("X-USER-ID") Long userId) {
+    public ResponseEntity<GetMemoryListResponse> getMyMemories(
+            @CurrentUserId Long userId) {
         return ResponseEntity.ok(memoryService.getAllByOwnerId(userId));
     }
 
     // 기록 정보(제목, 기간, ..) 수정
     @PutMapping("/{memoryId}")
-    public ResponseEntity<MemoryDto> updateMemoryInfo(@PathVariable Long memoryId,
+    public ResponseEntity<MemoryDto> updateMemoryInfo(
+            @PathVariable Long memoryId,
             @RequestBody UpdateMemoryRequest request) {
         return ResponseEntity.ok(memoryService.updateMemory(memoryId, request));
     }
