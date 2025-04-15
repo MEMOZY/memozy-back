@@ -1,7 +1,4 @@
 spring:
-  config:
-    import: "optional:file:.env[.properties]"
-
   datasource:
     url: jdbc:mysql://${MYSQL_HOST}:${MYSQL_PORT}/${MYSQL_DATABASE}?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
     username: ${MYSQL_USER}
