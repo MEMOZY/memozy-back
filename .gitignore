@@ -27,7 +27,6 @@ gradle-app.setting
 # ====================
 
 # Local config
-*.yml
 *.yaml
 *.properties
 .env

@@ -1,0 +1,48 @@
+spring:
+  config:
+    import: "optional:file:.env[.properties]"
+
+  datasource:
+    url: jdbc:mysql://${MYSQL_HOST}:${MYSQL_PORT}/${MYSQL_DATABASE}?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    username: ${MYSQL_USER}
+    password: ${MYSQL_PASSWORD}
+
+  jpa:
+    hibernate:
+      ddl-auto: update  # 개발 초기: create / update / none 중 선택
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        format_sql: true
+    show-sql: true
+
+  # (선택) 로깅 포맷
+  output:
+    ansi:
+      enabled: always
+
+  flyway:
+    enabled: false
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+    validate-on-migrate: true
+    baseline-version: 1
+
+jwt:
+  access-key: ${JWT_ACCESS_KEY}
+  refresh-key: ${JWT_REFRESH_KEY}
+  accessExpiredMin: ${JWT_ACCESS_EXPIRED_MIN}
+  refreshExpiredDay: ${JWT_REFRESH_EXPIRED_DAY}
+  bearerPrefix: Bearer
+
+oauth2:
+  client:
+    kakao:
+      client-id: ${KAKAO_CLIENT_ID}
+      redirect-path: /oauth/kakao/callback
+      grant-type: authorization_code
+      content-type: application/x-www-form-urlencoded;charset=utf-8
+      login-page-url: https://kauth.kakao.com/oauth/authorize?response_type=code
+
+server:
+  port: 8080
