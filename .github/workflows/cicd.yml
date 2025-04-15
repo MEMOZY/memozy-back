@@ -11,10 +11,10 @@ on:
       - main
 
 env:
-  PROJECT_NAME: nostroke
-  BUCKET_NAME: nostroke-dev-bucket
-  CODE_DEPLOY_APP_NAME: NoStrokeCodeDeployApplication
-  DEPLOYMENT_GROUP_NAME: nostroke-codedeploy-group
+  PROJECT_NAME: memozy-back
+  BUCKET_NAME: memozy-bucket
+  CODE_DEPLOY_APP_NAME: memozy
+  DEPLOYMENT_GROUP_NAME: memozy-group
 
 jobs:
   build:
@@ -32,13 +32,8 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: Create .env file
-        run: echo "${{ secrets.PROD_ENV_VARS }}" > .env
-
-      - name: create applications.yml
-        shell: bash
-        run: |
-          echo "${{ secrets.APPLICATION }}" > ./src/main/resources/application.yml
+      - name: Create application-prod.yml
+        run: echo "${{ secrets.APPLICATION_PROD_YML }}" > src/main/resources/application-prod.yml
 
       # gradlew 파일 실행권한 설정
       - name: Grant execute permission for gradlew

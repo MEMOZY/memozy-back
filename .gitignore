@@ -31,6 +31,7 @@ gradle-app.setting
 *.properties
 .env
 .env.*
+application-prod.yml
 
 # ====================
 # IntelliJ / IDE
