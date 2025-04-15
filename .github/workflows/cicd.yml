@@ -32,7 +32,7 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: Create application-prod.yml
+      - name: Create application.yml
         run: echo "${{ secrets.APPLICATION_PROD_YML }}" > src/main/resources/application.yml
 
       # gradlew 파일 실행권한 설정
