@@ -33,7 +33,7 @@ jobs:
           distribution: 'temurin'
 
       - name: Create application-prod.yml
-        run: echo "${{ secrets.APPLICATION_PROD_YML }}" > src/main/resources/application-prod.yml
+        run: echo "${{ secrets.APPLICATION_PROD_YML }}" > src/main/resources/application.yml
 
       # gradlew 파일 실행권한 설정
       - name: Grant execute permission for gradlew
