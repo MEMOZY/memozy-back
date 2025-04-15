@@ -63,7 +63,7 @@ public class UserController {
 //                        updatePolicyAgreementRequest.policyAgreementList())));
 //    }
 
-    @DeleteMapping("/user")
+    @DeleteMapping()
     public ResponseEntity<Void> withdrawUser(@RequestHeader("X-USER-ID") Long userId) {
         userFacade.withdrawUser(userId);
         return ResponseEntity.noContent().build();
