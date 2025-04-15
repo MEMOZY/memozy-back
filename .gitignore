@@ -12,8 +12,16 @@
 
 # Gradle
 .gradle/
-/!gradle/wrapper/gradle-wrapper.jar
 gradle-app.setting
+
+# gradle-wrapper 포함시키기
+!gradle/wrapper/
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties
+
+# gradlew 실행 스크립트 포함시키기
+!gradlew
+!gradlew.bat
 
 # Logs
 *.log
