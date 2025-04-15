@@ -16,6 +16,7 @@ import com.memozy.memozy_back.global.jwt.JwtProperty;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.util.UriComponentsBuilder;
 
 @Component
 @RequiredArgsConstructor
@@ -69,13 +70,11 @@ public class KakaoOAuthServiceImpl implements OAuthService {
 
     @Override
     public String getLoginPageUrl(String origin) {
-        return new StringBuilder()
-                .append(kakaoClientProperty.getLoginPageUrl())
-                .append("&client_id=")
-                .append(kakaoClientProperty.getClientId())
-                .append("&redirect_uri=")
-                .append(origin)
-                .append(kakaoClientProperty.getRedirectPath())
-                .toString();
+        return UriComponentsBuilder
+                .fromHttpUrl(kakaoClientProperty.getLoginPageUrl())
+                .queryParam("client_id", kakaoClientProperty.getClientId())
+                .queryParam("redirect_uri", origin + kakaoClientProperty.getRedirectPath())
+                .build()
+                .toUriString();
     }
 }

@@ -8,6 +8,7 @@ assignees: ''
 
 ## ⚠️ Bug Issue
 
+g
 >
 
 ## ✅ 해결
