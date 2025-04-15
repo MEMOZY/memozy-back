@@ -2,6 +2,7 @@ package com.memozy.memozy_back.domain.user.facade;
 
 import com.memozy.memozy_back.domain.user.dto.UserInfoDto;
 import com.memozy.memozy_back.domain.user.dto.request.UpdateUserRequest;
+import com.memozy.memozy_back.domain.user.dto.response.GetUserInfoResponse;
 import com.memozy.memozy_back.domain.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -47,5 +48,10 @@ public class UserFacadeImpl implements UserFacade {
     @Transactional
     public void withdrawUser(Long userId) {
         userService.withdrawUser(userId);
+    }
+
+    @Override
+    public GetUserInfoResponse getUserInfo(Long userId) {
+        return GetUserInfoResponse.from(userService.getById(userId));
     }
 }
