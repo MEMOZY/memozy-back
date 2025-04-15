@@ -2,6 +2,7 @@ package com.memozy.memozy_back.domain.friend.controller;
 
 import com.memozy.memozy_back.domain.friend.dto.response.GetFriendInfoListResponse;
 import com.memozy.memozy_back.domain.friend.service.FriendshipService;
+import com.memozy.memozy_back.global.annotation.CurrentUserId;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -21,9 +22,9 @@ public class FriendshipController {
     private final FriendshipService friendshipService;
 
     // 친구 요청
-    @PostMapping("/{userId}/request/{targetUserId}")
+    @PostMapping("/request/{targetUserId}")
     public ResponseEntity<Void> sendFriendRequest(
-            @PathVariable Long userId,
+            @CurrentUserId Long userId,
             @PathVariable Long targetUserId
     ) {
         friendshipService.sendFriendRequest(userId, targetUserId);
@@ -31,9 +32,9 @@ public class FriendshipController {
     }
 
     // 친구 수락
-    @PostMapping("/{userId}/accept/{targetUserId}")
+    @PostMapping("/accept/{targetUserId}")
     public ResponseEntity<Void> acceptFriendRequest(
-            @PathVariable Long userId,
+            @CurrentUserId Long userId,
             @PathVariable Long targetUserId
     ) {
         friendshipService.acceptFriendRequest(userId, targetUserId);
@@ -41,9 +42,9 @@ public class FriendshipController {
     }
 
     // 친구 거절
-    @PostMapping("/{userId}/reject/{targetUserId}")
+    @PostMapping("/reject/{targetUserId}")
     public ResponseEntity<Void> rejectFriendRequest(
-            @PathVariable Long userId,
+            @CurrentUserId Long userId,
             @PathVariable Long targetUserId
     ) {
         friendshipService.rejectFriendRequest(userId, targetUserId);
@@ -51,9 +52,9 @@ public class FriendshipController {
     }
 
     // 친구 삭제
-    @DeleteMapping("/{userId}/remove/{targetUserId}")
+    @DeleteMapping("/remove/{targetUserId}")
     public ResponseEntity<Void> removeFriend(
-            @PathVariable Long userId,
+            @CurrentUserId Long userId,
             @PathVariable Long targetUserId
     ) {
         friendshipService.deleteFriend(userId, targetUserId);
@@ -61,25 +62,25 @@ public class FriendshipController {
     }
 
     // 친구 목록 조회
-    @GetMapping("/{userId}/list")
+    @GetMapping("/list")
     public ResponseEntity<GetFriendInfoListResponse> getFriends(
-            @PathVariable Long userId
+            @CurrentUserId Long userId
     ) {
         return ResponseEntity.ok(friendshipService.getFriends(userId));
     }
 
     // 친구 요청 보낸 목록 조회
-    @GetMapping("/{userId}/sent-requests")
+    @GetMapping("/sent-requests")
     public ResponseEntity<GetFriendInfoListResponse> getSentRequests(
-            @PathVariable Long userId
+            @CurrentUserId Long userId
     ) {
         return ResponseEntity.ok(friendshipService.getSentRequests(userId));
     }
 
     // 친구 요청 받은 목록 조회
-    @GetMapping("/{userId}/received-requests")
+    @GetMapping("/received-requests")
     public ResponseEntity<GetFriendInfoListResponse> getReceivedRequests(
-            @PathVariable Long userId
+            @CurrentUserId Long userId
     ) {
         return ResponseEntity.ok(friendshipService.getReceivedRequests(userId));
     }
