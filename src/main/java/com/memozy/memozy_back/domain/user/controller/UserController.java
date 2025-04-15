@@ -23,7 +23,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "유저 관련 API", description = "")
-@V1
 @Slf4j
 @RestController
 @RequestMapping("/user")
