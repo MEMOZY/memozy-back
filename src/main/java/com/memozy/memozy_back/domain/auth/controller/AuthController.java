@@ -36,26 +36,24 @@ public class AuthController {
 
     @PostMapping("/social/{socialPlatform}/login")
     public ResponseEntity<TokenResponse> socialLogin(
-            @RequestHeader("Origin") String origin,
             @PathVariable(name = "socialPlatform") SocialPlatform socialPlatform,
             @Valid @RequestBody SocialLoginRequest request
     ) {
         TokenResponse response = authFacade.socialLogin(
-                origin,
                 socialPlatform,
-                request.code());
+                request.socialAccessToken());
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/social/{socialPlatform}/login-page")
-    public ResponseEntity<SocialLoginResponse> getSocialLoginPageUrl(
-            @RequestHeader("Origin") String origin,
-            @PathVariable(name = "socialPlatform") SocialPlatform socialPlatform
-    ) {
-        SocialLoginResponse response =
-                authFacade.getSocialLoginPageUrl(origin, socialPlatform);
-        return ResponseEntity.ok(response);
-    }
+//    @GetMapping("/social/{socialPlatform}/login-page")
+//    public ResponseEntity<SocialLoginResponse> getSocialLoginPageUrl(
+//            @RequestHeader("Origin") String origin,
+//            @PathVariable(name = "socialPlatform") SocialPlatform socialPlatform
+//    ) {
+//        SocialLoginResponse response =
+//                authFacade.getSocialLoginPageUrl(origin, socialPlatform);
+//        return ResponseEntity.ok(response);
+//    }
 
 //    @Override
 //    @PostMapping("/reissue")

@@ -6,11 +6,13 @@ import com.memozy.memozy_back.domain.user.domain.SocialPlatform;
 
 public interface AuthFacade {
     TokenResponse socialLogin(
-            String origin,
+//            String origin,
             SocialPlatform socialPlatform,
             String authorizationCode);
 
-    SocialLoginResponse getSocialLoginPageUrl(String origin, SocialPlatform socialPlatform);
+    // 앱 환경에선 필요없음
+//    SocialLoginResponse getSocialLoginPageUrl(String origin, SocialPlatform socialPlatform);
+;
 
 //    TokenResponse testLogin();
 //

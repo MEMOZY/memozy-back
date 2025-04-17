@@ -24,8 +24,8 @@ import org.hibernate.annotations.Where;
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-@Where(clause = "is_deleted = false")
-@SQLDelete(sql = "UPDATE social_user_info SET is_deleted = true WHERE social_user_info_id = ?")
+//@Where(clause = "is_deleted = false")
+//@SQLDelete(sql = "UPDATE social_user_info SET is_deleted = true WHERE social_user_info_id = ?")
 public class SocialUserInfo extends BaseTimeEntity {
 
     @Id
