@@ -36,14 +36,12 @@ public class AuthController {
 
     @PostMapping("/social/{socialPlatform}/login")
     public ResponseEntity<TokenResponse> socialLogin(
-            @RequestHeader("Origin") String origin,
             @PathVariable(name = "socialPlatform") SocialPlatform socialPlatform,
             @Valid @RequestBody SocialLoginRequest request
     ) {
         TokenResponse response = authFacade.socialLogin(
-                origin,
                 socialPlatform,
-                request.code());
+                request.socialAccessToken());
         return ResponseEntity.ok(response);
     }
 
