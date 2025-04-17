@@ -19,5 +19,6 @@ public interface UserFacade {
 
     void withdrawUser(Long userId);
 
+    // 타 유저 정보 조회
     GetUserInfoResponse getUserInfo(Long userId);
 }
