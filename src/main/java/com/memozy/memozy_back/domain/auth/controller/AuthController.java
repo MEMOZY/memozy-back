@@ -47,15 +47,15 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/social/{socialPlatform}/login-page")
-    public ResponseEntity<SocialLoginResponse> getSocialLoginPageUrl(
-            @RequestHeader("Origin") String origin,
-            @PathVariable(name = "socialPlatform") SocialPlatform socialPlatform
-    ) {
-        SocialLoginResponse response =
-                authFacade.getSocialLoginPageUrl(origin, socialPlatform);
-        return ResponseEntity.ok(response);
-    }
+//    @GetMapping("/social/{socialPlatform}/login-page")
+//    public ResponseEntity<SocialLoginResponse> getSocialLoginPageUrl(
+//            @RequestHeader("Origin") String origin,
+//            @PathVariable(name = "socialPlatform") SocialPlatform socialPlatform
+//    ) {
+//        SocialLoginResponse response =
+//                authFacade.getSocialLoginPageUrl(origin, socialPlatform);
+//        return ResponseEntity.ok(response);
+//    }
 
 //    @Override
 //    @PostMapping("/reissue")
