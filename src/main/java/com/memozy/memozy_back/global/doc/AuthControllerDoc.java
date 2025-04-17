@@ -17,7 +17,7 @@ import com.memozy.memozy_back.domain.auth.dto.request.LoginRequest;
 import com.memozy.memozy_back.domain.auth.dto.request.ReissueTokenRequest;
 import com.memozy.memozy_back.domain.auth.dto.request.SocialLoginRequest;
 import com.memozy.memozy_back.domain.auth.dto.response.LoginResponse;
-import com.memozy.memozy_back.domain.user.domain.SocialPlatform;
+import com.memozy.memozy_back.domain.user.constant.SocialPlatform;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;

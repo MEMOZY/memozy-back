@@ -3,7 +3,9 @@ package com.memozy.memozy_back.domain.memory.controller;
 import com.memozy.memozy_back.domain.memory.dto.MemoryDto;
 import com.memozy.memozy_back.domain.memory.dto.request.CreateMemoryRequest;
 import com.memozy.memozy_back.domain.memory.dto.request.UpdateMemoryRequest;
+import com.memozy.memozy_back.domain.memory.dto.request.UploadPhotosRequest;
 import com.memozy.memozy_back.domain.memory.dto.response.GetMemoryListResponse;
+import com.memozy.memozy_back.domain.memory.dto.response.GetUploadedPhotoInfoListResponse;
 import com.memozy.memozy_back.domain.memory.service.MemoryService;
 import com.memozy.memozy_back.global.annotation.CurrentUserId;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -15,8 +17,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "기록 API", description = "기록 관리")
@@ -55,6 +57,14 @@ public class MemoryController {
     public ResponseEntity<Void> deleteMemory(@PathVariable Long memoryId) {
         memoryService.deleteMemory(memoryId);
         return ResponseEntity.noContent().build();
+    }
+
+    // 임시 사진 업로드
+    @PostMapping("/temp/photos")
+    public ResponseEntity<GetUploadedPhotoInfoListResponse> uploadPhotos(
+            @CurrentUserId Long userId,
+            @RequestPart UploadPhotosRequest photos) {
+        return ResponseEntity.ok(memoryService.uploadPhotos(userId, photos));
     }
 
 }

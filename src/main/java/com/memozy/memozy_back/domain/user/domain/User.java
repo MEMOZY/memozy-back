@@ -1,5 +1,6 @@
 package com.memozy.memozy_back.domain.user.domain;
 
+import com.memozy.memozy_back.domain.user.constant.UserRole;
 import com.memozy.memozy_back.global.entity.BaseTimeEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -15,8 +16,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.DynamicInsert;
-import org.hibernate.annotations.SQLDelete;
-import org.hibernate.annotations.Where;
 
 @Entity
 @Getter

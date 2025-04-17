@@ -1,9 +1,7 @@
 package com.memozy.memozy_back.domain.memory.dto.request;
 
-import com.memozy.memozy_back.domain.memory.domain.MemoryCategory;
-import com.memozy.memozy_back.domain.memory.domain.MemoryItem;
+import com.memozy.memozy_back.domain.memory.constant.MemoryCategory;
 import com.memozy.memozy_back.domain.memory.dto.MemoryItemDto;
-import com.memozy.memozy_back.domain.user.domain.User;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;

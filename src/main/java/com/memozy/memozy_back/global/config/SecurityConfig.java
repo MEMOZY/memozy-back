@@ -1,6 +1,6 @@
 package com.memozy.memozy_back.global.config;
 
-import com.memozy.memozy_back.domain.user.domain.UserRole;
+import com.memozy.memozy_back.domain.user.constant.UserRole;
 import com.memozy.memozy_back.global.filter.JwtAccessDeniedHandler;
 import com.memozy.memozy_back.global.filter.JwtAuthenticationFilter;
 import com.memozy.memozy_back.global.filter.JwtExceptionFilter;

@@ -1,4 +1,4 @@
-package com.memozy.memozy_back.domain.memory.domain;
+package com.memozy.memozy_back.domain.memory.constant;
 
 public enum MemoryCategory {
     TRAVEL,

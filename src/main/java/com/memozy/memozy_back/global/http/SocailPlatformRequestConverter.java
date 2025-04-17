@@ -1,8 +1,7 @@
 package com.memozy.memozy_back.global.http;
 
-import com.memozy.memozy_back.domain.user.domain.SocialPlatform;
+import com.memozy.memozy_back.domain.user.constant.SocialPlatform;
 import org.springframework.core.convert.converter.Converter;
-import org.springframework.core.convert.converter.GenericConverter;
 
 public class SocailPlatformRequestConverter implements Converter<String, SocialPlatform> {
 

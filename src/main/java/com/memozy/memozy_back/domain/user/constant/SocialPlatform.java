@@ -1,4 +1,4 @@
-package com.memozy.memozy_back.domain.user.domain;
+package com.memozy.memozy_back.domain.user.constant;
 
 import java.util.Arrays;
 import lombok.AccessLevel;

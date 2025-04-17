@@ -41,5 +41,17 @@ oauth2:
       content-type: application/x-www-form-urlencoded;charset=utf-8
       login-page-url: https://kauth.kakao.com/oauth/authorize?response_type=code
 
+aws:
+  accessKey: ${AWS_ACCESS_KEY}
+  secretKey: ${AWS_SECRET_KEY}
+  region: ${AWS_REGION}
+  s3:
+    bucket: ${AWS_S3_BUCKET}
+    endpoint: ${AWS_S3_ENDPOINT}
+    url: ${AWS_S3_URL}
+    accessKey: ${AWS_S3_ACCESS_KEY}
+    secretKey: ${AWS_S3_SECRET_KEY}
+
+
 server:
   port: 8080

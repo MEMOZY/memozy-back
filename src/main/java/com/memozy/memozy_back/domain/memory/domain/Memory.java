@@ -1,5 +1,6 @@
 package com.memozy.memozy_back.domain.memory.domain;
 
+import com.memozy.memozy_back.domain.memory.constant.MemoryCategory;
 import com.memozy.memozy_back.domain.user.domain.User;
 import com.memozy.memozy_back.global.entity.BaseTimeEntity;
 import jakarta.persistence.*;
