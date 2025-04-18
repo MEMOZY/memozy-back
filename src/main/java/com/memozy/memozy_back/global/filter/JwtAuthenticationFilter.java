@@ -50,7 +50,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     );
 
     private static final List<AntPathRequestMatcher> whiteListPatternsForApi = List.of(
-            new AntPathRequestMatcher("/v1/auth/social/**")
+            new AntPathRequestMatcher("/auth/social/**")
     );
 
     @Override
