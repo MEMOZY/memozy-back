@@ -31,6 +31,7 @@ public class JwtExceptionFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
         } catch (BusinessException e) {
             log.error("error : {}", e.getMessage(), e);
+            e.printStackTrace();
             responseError(
                     response,
                     e.getErrorCode(),
