@@ -6,7 +6,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update  # 개발 초기: create / update / none 중 선택
+      ddl-auto: create-drop  # 개발 초기: create / update / none 중 선택
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect

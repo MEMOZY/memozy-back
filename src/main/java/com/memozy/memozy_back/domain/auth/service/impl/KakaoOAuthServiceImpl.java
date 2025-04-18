@@ -25,7 +25,7 @@ public class KakaoOAuthServiceImpl implements OAuthService {
     private final JwtProperty jwtProperty;
 //    private final KakaoAuthServerClient kakaoAuthServerClient;
     private final KakaoServerClient kakaoServerClient;
-    private final KakaoClientProperty kakaoClientProperty;
+//    private final KakaoClientProperty kakaoClientProperty;
     private final SocialUserInfoRepository socialUserInfoRepository;
     private final UserRepository userRepository;
 
@@ -57,7 +57,12 @@ public class KakaoOAuthServiceImpl implements OAuthService {
                 .orElseGet(() -> {
                     // 회원가입
                     User newUser = userRepository.save(
-                            User.from(UserRole.MEMBER));
+                            User.from(
+                                    UserRole.MEMBER,
+                                    socialUserProfile.getNickname(),
+                                    socialUserProfile.getProfileImageUrl()
+                            )
+                    );
 
                     socialUserInfoRepository.save(
                             SocialUserInfo.newInstance(

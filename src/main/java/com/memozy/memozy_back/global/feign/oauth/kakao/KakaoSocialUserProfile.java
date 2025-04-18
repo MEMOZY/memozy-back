@@ -12,4 +12,6 @@ import lombok.NoArgsConstructor;
 public class KakaoSocialUserProfile {
 
     private Long id;
+    private String nickname;
+    private String profileImageUrl;
 }
