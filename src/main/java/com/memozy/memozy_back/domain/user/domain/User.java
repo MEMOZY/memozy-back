@@ -53,9 +53,11 @@ public class User extends BaseTimeEntity {
     @Column(length = 2048)
     private String email;
 
-    public static User from(UserRole userRole) {
+    public static User from(UserRole userRole, String nickname, String profileImageUrl) {
         return User.builder()
                 .userRole(userRole)
+                .nickname(nickname)
+                .profileImageUrl(profileImageUrl)
                 .build();
     }
 
