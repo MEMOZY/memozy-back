@@ -45,7 +45,7 @@ public class KakaoOAuthServiceImpl implements OAuthService {
 //                kakaoClientProperty.getRedirectPath(),
 //                kakaoAccessToken);
         KakaoSocialUserProfile socialUserProfile = kakaoServerClient.getUserInformation(
-                jwtProperty.getBearerPrefix() + kakaoAccessToken);
+                jwtProperty.getBearerPrefix() + " " + kakaoAccessToken);
 
         String socialCode = SocialUserInfo.calculateSocialCode(
                 SocialPlatform.KAKAO,
