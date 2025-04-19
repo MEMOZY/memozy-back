@@ -6,7 +6,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: create-drop  # 개발 초기: create / update / none 중 선택
+      ddl-auto: update  # 개발 초기: create / update / none 중 선택
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
@@ -47,7 +47,6 @@ aws:
   region: ${AWS_REGION}
   s3:
     bucket: ${AWS_S3_BUCKET}
-
 
 server:
   port: 8080
