@@ -44,7 +44,7 @@ public class MemoryController {
         return ResponseEntity.ok(memoryService.getAllByOwnerId(userId));
     }
 
-    // 기록 정보(제목, 기간, ..) 수정
+    // 기록 수정
     @PutMapping("/{memoryId}")
     public ResponseEntity<MemoryDto> updateMemoryInfo(
             @PathVariable Long memoryId,
@@ -57,14 +57,6 @@ public class MemoryController {
     public ResponseEntity<Void> deleteMemory(@PathVariable Long memoryId) {
         memoryService.deleteMemory(memoryId);
         return ResponseEntity.noContent().build();
-    }
-
-    // 임시 사진 업로드
-    @PostMapping("/temp/photos")
-    public ResponseEntity<GetUploadedPhotoInfoListResponse> uploadPhotos(
-            @CurrentUserId Long userId,
-            @RequestPart UploadPhotosRequest photos) {
-        return ResponseEntity.ok(memoryService.uploadPhotos(userId, photos));
     }
 
 }

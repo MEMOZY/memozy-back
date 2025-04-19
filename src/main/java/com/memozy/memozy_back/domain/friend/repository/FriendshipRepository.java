@@ -28,21 +28,21 @@ public interface FriendshipRepository extends JpaRepository<Friendship, Long> {
         END
         FROM Friendship f
         WHERE (f.sender.id = :userId OR f.receiver.id = :userId)
-        AND f.status = com.memozy.memozy_back.domain.friend.domain.FriendshipStatus.ACCEPTED
+        AND f.status = com.memozy.memozy_back.domain.friend.constant.FriendshipStatus.ACCEPTED
     """)
     List<User> findAcceptedFriends(Long userId);
 
     // 보낸 친구 요청 목록 (PENDING)
     @Query("""
         SELECT f.receiver FROM Friendship f
-        WHERE f.sender.id = :userId AND f.status = com.memozy.memozy_back.domain.friend.domain.FriendshipStatus.REQUESTED
+        WHERE f.sender.id = :userId AND f.status = com.memozy.memozy_back.domain.friend.constant.FriendshipStatus.REQUESTED
     """)
     List<User> findSentRequests(Long userId);
 
     // 받은 친구 요청 목록 (PENDING)
     @Query("""
         SELECT f.sender FROM Friendship f
-        WHERE f.receiver.id = :userId AND f.status = com.memozy.memozy_back.domain.friend.domain.FriendshipStatus.REQUESTED
+        WHERE f.receiver.id = :userId AND f.status = com.memozy.memozy_back.domain.friend.constant.FriendshipStatus.REQUESTED
     """)
     List<User> findReceivedRequests(Long userId);
 }

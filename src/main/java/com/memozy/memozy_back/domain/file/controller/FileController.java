@@ -3,6 +3,7 @@ package com.memozy.memozy_back.domain.file.controller;
 import com.memozy.memozy_back.domain.file.dto.request.GeneratePreSignedUrlRequest;
 import com.memozy.memozy_back.domain.file.dto.PreSignedUrlDto;
 import com.memozy.memozy_back.domain.file.service.FileService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+@Tag(name = "파일 업로드 API", description = "S3 관리")
 @Slf4j
 @RestController
 @RequestMapping("/file")

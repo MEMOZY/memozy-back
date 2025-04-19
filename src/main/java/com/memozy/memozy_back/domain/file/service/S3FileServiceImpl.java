@@ -53,9 +53,9 @@ public class S3FileServiceImpl implements FileService {
 
     @Override
     public boolean isUploaded(String fileName) {
-        try {
-            s3Client.headObject(builder -> builder.bucket(bucket).key(fileName));
-        } catch (NoSuchKeyException e) {
+            try {
+                s3Client.headObject(builder -> builder.bucket(bucket).key(fileName));
+            } catch (NoSuchKeyException e) {
             return false;
         }
         return true;
