@@ -9,5 +9,7 @@ public interface FileService {
 
     boolean isUploaded(String fileName);
 
+    String moveFile(String imageUrl);
+
     void deleteFile(String fileKey);
 }

@@ -2,6 +2,7 @@ package com.memozy.memozy_back.domain.memory.dto.request;
 
 import com.memozy.memozy_back.domain.memory.constant.MemoryCategory;
 import com.memozy.memozy_back.domain.memory.domain.MemoryItem;
+import com.memozy.memozy_back.domain.memory.dto.MemoryItemDto;
 import com.memozy.memozy_back.domain.user.domain.User;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -14,6 +15,6 @@ public record CreateMemoryRequest(
         @NotNull MemoryCategory category,
         @NotNull LocalDate startDate,
         @NotNull LocalDate endDate,
-        @NotNull List<MemoryItem> memoryItems,
+        @NotNull List<MemoryItemDto> memoryItems,
         List<User> sharedUsers
 ) {}

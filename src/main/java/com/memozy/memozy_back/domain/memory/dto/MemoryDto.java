@@ -16,7 +16,7 @@ public record MemoryDto(
         @NotNull LocalDate startDate,
         @NotNull LocalDate endDate,
         @NotNull MemoryCategory category,
-        @NotNull List<MemoryItem> memoryItems,
+        @NotNull List<MemoryItemDto> memoryItems,
         @NotNull List<Long> sharedUserIds
 ) {
     public static MemoryDto from(Memory memory) {
@@ -26,7 +26,9 @@ public record MemoryDto(
                 memory.getStartDate(),
                 memory.getEndDate(),
                 memory.getCategory(),
-                memory.getMemoryItems(),
+                memory.getMemoryItems().stream()
+                        .map(MemoryItemDto::from)
+                        .toList(),
                 memory.getSharedUsers().stream()
                         .map(MemoryShared::getId)
                         .toList()

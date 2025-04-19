@@ -24,6 +24,10 @@ public class S3FileServiceImpl implements FileService {
 
     @Value("${aws.s3.bucket}")
     private String bucket;
+
+    @Value("${aws.region}")
+    private String region;
+
     private final static String FILE_PREFIX = "file";
     private final static String TEMPORARY_FILE_PREFIX = "temp";
 
@@ -61,8 +65,41 @@ public class S3FileServiceImpl implements FileService {
         return true;
     }
 
+    // 파일 이동
+    @Override
+    public String moveFile(String imageUrl) {
+        String fileKey = extractFileKeyFromUrl(imageUrl);
+
+        if (!fileKey.startsWith("temp/")) {
+            return fileKey; // 이미 file/이면 이동할 필요 없음
+        }
+
+        String toFileKey = fileKey.replaceFirst("temp/", "file/");
+
+        s3Client.copyObject(copy -> copy
+                .sourceBucket(bucket)
+                .sourceKey(fileKey)
+                .destinationBucket(bucket)
+                .destinationKey(toFileKey));
+
+        s3Client.deleteObject(delete -> delete
+                .bucket(bucket)
+                .key(fileKey));
+
+        return toFileKey;
+    }
+
     private static String createFileKey(String fileName, String directory, boolean isTemporary) {
         return (isTemporary ? TEMPORARY_FILE_PREFIX : FILE_PREFIX) + "/" + directory + "/" + UUID.randomUUID()
                 + fileName;
     }
+
+    private String extractFileKeyFromUrl(String imageUrl) {
+        String baseUrl = "https://" + bucket + ".s3." + region + ".amazonaws.com/";
+        if (!imageUrl.startsWith(baseUrl)) {
+            throw new IllegalArgumentException("Invalid image URL");
+        }
+        return imageUrl.substring(baseUrl.length());
+    }
+
 }
