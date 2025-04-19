@@ -1,7 +1,7 @@
 package com.memozy.memozy_back.domain.auth.service.provider;
 
 import com.memozy.memozy_back.domain.auth.service.OAuthService;
-import com.memozy.memozy_back.domain.user.domain.SocialPlatform;
+import com.memozy.memozy_back.domain.user.constant.SocialPlatform;
 import com.memozy.memozy_back.global.exception.BusinessException;
 import com.memozy.memozy_back.global.exception.ErrorCode;
 import java.util.List;

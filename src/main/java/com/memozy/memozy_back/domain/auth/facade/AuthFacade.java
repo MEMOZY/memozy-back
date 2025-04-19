@@ -1,8 +1,7 @@
 package com.memozy.memozy_back.domain.auth.facade;
 
-import com.memozy.memozy_back.domain.auth.dto.response.SocialLoginResponse;
 import com.memozy.memozy_back.domain.auth.dto.response.TokenResponse;
-import com.memozy.memozy_back.domain.user.domain.SocialPlatform;
+import com.memozy.memozy_back.domain.user.constant.SocialPlatform;
 
 public interface AuthFacade {
     TokenResponse socialLogin(

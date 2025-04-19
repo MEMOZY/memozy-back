@@ -41,7 +41,7 @@ public class MemoryItem extends BaseTimeEntity {
     @Column
     private Integer sequence;
 
-    public static MemoryItem of(Memory memory, String imageUrl, String content, int sequence) {
+    public static MemoryItem create(Memory memory, String imageUrl, String content, int sequence) {
         return MemoryItem.builder()
                 .imageUrl(imageUrl)
                 .content(content)

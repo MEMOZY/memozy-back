@@ -1,5 +1,6 @@
 package com.memozy.memozy_back.domain.friend.domain;
 
+import com.memozy.memozy_back.domain.friend.constant.FriendshipStatus;
 import com.memozy.memozy_back.domain.user.domain.User;
 import com.memozy.memozy_back.global.entity.BaseTimeEntity;
 import jakarta.persistence.Column;

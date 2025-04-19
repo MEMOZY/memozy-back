@@ -1,5 +1,7 @@
 package com.memozy.memozy_back.domain.memory.domain;
 
+import com.memozy.memozy_back.domain.memory.constant.MemoryCategory;
+import com.memozy.memozy_back.domain.memory.dto.MemoryItemDto;
 import com.memozy.memozy_back.domain.user.domain.User;
 import com.memozy.memozy_back.global.entity.BaseTimeEntity;
 import jakarta.persistence.*;
@@ -40,37 +42,20 @@ public class Memory extends BaseTimeEntity {
     @OneToMany(mappedBy = "memory", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<MemoryShared> sharedUsers = new ArrayList<>();
 
-    public static Memory create(
+    public static Memory init(
             User owner,
             String title,
             MemoryCategory category,
             LocalDate startDate,
-            LocalDate endDate,
-            List<MemoryItem> memoryItems,
-            List<User> sharedUsers
+            LocalDate endDate
     ) {
-        Memory memory = Memory.builder()
+        return Memory.builder()
                 .owner(owner)
                 .title(title)
                 .category(category)
                 .startDate(startDate)
                 .endDate(endDate)
                 .build();
-
-        for (MemoryItem item : memoryItems) {
-            memory.addMemoryItem(item);
-        }
-
-        // MemoryShared 연관관계 설정
-        for (User user : sharedUsers) {
-            MemoryShared memoryShared = MemoryShared.builder()
-                    .memory(memory)
-                    .user(user)
-                    .build();
-            memory.addSharedUser(memoryShared);
-        }
-
-        return memory;
     }
 
     public void update(String title, MemoryCategory category,
@@ -82,7 +67,7 @@ public class Memory extends BaseTimeEntity {
     }
 
     public void addMemoryItem(MemoryItem item) {
-        memoryItems.add(item);
+        this.memoryItems.add(item);
     }
 
     public void addSharedUser(MemoryShared memoryShared) {
