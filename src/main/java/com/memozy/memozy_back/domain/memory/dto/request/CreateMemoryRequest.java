@@ -16,5 +16,5 @@ public record CreateMemoryRequest(
         @NotNull LocalDate startDate,
         @NotNull LocalDate endDate,
         @NotNull List<MemoryItemDto> memoryItems,
-        List<User> sharedUsers
+        List<Long> sharedUsersId
 ) {}

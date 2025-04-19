@@ -48,7 +48,8 @@ public class MemoryServiceImpl implements MemoryService {
             addMemoryItem(item, memory);
         }
 
-        for (User sharedUser : request.sharedUsers()) {
+        List<User> newSharedUsers = userRepository.findAllById(request.sharedUsersId());
+        for (User sharedUser : newSharedUsers) {
             addSharedUser(sharedUser, memory);
         }
 
