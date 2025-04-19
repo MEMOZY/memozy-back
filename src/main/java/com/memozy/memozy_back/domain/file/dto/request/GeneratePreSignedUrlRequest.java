@@ -7,8 +7,8 @@ import jakarta.validation.constraints.NotNull;
 public record GeneratePreSignedUrlRequest(
         @NotNull
         @Schema(
-                description = "S3 파일 경로 (파일 키)",
-                example = "temp/memory/82371adf-90a4-478b-a73d-photo.jpg"
+                description = "S3에 저장할 파일명",
+                example = "82371adf-90a4-478b-a73d-photo.jpg"
         )
         String fileName,
 
