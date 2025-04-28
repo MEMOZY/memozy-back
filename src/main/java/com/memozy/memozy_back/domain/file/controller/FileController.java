@@ -16,13 +16,13 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "파일 업로드 API", description = "S3 관리")
 @Slf4j
 @RestController
-@RequestMapping("/file")
+@RequestMapping("/files")
 @RequiredArgsConstructor
 public class FileController {
 
     private final FileService fileService;
 
-    @PostMapping(value = "/pre-signed-url")
+    @PostMapping(value = "/pre-signed-urls")
     public ResponseEntity<PreSignedUrlDto> generatePreSignedUrl(
             @Valid @RequestBody GeneratePreSignedUrlRequest request) {
         var result = fileService.generatePreSignedUrl(request.fileName(), request.fileDomain());

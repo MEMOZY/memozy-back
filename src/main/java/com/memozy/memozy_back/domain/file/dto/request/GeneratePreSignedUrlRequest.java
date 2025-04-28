@@ -14,8 +14,8 @@ public record GeneratePreSignedUrlRequest(
 
         @NotNull
         @Schema(
-                description = "파일 도메인 (ex: PROFILE_DEFAULT_IMAGE, PROFILE_IMAGE, MEMORY_TEMP_PHOTOS, MEMORY_PHOTOS)",
-                example = "MEMORY_PHOTOS"
+                description = "파일 도메인 (ex: PROFILE_DEFAULT_IMAGE, PROFILE_IMAGE, MEMORY_TEMP_PHOTOS)",
+                example = "MEMORY_TEMP_PHOTOS"
         )
         FileDomain fileDomain
 ) {
