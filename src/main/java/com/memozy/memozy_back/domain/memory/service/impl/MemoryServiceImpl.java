@@ -43,9 +43,9 @@ public class MemoryServiceImpl implements MemoryService {
                 request.endDate()
         );
 
-        for (MemoryItemDto item : request.memoryItems()) {
-            validateImageUrl(item.imageUrl());
-            addMemoryItem(item, memory);
+        for (MemoryItemDto itemDto : request.memoryItems()) {
+            validateImageUrl(itemDto.imageUrl());
+            addMemoryItem(itemDto, memory);
         }
 
         List<User> newSharedUsers = userRepository.findAllById(request.sharedUsersId());

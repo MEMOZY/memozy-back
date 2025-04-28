@@ -12,6 +12,7 @@ spring:
         dialect: org.hibernate.dialect.MySQL8Dialect
         format_sql: true
     show-sql: true
+    open-in-view: false
 
   # (선택) 로깅 포맷
   output:
