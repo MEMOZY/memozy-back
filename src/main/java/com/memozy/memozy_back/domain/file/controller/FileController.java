@@ -1,10 +1,11 @@
 package com.memozy.memozy_back.domain.file.controller;
 
-import com.memozy.memozy_back.domain.file.dto.request.GeneratePreSignedUrlRequest;
 import com.memozy.memozy_back.domain.file.dto.PreSignedUrlDto;
+import com.memozy.memozy_back.domain.file.dto.request.GeneratePreSignedUrlsRequest;
 import com.memozy.memozy_back.domain.file.service.FileService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -23,9 +24,12 @@ public class FileController {
     private final FileService fileService;
 
     @PostMapping(value = "/pre-signed-urls")
-    public ResponseEntity<PreSignedUrlDto> generatePreSignedUrl(
-            @Valid @RequestBody GeneratePreSignedUrlRequest request) {
-        var result = fileService.generatePreSignedUrl(request.fileName(), request.fileDomain());
+    public ResponseEntity<List<PreSignedUrlDto>> generatePreSignedUrl(
+            @Valid @RequestBody GeneratePreSignedUrlsRequest requests) {
+
+        var result = requests.fileInfos().stream()
+                .map(request -> fileService.generatePreSignedUrl(request.fileName(), request.fileDomain()))
+                .toList();
         return ResponseEntity.ok(result);
     }
 }
