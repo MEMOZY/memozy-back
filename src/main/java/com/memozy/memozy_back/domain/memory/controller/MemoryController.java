@@ -1,5 +1,6 @@
 package com.memozy.memozy_back.domain.memory.controller;
 
+import com.memozy.memozy_back.domain.memory.dto.MemoryItemDto;
 import com.memozy.memozy_back.domain.memory.dto.request.CreateTempMemoryRequest;
 import com.memozy.memozy_back.domain.memory.dto.response.CreateTempMemoryResponse;
 import com.memozy.memozy_back.domain.memory.dto.MemoryDto;
@@ -13,6 +14,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -47,11 +49,11 @@ public class MemoryController {
     }
 
     // 임시 기록 조회(서버 메모리 -> redis)
-    @GetMapping("/temp/{sessionId}")
-    public ResponseEntity<GetTempMemoryResponse> getTemporaryMemory(
+    @GetMapping("/temp/{sessionId}/items")
+    public ResponseEntity<GetTempMemoryResponse> getTemporaryMemoryItems(
             @PathVariable String sessionId,
             @CurrentUserId Long userId) {
-        return ResponseEntity.ok(memoryService.getTemporaryMemory(sessionId, userId));
+        return ResponseEntity.ok(memoryService.getTemporaryMemoryItems(sessionId, userId));
     }
 
 

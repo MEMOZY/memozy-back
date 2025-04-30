@@ -11,9 +11,8 @@ public interface AuthFacade {
 
     // 앱 환경에선 필요없음
 //    SocialLoginResponse getSocialLoginPageUrl(String origin, SocialPlatform socialPlatform);
-;
 
-//    TokenResponse testLogin();
-//
-//    TokenResponse testLogin(Long userId);
+    TokenResponse reissue(String refreshToken);
+
+
 }

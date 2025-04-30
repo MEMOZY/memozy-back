@@ -6,9 +6,9 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum FileDomain {
-    PROFILE_DEFAULT_IMAGE("/profile/default", false),
-    PROFILE_IMAGE("/profile", false),
-    MEMORY_TEMP_PHOTOS("/memory", true);
+    PROFILE_DEFAULT_IMAGE("profile/default", false),
+    PROFILE_IMAGE("profile", false),
+    MEMORY_TEMP_PHOTOS("memory", true);
 
     private final String directory;
     private final boolean isTemporary;

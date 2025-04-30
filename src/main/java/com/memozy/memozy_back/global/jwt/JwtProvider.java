@@ -1,8 +1,15 @@
 package com.memozy.memozy_back.global.jwt;
 
+import com.memozy.memozy_back.global.exception.BusinessException;
+import com.memozy.memozy_back.global.exception.ErrorCode;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Header;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.security.SignatureException;
 import jakarta.annotation.PostConstruct;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
@@ -59,4 +66,39 @@ public class JwtProvider {
                 .signWith(refreshKey)
                 .compact();
     }
+
+    public Long getUserIdFromRefreshToken(String refreshToken) {
+        try {
+            Claims claims = getRefreshTokenBody(refreshToken);
+            return Long.parseLong(claims.get("userId").toString());
+        } catch (ExpiredJwtException e) {
+            throw new BusinessException(e, ErrorCode.EXPIRED_REFRESH_TOKEN_EXCEPTION);
+        } catch (Exception e) {
+            throw new BusinessException(e, ErrorCode.INVALID_REFRESH_TOKEN_EXCEPTION);
+        }
+    }
+
+    public boolean validateRefreshToken(String refreshToken) {
+        try {
+            return !getRefreshTokenBody(refreshToken)
+                    .getExpiration()
+                    .before(new Date());
+        } catch (SecurityException | MalformedJwtException | SignatureException |
+                 IllegalArgumentException e) {
+            throw new BusinessException(e, ErrorCode.INVALID_REFRESH_TOKEN_EXCEPTION);
+        } catch (UnsupportedJwtException e) {
+            throw new BusinessException(e, ErrorCode.UNSUPPORTED_JWT_TOKEN_EXCEPTION);
+        } catch (ExpiredJwtException e) {
+            throw new BusinessException(e, ErrorCode.EXPIRED_REFRESH_TOKEN_EXCEPTION);
+        }
+    }
+
+    private Claims getRefreshTokenBody(String refreshToken) {
+        return Jwts.parserBuilder()
+                .setSigningKey(refreshKey)
+                .build()
+                .parseClaimsJws(refreshToken)
+                .getBody();
+    }
+
 }

@@ -68,8 +68,9 @@ public class MemoryServiceImpl implements MemoryService {
         Memory memory = Memory.initWithoutBasicInfo(owner);
 
         for (MemoryItemDto itemDto : request.memoryItems()) {
+            fileService.validateFileKey(itemDto.fileKey());
             memory.addMemoryItem(
-                    MemoryItem.create(
+                    MemoryItem.createTemp(
                             memory,
                             itemDto.fileKey(),
                             itemDto.content(),
@@ -84,7 +85,7 @@ public class MemoryServiceImpl implements MemoryService {
     }
 
     @Override
-    public GetTempMemoryResponse getTemporaryMemory(String sessionId, Long userId) {
+    public GetTempMemoryResponse getTemporaryMemoryItems(String sessionId, Long userId) {
         User owner = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_USER_EXCEPTION));
         Memory memory = temporaryMemoryStore.load(sessionId);
@@ -93,8 +94,7 @@ public class MemoryServiceImpl implements MemoryService {
             throw new BusinessException(ErrorCode.UNAUTHORIZED_EXCEPTION);
         }
 
-        List<MemoryItemDto> memoryItems = memory.getMemoryItems().stream()
-                .map(MemoryItemDto::from)
+        List<MemoryItem> memoryItems = memory.getMemoryItems().stream()
                 .toList();
 
         return GetTempMemoryResponse.from(memoryItems);
@@ -119,7 +119,7 @@ public class MemoryServiceImpl implements MemoryService {
         // 기존 MemoryItem 삭제 후 새로 추가
         memory.getMemoryItems().clear();
         for (MemoryItemDto itemDto : request.memoryItems()) {
-            validateImageUrl(itemDto.fileKey());
+            fileService.validateFileKey(itemDto.fileKey());
             addMemoryItem(itemDto, memory);
         }
 
@@ -147,20 +147,12 @@ public class MemoryServiceImpl implements MemoryService {
         memoryRepository.deleteById(memoryId);
     }
 
-
-    // 파일이 S3에 올라가있는지 검증
-    private void validateImageUrl(String imageUrl) {
-        if (!fileService.isUploaded(imageUrl)) {
-            throw new BusinessException(ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION);
-        }
-    }
-
     private void addMemoryItem(MemoryItemDto item, Memory memory) {
-        String imageUrl = fileService.moveFile(item.fileKey());
+        String fileKey = fileService.moveFile(item.fileKey());
         memory.addMemoryItem(
                 MemoryItem.create(
                         memory,
-                        imageUrl,
+                        fileKey,
                         item.content(),
                         item.sequence())
         );

@@ -83,6 +83,7 @@ public class Memory extends BaseTimeEntity {
     }
 
     public void addMemoryItem(MemoryItem item) {
+        System.out.println("add " + item);
         this.memoryItems.add(item);
     }
 
