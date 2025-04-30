@@ -6,16 +6,20 @@ import com.memozy.memozy_back.domain.memory.domain.MemoryShared;
 import com.memozy.memozy_back.domain.memory.dto.MemoryDto;
 import com.memozy.memozy_back.domain.memory.dto.MemoryItemDto;
 import com.memozy.memozy_back.domain.memory.dto.request.CreateMemoryRequest;
+import com.memozy.memozy_back.domain.memory.dto.request.CreateTempMemoryRequest;
 import com.memozy.memozy_back.domain.memory.dto.request.UpdateMemoryRequest;
 import com.memozy.memozy_back.domain.memory.dto.response.GetMemoryListResponse;
+import com.memozy.memozy_back.domain.memory.dto.response.GetTempMemoryResponse;
 import com.memozy.memozy_back.domain.memory.repository.MemoryRepository;
 import com.memozy.memozy_back.domain.memory.service.MemoryService;
+import com.memozy.memozy_back.domain.memory.service.TemporaryMemoryStore;
 import com.memozy.memozy_back.domain.user.domain.User;
 import com.memozy.memozy_back.domain.user.repository.UserRepository;
 import com.memozy.memozy_back.global.exception.BusinessException;
 import com.memozy.memozy_back.global.exception.ErrorCode;
 import com.memozy.memozy_back.domain.file.service.FileService;
 import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,25 +32,25 @@ public class MemoryServiceImpl implements MemoryService {
     private final MemoryRepository memoryRepository;
     private final UserRepository userRepository;
     private final FileService fileService;
+    private final TemporaryMemoryStore temporaryMemoryStore;
 
     @Override
     @Transactional
     public MemoryDto createMemory(Long ownerId, CreateMemoryRequest request) {
-        User owner = userRepository.findById(ownerId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_USER_EXCEPTION));
+        String sessionId = request.sessionId();
 
-        Memory memory = Memory.init(
-                owner,
+        Memory memory = temporaryMemoryStore.load(sessionId);
+
+        if (!memory.getOwner().getId().equals(ownerId)) {
+            throw new BusinessException(ErrorCode.UNAUTHORIZED_EXCEPTION);
+        }
+
+        memory.updateBasicInfo(
                 request.title(),
                 request.category(),
                 request.startDate(),
                 request.endDate()
         );
-
-        for (MemoryItemDto itemDto : request.memoryItems()) {
-            validateImageUrl(itemDto.imageUrl());
-            addMemoryItem(itemDto, memory);
-        }
 
         List<User> newSharedUsers = userRepository.findAllById(request.sharedUsersId());
         for (User sharedUser : newSharedUsers) {
@@ -54,6 +58,46 @@ public class MemoryServiceImpl implements MemoryService {
         }
 
         return MemoryDto.from(memoryRepository.save(memory));
+    }
+
+    /* 임시 기록 생성(기본 정보 없이) */
+    @Override
+    public String createTemporaryMemory(Long userId, CreateTempMemoryRequest request) {
+        User owner = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_USER_EXCEPTION));
+        Memory memory = Memory.initWithoutBasicInfo(owner);
+
+        for (MemoryItemDto itemDto : request.memoryItems()) {
+            memory.addMemoryItem(
+                    MemoryItem.create(
+                            memory,
+                            itemDto.fileKey(),
+                            itemDto.content(),
+                            itemDto.sequence()
+                    )
+            );
+        }
+
+        String sessionId = UUID.randomUUID().toString();
+        temporaryMemoryStore.save(sessionId, memory);
+        return sessionId;
+    }
+
+    @Override
+    public GetTempMemoryResponse getTemporaryMemory(String sessionId, Long userId) {
+        User owner = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_USER_EXCEPTION));
+        Memory memory = temporaryMemoryStore.load(sessionId);
+
+        if (!memory.getOwner().getId().equals(owner.getId())) {
+            throw new BusinessException(ErrorCode.UNAUTHORIZED_EXCEPTION);
+        }
+
+        List<MemoryItemDto> memoryItems = memory.getMemoryItems().stream()
+                .map(MemoryItemDto::from)
+                .toList();
+
+        return GetTempMemoryResponse.from(memoryItems);
     }
 
     @Override
@@ -75,7 +119,7 @@ public class MemoryServiceImpl implements MemoryService {
         // 기존 MemoryItem 삭제 후 새로 추가
         memory.getMemoryItems().clear();
         for (MemoryItemDto itemDto : request.memoryItems()) {
-            validateImageUrl(itemDto.imageUrl());
+            validateImageUrl(itemDto.fileKey());
             addMemoryItem(itemDto, memory);
         }
 
@@ -103,6 +147,7 @@ public class MemoryServiceImpl implements MemoryService {
         memoryRepository.deleteById(memoryId);
     }
 
+
     // 파일이 S3에 올라가있는지 검증
     private void validateImageUrl(String imageUrl) {
         if (!fileService.isUploaded(imageUrl)) {
@@ -111,7 +156,7 @@ public class MemoryServiceImpl implements MemoryService {
     }
 
     private void addMemoryItem(MemoryItemDto item, Memory memory) {
-        String imageUrl = fileService.moveFile(item.imageUrl());
+        String imageUrl = fileService.moveFile(item.fileKey());
         memory.addMemoryItem(
                 MemoryItem.create(
                         memory,

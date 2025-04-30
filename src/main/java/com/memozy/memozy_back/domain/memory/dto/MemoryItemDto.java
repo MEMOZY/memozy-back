@@ -10,16 +10,16 @@ public record MemoryItemDto(
         @NotBlank
         @Schema(
                 description = "S3에 업로드된 파일의 url",
-                example = "https://bucket.s3.ap-northeast-2.amazonaws.com/file/memory/abc.jpg"
+                example = "file/memory/abc.jpg"
         )
-        String imageUrl,
+        String fileKey,
         @NotBlank String content,
         @NotNull Integer sequence
 ) {
     public static MemoryItemDto from(MemoryItem memoryItem) {
         return new MemoryItemDto(
                 memoryItem.getId(),
-                memoryItem.getImageUrl(),
+                memoryItem.getFileKey(),
                 memoryItem.getContent(),
                 memoryItem.getSequence()
         );

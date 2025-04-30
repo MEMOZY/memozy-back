@@ -58,7 +58,23 @@ public class Memory extends BaseTimeEntity {
                 .build();
     }
 
+    public static Memory initWithoutBasicInfo(User owner) {
+        return Memory.builder()
+                .owner(owner)
+                .memoryItems(new ArrayList<>())
+                .sharedUsers(new ArrayList<>())
+                .build();
+    }
+
     public void update(String title, MemoryCategory category,
+            LocalDate startDate, LocalDate endDate) {
+        this.title = title;
+        this.category = category;
+        this.startDate = startDate;
+        this.endDate = endDate;
+    }
+
+    public void updateBasicInfo(String title, MemoryCategory category,
             LocalDate startDate, LocalDate endDate) {
         this.title = title;
         this.category = category;

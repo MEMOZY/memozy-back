@@ -7,9 +7,13 @@ public interface FileService {
 
     PreSignedUrlDto generatePreSignedUrl(String fileName, FileDomain fileDomain);
 
+    PreSignedUrlDto generatePresignedUrlToRead(String fileKey);
+
     boolean isUploaded(String fileName);
 
     String moveFile(String imageUrl);
 
     void deleteFile(String fileKey);
+
+    String transferToBase64(String fileKey);
 }
