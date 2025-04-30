@@ -7,6 +7,8 @@ public interface FileService {
 
     PreSignedUrlDto generatePreSignedUrl(String fileName, FileDomain fileDomain);
 
+    PreSignedUrlDto generatePresignedUrlToRead(String fileKey);
+
     boolean isUploaded(String fileName);
 
     String moveFile(String imageUrl);

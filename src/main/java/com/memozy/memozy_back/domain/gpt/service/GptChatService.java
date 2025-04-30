@@ -28,6 +28,9 @@ public class GptChatService {
 
     public SseEmitter generateInitialPrompts(String sessionId, SseEmitter emitter) {
         Memory temporaryMemory = temporaryMemoryStore.load(sessionId);
+        if (temporaryMemory == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION);
+        }
         var memoryItems = temporaryMemory.getMemoryItems();
 
         Executors.newSingleThreadExecutor().submit(() -> {
@@ -76,7 +79,8 @@ public class GptChatService {
                 .map(ChatMessage::content)
                 .toList();
 
-        MemoryItem memoryItem = temporaryMemoryStore.load(sessionId).getMemoryItems().stream()
+        MemoryItem memoryItem = temporaryMemoryStore.load(sessionId)
+                .getMemoryItems().stream()
                 .filter(item -> item.getId().equals(memoryItemId))
                 .findFirst()
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION));
@@ -95,7 +99,10 @@ public class GptChatService {
                 emitter.send(Map.of(
                         "memoryItemId", memoryItem.getId(),
                         "type", "story",
-                        "message", story
+                        "message", story,
+                        "imageUrl", fileService
+                                .generatePresignedUrlToRead(memoryItem.getFileKey())
+                                .preSignedUrl()
                 ));
             } else {
                 String gptReply = gptClient.sendMessage(messageHistory);
@@ -112,6 +119,8 @@ public class GptChatService {
 
         } catch (Exception e) {
             emitter.completeWithError(e);
+        } finally {
+            emitter.complete(); // 항상 실행 보장
         }
     }
 }

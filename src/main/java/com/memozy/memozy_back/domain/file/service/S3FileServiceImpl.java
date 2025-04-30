@@ -15,6 +15,7 @@ import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 
 @Service
@@ -38,7 +39,10 @@ public class S3FileServiceImpl implements FileService {
     @Override
     public PreSignedUrlDto generatePreSignedUrl(String fileName, FileDomain fileDomain) {
         var fileKey = createFileKey(fileName, fileDomain.getDirectory(), fileDomain.isTemporary());
-        var putObjectRequest = PutObjectRequest.builder().bucket(bucket).key(fileKey).build();
+        var putObjectRequest = PutObjectRequest.builder()
+                .bucket(bucket)
+                .key(fileKey)
+                .build();
 
         var preSignRequest = PutObjectPresignRequest.builder()
                 .signatureDuration(Duration.ofMinutes(10))
@@ -50,6 +54,26 @@ public class S3FileServiceImpl implements FileService {
         return PreSignedUrlDto.builder()
                 .preSignedUrl(preSignedRequest.url().toExternalForm())
                 .fileKey(fileKey)
+                .build();
+    }
+
+    @Override
+    public PreSignedUrlDto generatePresignedUrlToRead(String fileKey) {
+        var getObjectRequest = GetObjectRequest.builder()
+                .bucket(bucket)
+                .key(fileKey)
+                .build();
+
+        var presignRequest = GetObjectPresignRequest.builder()
+                .signatureDuration(Duration.ofMinutes(10))
+                .getObjectRequest(getObjectRequest)
+                .build();
+
+        var presignedRequest = s3Presigner.presignGetObject(presignRequest);
+
+        return PreSignedUrlDto.builder()
+                .fileKey(fileKey)
+                .preSignedUrl(presignedRequest.url().toExternalForm())
                 .build();
     }
 

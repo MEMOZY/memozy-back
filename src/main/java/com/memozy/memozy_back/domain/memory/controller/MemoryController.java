@@ -45,6 +45,8 @@ public class MemoryController {
         return ResponseEntity.ok(new CreateTempMemoryResponse(sessionId));
     }
 
+    // 임시 기록 조회(서버 메모리 -> redis)
+
 
     // 내 기록 전체 조회
     @GetMapping
