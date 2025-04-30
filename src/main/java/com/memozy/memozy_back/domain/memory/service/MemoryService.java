@@ -5,6 +5,7 @@ import com.memozy.memozy_back.domain.memory.dto.request.CreateMemoryRequest;
 import com.memozy.memozy_back.domain.memory.dto.request.CreateTempMemoryRequest;
 import com.memozy.memozy_back.domain.memory.dto.request.UpdateMemoryRequest;
 import com.memozy.memozy_back.domain.memory.dto.response.GetMemoryListResponse;
+import com.memozy.memozy_back.domain.memory.dto.response.GetTempMemoryResponse;
 
 
 public interface MemoryService {
@@ -14,4 +15,6 @@ public interface MemoryService {
     void deleteMemory(Long memoryId);
 
     String createTemporaryMemory(Long userId, CreateTempMemoryRequest request);
+
+    GetTempMemoryResponse getTemporaryMemory(String sessionId, Long userId);
 }

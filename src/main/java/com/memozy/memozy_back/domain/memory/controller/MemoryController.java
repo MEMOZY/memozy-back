@@ -6,6 +6,7 @@ import com.memozy.memozy_back.domain.memory.dto.MemoryDto;
 import com.memozy.memozy_back.domain.memory.dto.request.CreateMemoryRequest;
 import com.memozy.memozy_back.domain.memory.dto.request.UpdateMemoryRequest;
 import com.memozy.memozy_back.domain.memory.dto.response.GetMemoryListResponse;
+import com.memozy.memozy_back.domain.memory.dto.response.GetTempMemoryResponse;
 import com.memozy.memozy_back.domain.memory.service.MemoryService;
 import com.memozy.memozy_back.global.annotation.CurrentUserId;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -46,6 +47,12 @@ public class MemoryController {
     }
 
     // 임시 기록 조회(서버 메모리 -> redis)
+    @GetMapping("/temp/{sessionId}")
+    public ResponseEntity<GetTempMemoryResponse> getTemporaryMemory(
+            @PathVariable String sessionId,
+            @CurrentUserId Long userId) {
+        return ResponseEntity.ok(memoryService.getTemporaryMemory(sessionId, userId));
+    }
 
 
     // 내 기록 전체 조회

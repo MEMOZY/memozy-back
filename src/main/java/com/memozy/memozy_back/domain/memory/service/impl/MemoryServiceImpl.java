@@ -9,6 +9,7 @@ import com.memozy.memozy_back.domain.memory.dto.request.CreateMemoryRequest;
 import com.memozy.memozy_back.domain.memory.dto.request.CreateTempMemoryRequest;
 import com.memozy.memozy_back.domain.memory.dto.request.UpdateMemoryRequest;
 import com.memozy.memozy_back.domain.memory.dto.response.GetMemoryListResponse;
+import com.memozy.memozy_back.domain.memory.dto.response.GetTempMemoryResponse;
 import com.memozy.memozy_back.domain.memory.repository.MemoryRepository;
 import com.memozy.memozy_back.domain.memory.service.MemoryService;
 import com.memozy.memozy_back.domain.memory.service.TemporaryMemoryStore;
@@ -80,6 +81,23 @@ public class MemoryServiceImpl implements MemoryService {
         String sessionId = UUID.randomUUID().toString();
         temporaryMemoryStore.save(sessionId, memory);
         return sessionId;
+    }
+
+    @Override
+    public GetTempMemoryResponse getTemporaryMemory(String sessionId, Long userId) {
+        User owner = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_USER_EXCEPTION));
+        Memory memory = temporaryMemoryStore.load(sessionId);
+
+        if (!memory.getOwner().getId().equals(owner.getId())) {
+            throw new BusinessException(ErrorCode.UNAUTHORIZED_EXCEPTION);
+        }
+
+        List<MemoryItemDto> memoryItems = memory.getMemoryItems().stream()
+                .map(MemoryItemDto::from)
+                .toList();
+
+        return GetTempMemoryResponse.from(memoryItems);
     }
 
     @Override
