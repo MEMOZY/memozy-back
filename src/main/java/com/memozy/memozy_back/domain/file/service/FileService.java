@@ -16,4 +16,6 @@ public interface FileService {
     void deleteFile(String fileKey);
 
     String transferToBase64(String fileKey);
+
+    void validateFileKey(String fileKey);
 }

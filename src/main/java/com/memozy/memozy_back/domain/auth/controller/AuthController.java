@@ -1,5 +1,6 @@
 package com.memozy.memozy_back.domain.auth.controller;
 
+import com.memozy.memozy_back.domain.auth.dto.request.ReissueTokenRequest;
 import com.memozy.memozy_back.domain.auth.dto.request.SocialLoginRequest;
 import com.memozy.memozy_back.domain.auth.dto.response.TokenResponse;
 import com.memozy.memozy_back.domain.auth.facade.AuthFacade;
@@ -42,6 +43,8 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
+
+
 //    @GetMapping("/social/{socialPlatform}/login-page")
 //    public ResponseEntity<SocialLoginResponse> getSocialLoginPageUrl(
 //            @RequestHeader("Origin") String origin,
@@ -52,11 +55,10 @@ public class AuthController {
 //        return ResponseEntity.ok(response);
 //    }
 
-//    @Override
-//    @PostMapping("/reissue")
-//    public ResponseEntity<LoginResponse> reissue(@RequestBody @Valid ReissueTokenRequest request) {
-//        LoginResponse response = authService.reissue(request);
-//
-//        return ResponseEntity.ok(response);
-//    }
+    @PostMapping("/reissue")
+    public ResponseEntity<TokenResponse> reissue(@RequestBody @Valid ReissueTokenRequest request) {
+        TokenResponse response = authFacade.reissue(request.refreshToken());
+
+        return ResponseEntity.ok(response);
+    }
 }

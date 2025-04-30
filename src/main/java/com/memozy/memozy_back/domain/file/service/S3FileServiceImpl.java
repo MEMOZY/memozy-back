@@ -3,6 +3,8 @@ package com.memozy.memozy_back.domain.file.service;
 
 import com.memozy.memozy_back.domain.file.constant.FileDomain;
 import com.memozy.memozy_back.domain.file.dto.PreSignedUrlDto;
+import com.memozy.memozy_back.global.exception.BusinessException;
+import com.memozy.memozy_back.global.exception.ErrorCode;
 import java.io.InputStream;
 import java.time.Duration;
 import java.util.Base64;
@@ -34,7 +36,6 @@ public class S3FileServiceImpl implements FileService {
 
     private final static String FILE_PREFIX = "file";
     private final static String TEMPORARY_FILE_PREFIX = "temp";
-
 
     @Override
     public PreSignedUrlDto generatePreSignedUrl(String fileName, FileDomain fileDomain) {
@@ -98,9 +99,15 @@ public class S3FileServiceImpl implements FileService {
     }
 
     @Override
-    public boolean isUploaded(String fileName) {
+    public void validateFileKey(String fileKey) {
+        if (!isUploaded(fileKey)) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION);
+        }
+    }
+
+    public boolean isUploaded(String fileKey) {
             try {
-                s3Client.headObject(builder -> builder.bucket(bucket).key(fileName));
+                s3Client.headObject(builder -> builder.bucket(bucket).key(fileKey));
             } catch (NoSuchKeyException e) {
             return false;
         }

@@ -16,5 +16,5 @@ public interface MemoryService {
 
     String createTemporaryMemory(Long userId, CreateTempMemoryRequest request);
 
-    GetTempMemoryResponse getTemporaryMemory(String sessionId, Long userId);
+    GetTempMemoryResponse getTemporaryMemoryItems(String sessionId, Long userId);
 }

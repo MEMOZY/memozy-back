@@ -40,18 +40,21 @@ public class GptChatService {
                         .toList();
 
                 for (MemoryItem memoryItem : sortedItems) {
-                    gptChatStore.initConversation(memoryItem.getId());
+                    gptChatStore.initChat(memoryItem.getTempId());
 
                     String fileKey = memoryItem.getFileKey();
                     String base64Image = fileService.transferToBase64(fileKey);
 
                     String firstQuestion = gptClient.initiateChatWithImage(base64Image);
-                    gptChatStore.addAssistantMessage(memoryItem.getId(), firstQuestion);
+                    gptChatStore.addAssistantMessage(memoryItem.getTempId(), firstQuestion);
 
                     Map<String, Object> payload = Map.of(
-                            "memoryItemId", memoryItem.getId(),
+                            "memoryItemTempId", memoryItem.getTempId(),
                             "type", "question",
-                            "message", firstQuestion
+                            "message", firstQuestion,
+                            "imageUrl", fileService
+                                    .generatePresignedUrlToRead(fileKey)
+                                    .preSignedUrl()
                     );
 
                     emitter.send(SseEmitter.event()
@@ -70,46 +73,44 @@ public class GptChatService {
     }
 
     public void handleUserAnswer(String sessionId, UserAnswerRequest request, SseEmitter emitter) {
-        Long memoryItemId = request.memoryItemId();
+        Long memoryItemTempId = request.memoryItemTempId();
         String userAnswer = request.userAnswer().trim();
 
-        gptChatStore.addUserMessage(memoryItemId, userAnswer);
-
-        List<String> messageHistory = gptChatStore.getChat(memoryItemId).stream()
-                .map(ChatMessage::content)
-                .toList();
+        gptChatStore.addUserMessage(memoryItemTempId, userAnswer);
 
         MemoryItem memoryItem = temporaryMemoryStore.load(sessionId)
                 .getMemoryItems().stream()
-                .filter(item -> item.getId().equals(memoryItemId))
+                .filter(item -> item.getTempId().equals(memoryItemTempId))
                 .findFirst()
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION));
 
         String base64Image = fileService.transferToBase64(memoryItem.getFileKey());
 
+        List<String> messageHistory = gptChatStore.getChat(memoryItemTempId).stream()
+                .map(ChatMessage::content)
+                .toList();
+
+        String gptReply = gptClient.sendMessage(messageHistory);
+        gptChatStore.addAssistantMessage(memoryItemTempId, gptReply);
+
         try {
             boolean isEndCommand = PromptText.GENERATE_STORY.getText().equalsIgnoreCase(userAnswer);
-            boolean isThirdTurn = gptChatStore.getUserMessageCount(memoryItemId) >= 3;
+            boolean isThirdTurn = gptChatStore.getUserMessageCount(memoryItemTempId) >= 3;
+
 
             if (isEndCommand || isThirdTurn) { // 스토리(일기) 초안 생성
                 String story = gptClient.generateStoryFromChatAndImage(messageHistory, base64Image);
                 memoryItem.updateContent(story);
-                gptChatStore.removeChat(memoryItemId);
+                gptChatStore.removeChat(memoryItemTempId);
 
                 emitter.send(Map.of(
-                        "memoryItemId", memoryItem.getId(),
+                        "memoryItemId", memoryItem.getTempId(),
                         "type", "story",
-                        "message", story,
-                        "imageUrl", fileService
-                                .generatePresignedUrlToRead(memoryItem.getFileKey())
-                                .preSignedUrl()
+                        "message", story
                 ));
             } else {
-                String gptReply = gptClient.sendMessage(messageHistory);
-                gptChatStore.addAssistantMessage(memoryItemId, gptReply);
-
                 emitter.send(Map.of(
-                        "memoryItemId", memoryItem.getId(),
+                        "memoryItemId", memoryItem.getTempId(),
                         "type", "reply",
                         "message", gptReply
                 ));

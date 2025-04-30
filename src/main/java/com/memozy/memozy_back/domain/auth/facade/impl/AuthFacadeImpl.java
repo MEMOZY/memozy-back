@@ -7,6 +7,8 @@ import com.memozy.memozy_back.domain.auth.service.provider.OAuthServiceProvider;
 import com.memozy.memozy_back.domain.user.constant.SocialPlatform;
 import com.memozy.memozy_back.domain.user.domain.User;
 import com.memozy.memozy_back.domain.user.repository.UserRepository;
+import com.memozy.memozy_back.global.exception.BusinessException;
+import com.memozy.memozy_back.global.exception.ErrorCode;
 import com.memozy.memozy_back.global.jwt.JwtProvider;
 import com.memozy.memozy_back.global.jwt.TokenInfo;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +30,23 @@ public class AuthFacadeImpl implements AuthFacade {
             String oauthAccessToken) {
         OAuthService oAuthService = oAuthServiceProvider.getService(socialPlatform);
         User user = oAuthService.socialUserLogin(oauthAccessToken);
+        return TokenResponse.from(
+                jwtProvider.createTokenCollection(
+                        TokenInfo.from(user)));
+    }
+
+    @Override
+    @Transactional
+    public TokenResponse reissue(String refreshToken) {
+        if (!jwtProvider.validateRefreshToken(refreshToken)) {
+            throw new BusinessException(ErrorCode.INVALID_REFRESH_TOKEN_EXCEPTION);
+        }
+
+        Long userId = jwtProvider.getUserIdFromRefreshToken(refreshToken);
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_USER_EXCEPTION));
+
         return TokenResponse.from(
                 jwtProvider.createTokenCollection(
                         TokenInfo.from(user)));
