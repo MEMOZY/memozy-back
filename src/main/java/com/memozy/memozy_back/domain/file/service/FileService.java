@@ -12,4 +12,6 @@ public interface FileService {
     String moveFile(String imageUrl);
 
     void deleteFile(String fileKey);
+
+    String transferToBase64(String fileKey);
 }

@@ -33,7 +33,7 @@ public class MemoryItem extends BaseTimeEntity {
     private Memory memory;
 
     @Column(length = 2048)
-    private String imageUrl;
+    private String fileKey;
 
     @Column(length = 1000)
     private String content;
@@ -43,11 +43,15 @@ public class MemoryItem extends BaseTimeEntity {
 
     public static MemoryItem create(Memory memory, String imageUrl, String content, int sequence) {
         return MemoryItem.builder()
-                .imageUrl(imageUrl)
+                .fileKey(imageUrl)
                 .content(content)
                 .sequence(sequence)
                 .memory(memory)
                 .build();
+    }
+
+    public void updateContent(String content) {
+        this.content = content;
     }
 
 }

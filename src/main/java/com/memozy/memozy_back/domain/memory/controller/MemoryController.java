@@ -1,5 +1,7 @@
 package com.memozy.memozy_back.domain.memory.controller;
 
+import com.memozy.memozy_back.domain.memory.dto.request.CreateTempMemoryRequest;
+import com.memozy.memozy_back.domain.memory.dto.response.CreateTempMemoryResponse;
 import com.memozy.memozy_back.domain.memory.dto.MemoryDto;
 import com.memozy.memozy_back.domain.memory.dto.request.CreateMemoryRequest;
 import com.memozy.memozy_back.domain.memory.dto.request.UpdateMemoryRequest;
@@ -33,6 +35,16 @@ public class MemoryController {
             @RequestBody CreateMemoryRequest request) {
         return ResponseEntity.ok(memoryService.createMemory(userId, request));
     }
+
+    // 임시 기록 생성(서버 메모리 -> redis)
+    @PostMapping("/temp")
+    public ResponseEntity<CreateTempMemoryResponse> createTemporaryMemory(
+            @RequestBody CreateTempMemoryRequest request,
+            @CurrentUserId Long userId) {
+        String sessionId = memoryService.createTemporaryMemory(userId, request);
+        return ResponseEntity.ok(new CreateTempMemoryResponse(sessionId));
+    }
+
 
     // 내 기록 전체 조회
     @GetMapping
