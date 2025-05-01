@@ -31,15 +31,14 @@ public class GptChatService {
         if (temporaryMemory == null) {
             throw new BusinessException(ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION);
         }
-        List<MemoryItem> memoryItems = temporaryMemory.getMemoryItems();
+        List<MemoryItem> sortedMemoryItems = temporaryMemory.getMemoryItems()
+                .stream()
+                .sorted(Comparator.comparingInt(MemoryItem::getSequence))
+                .toList();;
 
         Executors.newSingleThreadExecutor().submit(() -> {
             try {
-                List<MemoryItem> sortedItems = memoryItems.stream()
-                        .sorted(Comparator.comparingInt(MemoryItem::getSequence))
-                        .toList();
-
-                MemoryItem firstItem = sortedItems.get(0);
+                MemoryItem firstItem = sortedMemoryItems.get(0);
                 gptChatStore.initChat(firstItem.getTempId());
 
                 String fileKey = firstItem.getFileKey();
@@ -70,9 +69,11 @@ public class GptChatService {
         gptChatStore.addUserMessage(memoryItemTempId, userAnswer);
 
         Memory memory = temporaryMemoryStore.load(sessionId);
-        List<MemoryItem> memoryItems = memory.getMemoryItems();
+        List<MemoryItem> sortedMemoryItems = memory.getMemoryItems().stream()
+                .sorted(Comparator.comparingInt(MemoryItem::getSequence))
+                .toList();
 
-        MemoryItem currentItem = memoryItems.stream()
+        MemoryItem currentItem = sortedMemoryItems.stream()
                 .filter(item -> item.getTempId().equals(memoryItemTempId))
                 .findFirst()
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION));
@@ -94,11 +95,11 @@ public class GptChatService {
                 currentItem.updateContent(story);
                 gptChatStore.removeChat(memoryItemTempId);
 
-                int currentIndex = memoryItems.indexOf(currentItem);
-                boolean hasNext = currentIndex + 1 < memoryItems.size();
+                int currentIndex = sortedMemoryItems.indexOf(currentItem);
+                boolean hasNext = currentIndex + 1 < sortedMemoryItems.size();
 
                 if (hasNext) {
-                    MemoryItem nextItem = memoryItems.get(currentIndex + 1);
+                    MemoryItem nextItem = sortedMemoryItems.get(currentIndex + 1);
                     gptChatStore.initChat(nextItem.getTempId());
 
                     String nextBase64 = fileService.transferToBase64(nextItem.getFileKey());
