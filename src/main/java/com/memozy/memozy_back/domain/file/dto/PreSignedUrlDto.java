@@ -4,8 +4,6 @@ import lombok.Builder;
 
 @Builder
 public record PreSignedUrlDto(
-        String preSignedUrl,
-        String fileKey
+        String preSignedUrl
 ) {
-
 }

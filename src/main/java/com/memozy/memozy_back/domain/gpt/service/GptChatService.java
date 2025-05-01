@@ -73,7 +73,7 @@ public class GptChatService {
     }
 
     public void handleUserAnswer(String sessionId, UserAnswerRequest request, SseEmitter emitter) {
-        Long memoryItemTempId = request.memoryItemTempId();
+        String memoryItemTempId = request.memoryItemTempId();
         String userAnswer = request.userAnswer().trim();
 
         gptChatStore.addUserMessage(memoryItemTempId, userAnswer);
@@ -96,7 +96,6 @@ public class GptChatService {
         try {
             boolean isEndCommand = PromptText.GENERATE_STORY.getText().equalsIgnoreCase(userAnswer);
             boolean isThirdTurn = gptChatStore.getUserMessageCount(memoryItemTempId) >= 3;
-            System.out.println("messagecount: " + gptChatStore.getUserMessageCount(memoryItemTempId));
             if (isEndCommand || isThirdTurn) { // 스토리(일기) 초안 생성
                 String story = gptClient.generateStoryFromChatAndImage(messageHistory, base64Image);
                 memoryItem.updateContent(story);

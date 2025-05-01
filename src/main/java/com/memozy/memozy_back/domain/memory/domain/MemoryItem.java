@@ -33,7 +33,7 @@ public class MemoryItem extends BaseTimeEntity {
     private Long id;
 
     @Transient // DB에 저장되지 않음
-    private Long tempId;
+    private String tempId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "memory_id", nullable = false)
@@ -48,9 +48,9 @@ public class MemoryItem extends BaseTimeEntity {
     @Column
     private Integer sequence;
 
-    public static MemoryItem create(Memory memory, String imageUrl, String content, int sequence) {
+    public static MemoryItem create(Memory memory, String fileKey, String content, int sequence) {
         return MemoryItem.builder()
-                .fileKey(imageUrl)
+                .fileKey(fileKey)
                 .content(content)
                 .sequence(sequence)
                 .memory(memory)
@@ -58,10 +58,8 @@ public class MemoryItem extends BaseTimeEntity {
     }
 
     public static MemoryItem createTemp(Memory memory, String fileKey, String content, int sequence) {
-        long temp = UUID.randomUUID().getMostSignificantBits() & Long.MAX_VALUE;
-        System.out.println("tempId = " + temp);
         return MemoryItem.builder()
-                .tempId(temp)
+                .tempId(UUID.randomUUID().toString())
                 .fileKey(fileKey)
                 .content(content)
                 .sequence(sequence)
@@ -72,7 +70,5 @@ public class MemoryItem extends BaseTimeEntity {
     public void updateContent(String content) {
         this.content = content;
     }
-
-
 
 }

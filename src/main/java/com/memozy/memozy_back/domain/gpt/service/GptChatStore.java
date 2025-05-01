@@ -9,31 +9,29 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class GptChatStore {
-    private final Map<Long, List<ChatMessage>> chatHistories = new ConcurrentHashMap<>();
+    private final Map<String, List<ChatMessage>> chatHistories = new ConcurrentHashMap<>();
 
-    public void initChat(Long memoryItemTempId) {
-        System.out.println("memoryItemTempId = " + memoryItemTempId);
+    public void initChat(String memoryItemTempId) {
         chatHistories.put(memoryItemTempId, new ArrayList<>());
-        System.out.println("chatHistories.get(memoryItemTempId) = " + chatHistories.get(memoryItemTempId));
     }
 
-    public void addUserMessage(Long memoryItemTempId, String content) {
+    public void addUserMessage(String memoryItemTempId, String content) {
         chatHistories.get(memoryItemTempId).add(ChatMessage.user(content));
     }
 
-    public void addAssistantMessage(Long memoryItemTempId, String content) {
+    public void addAssistantMessage(String memoryItemTempId, String content) {
         chatHistories.get(memoryItemTempId).add(ChatMessage.assistant(content));
     }
 
-    public List<ChatMessage> getChat(Long memoryItemTempId) {
+    public List<ChatMessage> getChat(String memoryItemTempId) {
         return chatHistories.getOrDefault(memoryItemTempId, List.of());
     }
 
-    public void removeChat(Long memoryItemTempId) {
+    public void removeChat(String memoryItemTempId) {
         chatHistories.remove(memoryItemTempId);
     }
 
-    public int getUserMessageCount(Long memoryItemTempId) {
+    public int getUserMessageCount(String memoryItemTempId) {
         return chatHistories.get(memoryItemTempId).stream()
                 .filter(chat -> chat.role().equals("user"))
                 .toList()

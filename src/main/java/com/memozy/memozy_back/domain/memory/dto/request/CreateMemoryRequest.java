@@ -18,5 +18,6 @@ public record CreateMemoryRequest(
 
         @Schema(description = "임시 저장소에 있던 memoryItems 불러오기 위함", example = "sessionId")
         @NotBlank String sessionId,
+
         List<Long> sharedUsersId
 ) {}
