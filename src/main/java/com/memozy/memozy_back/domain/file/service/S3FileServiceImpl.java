@@ -117,6 +117,7 @@ public class S3FileServiceImpl implements FileService {
     // 파일 이동
     @Override
     public String moveFile(String fileKey) {
+        validateFileKey(fileKey);
 
         if (!fileKey.startsWith("temp/")) {
             return fileKey; // 이미 file/이면 이동할 필요 없음

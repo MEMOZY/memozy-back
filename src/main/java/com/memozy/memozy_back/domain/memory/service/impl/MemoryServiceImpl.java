@@ -37,20 +37,20 @@ public class MemoryServiceImpl implements MemoryService {
     @Override
     @Transactional
     public MemoryDto createMemory(Long ownerId, CreateMemoryRequest request) {
-        String sessionId = request.sessionId();
+        User owner = userRepository.findById(ownerId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_USER_EXCEPTION));
 
-        Memory memory = temporaryMemoryStore.load(sessionId);
-
-        if (!memory.getOwner().getId().equals(ownerId)) {
-            throw new BusinessException(ErrorCode.UNAUTHORIZED_EXCEPTION);
-        }
-
-        memory.updateBasicInfo(
+        Memory memory = Memory.create(
+                owner,
                 request.title(),
                 request.category(),
                 request.startDate(),
                 request.endDate()
         );
+
+        for (MemoryItemDto itemDto : request.memoryItems()) {
+            addMemoryItem(itemDto, memory);
+        }
 
         List<User> newSharedUsers = userRepository.findAllById(request.sharedUsersId());
         for (User sharedUser : newSharedUsers) {
@@ -65,10 +65,9 @@ public class MemoryServiceImpl implements MemoryService {
     public String createTemporaryMemory(Long userId, CreateTempMemoryRequest request) {
         User owner = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_USER_EXCEPTION));
-        Memory memory = Memory.initWithoutBasicInfo(owner);
+        Memory memory = Memory.createWithoutBasicInfo(owner);
 
         for (MemoryItemDto itemDto : request.memoryItems()) {
-            fileService.validateFileKey(itemDto.fileKey());
             memory.addMemoryItem(
                     MemoryItem.createTemp(
                             memory,
@@ -119,7 +118,6 @@ public class MemoryServiceImpl implements MemoryService {
         // 기존 MemoryItem 삭제 후 새로 추가
         memory.getMemoryItems().clear();
         for (MemoryItemDto itemDto : request.memoryItems()) {
-            fileService.validateFileKey(itemDto.fileKey());
             addMemoryItem(itemDto, memory);
         }
 
