@@ -10,7 +10,7 @@ public record MemoryItemDto(
         @NotBlank
         @Schema(
                 description = "S3에 업로드된 파일 URL",
-                example = "https://memozy.s3.ap-northeast-2.amazonaws.com/temp/memozy/1234567890.jpg"
+                example = "https://memozy-bucket.s3.ap-northeast-2.amazonaws.com/temp/memory/1234567890.jpg"
         )
         String imageUrl,
         @Nullable String content,
