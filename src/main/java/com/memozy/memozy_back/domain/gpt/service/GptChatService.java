@@ -41,19 +41,9 @@ public class GptChatService {
         MemoryItem firstItem = sortedMemoryItems.get(0);
         String fileKey = firstItem.getFileKey();
 
-
         Executors.newSingleThreadExecutor().submit(() -> {
             try {
-                emitter.send(SseEmitter.event()
-                        .name("init")
-                        .data(Map.of(
-                                        "memoryItemTempId", firstItem.getTempId(),
-                                        "type", "init",
-                                        "message", "잠시만 기다려주세요."
 
-                                )
-                        )
-                );
 
                 gptChatStore.initChat(firstItem.getTempId());
 
