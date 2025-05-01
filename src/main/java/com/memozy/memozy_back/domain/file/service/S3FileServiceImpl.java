@@ -153,7 +153,9 @@ public class S3FileServiceImpl implements FileService {
     }
 
     private static String createFileKey(String fileName, String directory, boolean isTemporary) {
-        return (isTemporary ? TEMPORARY_FILE_PREFIX : FILE_PREFIX) + "/" + directory + "/" + UUID.randomUUID()
+        return (isTemporary ? TEMPORARY_FILE_PREFIX : FILE_PREFIX) + "/"
+                + directory + "/"
+                + UUID.randomUUID()
                 + fileName;
     }
 
