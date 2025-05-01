@@ -106,18 +106,18 @@ public class S3FileServiceImpl implements FileService {
     }
 
     public boolean isUploaded(String fileKey) {
-            try {
-                s3Client.headObject(builder -> builder.bucket(bucket).key(fileKey));
-            } catch (NoSuchKeyException e) {
+        try {
+            s3Client.headObject(builder -> builder.bucket(bucket).key(fileKey));
+        } catch (NoSuchKeyException e) {
             return false;
         }
         return true;
     }
 
     @Override
-    public String extractFileKeyFromPresignedUrl(String presignedUrl) {
+    public String extractFileKeyFromImageUrl(String imageUrl) {
         try {
-            URI uri = URI.create(presignedUrl);
+            URI uri = URI.create(imageUrl);
             String path = uri.getPath(); // 예: /temp/memory/abc.jpg
             if (path.startsWith("/")) {
                 path = path.substring(1); // 슬래시 제거 → temp/memory/abc.jpg
