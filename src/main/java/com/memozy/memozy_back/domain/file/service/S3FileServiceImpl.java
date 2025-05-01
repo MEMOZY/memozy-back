@@ -41,11 +41,11 @@ public class S3FileServiceImpl implements FileService {
     @Override
     public PreSignedUrlDto generatePreSignedUrl(String fileName, FileDomain fileDomain) {
         var fileKey = createFileKey(fileName, fileDomain.getDirectory(), fileDomain.isTemporary());
+
         var putObjectRequest = PutObjectRequest.builder()
                 .bucket(bucket)
                 .key(fileKey)
-                .contentType(guessContentType(fileName))
-                .build();
+                .build(); //contentType 제거
 
         var preSignRequest = PutObjectPresignRequest.builder()
                 .signatureDuration(Duration.ofMinutes(10))
@@ -156,15 +156,5 @@ public class S3FileServiceImpl implements FileService {
         return (isTemporary ? TEMPORARY_FILE_PREFIX : FILE_PREFIX) + "/" + directory + "/" + UUID.randomUUID()
                 + fileName;
     }
-
-    private String guessContentType(String fileName) {
-        if (fileName.endsWith(".jpg") || fileName.endsWith(".jpeg")) return "image/jpeg";
-        if (fileName.endsWith(".png")) return "image/png";
-        if (fileName.endsWith(".pdf")) return "application/pdf";
-        if (fileName.endsWith(".mp4")) return "video/mp4";
-        // 기타 필요한 타입들...
-        return "application/octet-stream"; // 기본값
-    }
-
 
 }

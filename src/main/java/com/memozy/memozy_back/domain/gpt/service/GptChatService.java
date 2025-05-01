@@ -103,8 +103,8 @@ public class GptChatService {
 
                 Map<String, Object> payload = Map.of(
                         "memoryItemId", memoryItem.getTempId(),
-                        "type", "reply",
-                        "message", gptReply
+                        "type", "story",
+                        "message", story
                 );
 
                 emitter.send(SseEmitter.event()
