@@ -37,20 +37,20 @@ public class MemoryServiceImpl implements MemoryService {
     @Override
     @Transactional
     public MemoryDto createMemory(Long ownerId, CreateMemoryRequest request) {
-        User owner = userRepository.findById(ownerId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_USER_EXCEPTION));
+        String sessionId = request.sessionId();
 
-        Memory memory = Memory.create(
-                owner,
+        Memory memory = temporaryMemoryStore.load(sessionId);
+
+        if (!memory.getOwner().getId().equals(ownerId)) {
+            throw new BusinessException(ErrorCode.UNAUTHORIZED_EXCEPTION);
+        }
+
+        memory.updateBasicInfo(
                 request.title(),
                 request.category(),
                 request.startDate(),
                 request.endDate()
         );
-
-        for (MemoryItemDto itemDto : request.memoryItems()) {
-            addMemoryItem(itemDto, memory);
-        }
 
         List<User> newSharedUsers = userRepository.findAllById(request.sharedUsersId());
         for (User sharedUser : newSharedUsers) {
@@ -68,6 +68,7 @@ public class MemoryServiceImpl implements MemoryService {
         Memory memory = Memory.createWithoutBasicInfo(owner);
 
         for (MemoryItemDto itemDto : request.memoryItems()) {
+            fileService.validateFileKey(itemDto.fileKey());
             memory.addMemoryItem(
                     MemoryItem.createTemp(
                             memory,

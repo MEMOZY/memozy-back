@@ -13,7 +13,7 @@ public record MemoryItemDto(
                 example = "temp/memory/bab.jpeg"
         )
         String fileKey,
-        @NotBlank String content,
+        @Nullable String content,
         @NotNull Integer sequence
 ) {
     public static MemoryItemDto from(MemoryItem memoryItem) {
