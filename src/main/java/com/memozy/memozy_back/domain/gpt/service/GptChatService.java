@@ -31,39 +31,29 @@ public class GptChatService {
         if (temporaryMemory == null) {
             throw new BusinessException(ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION);
         }
-        var memoryItems = temporaryMemory.getMemoryItems();
+        List<MemoryItem> sortedMemoryItems = temporaryMemory.getMemoryItems()
+                .stream()
+                .sorted(Comparator.comparingInt(MemoryItem::getSequence))
+                .toList();;
 
         Executors.newSingleThreadExecutor().submit(() -> {
             try {
-                List<MemoryItem> sortedItems = memoryItems.stream()
-                        .sorted(Comparator.comparingInt(MemoryItem::getSequence))
-                        .toList();
+                MemoryItem firstItem = sortedMemoryItems.get(0);
+                gptChatStore.initChat(firstItem.getTempId());
 
-                for (MemoryItem memoryItem : sortedItems) {
-                    gptChatStore.initChat(memoryItem.getTempId());
+                String fileKey = firstItem.getFileKey();
+                String base64Image = fileService.transferToBase64(fileKey);
+                String firstQuestion = gptClient.initiateChatWithImage(base64Image);
+                gptChatStore.addAssistantMessage(firstItem.getTempId(), firstQuestion);
 
-                    String fileKey = memoryItem.getFileKey();
-                    String base64Image = fileService.transferToBase64(fileKey);
+                Map<String, Object> payload = Map.of(
+                        "memoryItemTempId", firstItem.getTempId(),
+                        "type", "question",
+                        "message", firstQuestion,
+                        "presignedUrl", fileService.generatePresignedUrlToRead(fileKey).preSignedUrl()
+                );
 
-                    String firstQuestion = gptClient.initiateChatWithImage(base64Image);
-                    gptChatStore.addAssistantMessage(memoryItem.getTempId(), firstQuestion);
-
-                    Map<String, Object> payload = Map.of(
-                            "memoryItemTempId", memoryItem.getTempId(),
-                            "type", "question",
-                            "message", firstQuestion,
-                            "imageUrl", fileService
-                                    .generatePresignedUrlToRead(fileKey)
-                                    .preSignedUrl()
-                    );
-
-                    emitter.send(SseEmitter.event()
-                            .name("question")
-                            .data(payload));
-                }
-
-                emitter.complete();
-
+                emitter.send(SseEmitter.event().name("question").data(payload));
             } catch (Exception e) {
                 emitter.completeWithError(e);
             }
@@ -78,14 +68,17 @@ public class GptChatService {
 
         gptChatStore.addUserMessage(memoryItemTempId, userAnswer);
 
-        MemoryItem memoryItem = temporaryMemoryStore.load(sessionId)
-                .getMemoryItems().stream()
+        Memory memory = temporaryMemoryStore.load(sessionId);
+        List<MemoryItem> sortedMemoryItems = memory.getMemoryItems().stream()
+                .sorted(Comparator.comparingInt(MemoryItem::getSequence))
+                .toList();
+
+        MemoryItem currentItem = sortedMemoryItems.stream()
                 .filter(item -> item.getTempId().equals(memoryItemTempId))
                 .findFirst()
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION));
 
-        String base64Image = fileService.transferToBase64(memoryItem.getFileKey());
-
+        String base64Image = fileService.transferToBase64(currentItem.getFileKey());
         List<String> messageHistory = gptChatStore.getChat(memoryItemTempId).stream()
                 .map(ChatMessage::content)
                 .toList();
@@ -96,39 +89,51 @@ public class GptChatService {
         try {
             boolean isEndCommand = PromptText.GENERATE_STORY.getText().equalsIgnoreCase(userAnswer);
             boolean isThirdTurn = gptChatStore.getUserMessageCount(memoryItemTempId) >= 3;
-            if (isEndCommand || isThirdTurn) { // 스토리(일기) 초안 생성
+
+            if (isEndCommand || isThirdTurn) {
                 String story = gptClient.generateStoryFromChatAndImage(messageHistory, base64Image);
-                memoryItem.updateContent(story);
+                currentItem.updateContent(story);
                 gptChatStore.removeChat(memoryItemTempId);
 
-                Map<String, Object> payload = Map.of(
-                        "memoryItemId", memoryItem.getTempId(),
-                        "type", "story",
-                        "message", story
-                );
+                int currentIndex = sortedMemoryItems.indexOf(currentItem);
+                boolean hasNext = currentIndex + 1 < sortedMemoryItems.size();
 
-                emitter.send(SseEmitter.event()
-                        .name("story")
-                        .data(payload)
-                );
+                if (hasNext) {
+                    MemoryItem nextItem = sortedMemoryItems.get(currentIndex + 1);
+                    gptChatStore.initChat(nextItem.getTempId());
+
+                    String nextBase64 = fileService.transferToBase64(nextItem.getFileKey());
+                    String nextQuestion = gptClient.initiateChatWithImage(nextBase64);
+                    gptChatStore.addAssistantMessage(nextItem.getTempId(), nextQuestion);
+
+                    Map<String, Object> payload = Map.of(
+                            "memoryItemTempId", nextItem.getTempId(),
+                            "type", "question",
+                            "message", nextQuestion,
+                            "presignedUrl", fileService.generatePresignedUrlToRead(nextItem.getFileKey()).preSignedUrl()
+                    );
+
+                    emitter.send(SseEmitter.event().name("question").data(payload));
+                } else {
+                    emitter.send(SseEmitter
+                            .event()
+                            .name("done")
+                            .data(Map.of(
+                                    "type", "done",
+                                    "message", "일기 생성이 완료되었습니다.")));
+                }
             } else {
                 Map<String, Object> payload = Map.of(
-                        "memoryItemId", memoryItem.getTempId(),
+                        "memoryItemId", currentItem.getTempId(),
                         "type", "reply",
                         "message", gptReply
                 );
-                emitter.send(SseEmitter.event()
-                                .name("reply")
-                                .data(payload)
-                );
+                emitter.send(SseEmitter.event().name("reply").data(payload));
             }
-
-            emitter.complete();
-
         } catch (Exception e) {
             emitter.completeWithError(e);
         } finally {
-            emitter.complete(); // 항상 실행 보장
+            emitter.complete();
         }
     }
 }

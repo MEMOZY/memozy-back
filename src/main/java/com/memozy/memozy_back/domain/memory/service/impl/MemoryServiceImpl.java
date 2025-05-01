@@ -71,7 +71,7 @@ public class MemoryServiceImpl implements MemoryService {
         Memory memory = Memory.createWithoutBasicInfo(owner);
 
         for (MemoryItemDto itemDto : request.memoryItems()) {
-            String fileKey = fileService.extractFileKeyFromPresignedUrl(itemDto.imageUrl());
+            String fileKey = fileService.extractFileKeyFromImageUrl(itemDto.imageUrl());
             fileService.validateFileKey(
                     fileKey
             );
@@ -154,7 +154,7 @@ public class MemoryServiceImpl implements MemoryService {
 
     private void addMemoryItem(MemoryItemDto item, Memory memory) {
         String fileKey = fileService.moveFile(
-                fileService.extractFileKeyFromPresignedUrl(item.imageUrl())
+                fileService.extractFileKeyFromImageUrl(item.imageUrl())
         );
         memory.addMemoryItem(
                 MemoryItem.create(
