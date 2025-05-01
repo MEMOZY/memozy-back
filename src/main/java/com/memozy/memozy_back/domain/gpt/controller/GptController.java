@@ -6,6 +6,7 @@ import com.memozy.memozy_back.global.exception.BusinessException;
 import com.memozy.memozy_back.global.exception.ErrorResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
+import java.io.IOException;
 import java.util.concurrent.Executors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
@@ -27,10 +28,11 @@ public class GptController {
 
     private final GptChatService gptChatService;
 
-    @GetMapping("/start")
+    @GetMapping(value = "/start", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter start(@RequestParam String sessionId) {
         SseEmitter emitter = new SseEmitter(300_000L);
-        return gptChatService.generateInitialPrompts(sessionId, emitter);
+        gptChatService.generateInitialPrompts(sessionId, emitter);
+        return emitter;
     }
 
     @PostMapping(value = "/answer", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
