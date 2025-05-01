@@ -57,7 +57,10 @@ public class MemoryServiceImpl implements MemoryService {
             addSharedUser(sharedUser, memory);
         }
 
-        return MemoryDto.from(memoryRepository.save(memory));
+        return MemoryDto.from(
+                memoryRepository.save(memory)
+                , fileService
+        );
     }
 
     /* 임시 기록 생성(기본 정보 없이) */
@@ -65,14 +68,17 @@ public class MemoryServiceImpl implements MemoryService {
     public String createTemporaryMemory(Long userId, CreateTempMemoryRequest request) {
         User owner = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_USER_EXCEPTION));
-        Memory memory = Memory.initWithoutBasicInfo(owner);
+        Memory memory = Memory.createWithoutBasicInfo(owner);
 
         for (MemoryItemDto itemDto : request.memoryItems()) {
-            fileService.validateFileKey(itemDto.fileKey());
+            String fileKey = fileService.extractFileKeyFromPresignedUrl(itemDto.imageUrl());
+            fileService.validateFileKey(
+                    fileKey
+            );
             memory.addMemoryItem(
                     MemoryItem.createTemp(
                             memory,
-                            itemDto.fileKey(),
+                            fileKey,
                             itemDto.content(),
                             itemDto.sequence()
                     )
@@ -97,14 +103,14 @@ public class MemoryServiceImpl implements MemoryService {
         List<MemoryItem> memoryItems = memory.getMemoryItems().stream()
                 .toList();
 
-        return GetTempMemoryResponse.from(memoryItems);
+        return GetTempMemoryResponse.of(memoryItems, fileService);
     }
 
     @Override
     @Transactional(readOnly = true)
     public GetMemoryListResponse getAllByOwnerId(Long userId) {
         var memoryInfoDtoList = memoryRepository.findAllByOwnerId(userId).stream()
-                .map(MemoryDto::from)
+                .map(memory -> MemoryDto.from(memory, fileService))
                 .toList();
 
         return GetMemoryListResponse.from(memoryInfoDtoList);
@@ -119,7 +125,6 @@ public class MemoryServiceImpl implements MemoryService {
         // 기존 MemoryItem 삭제 후 새로 추가
         memory.getMemoryItems().clear();
         for (MemoryItemDto itemDto : request.memoryItems()) {
-            fileService.validateFileKey(itemDto.fileKey());
             addMemoryItem(itemDto, memory);
         }
 
@@ -138,7 +143,7 @@ public class MemoryServiceImpl implements MemoryService {
                 request.endDate()
         );
 
-        return MemoryDto.from(memory);
+        return MemoryDto.from(memory, fileService);
     }
 
     @Override
@@ -148,7 +153,9 @@ public class MemoryServiceImpl implements MemoryService {
     }
 
     private void addMemoryItem(MemoryItemDto item, Memory memory) {
-        String fileKey = fileService.moveFile(item.fileKey());
+        String fileKey = fileService.moveFile(
+                fileService.extractFileKeyFromPresignedUrl(item.imageUrl())
+        );
         memory.addMemoryItem(
                 MemoryItem.create(
                         memory,

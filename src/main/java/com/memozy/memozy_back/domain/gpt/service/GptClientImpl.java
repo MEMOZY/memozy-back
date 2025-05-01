@@ -1,19 +1,24 @@
 package com.memozy.memozy_back.domain.gpt.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.memozy.memozy_back.domain.gpt.constant.PromptText;
 import com.memozy.memozy_back.domain.gpt.dto.response.OpenAiChatResponse;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Flux;
 
 @Component
 @RequiredArgsConstructor
 public class GptClientImpl implements GptClient {
 
+    private final ObjectMapper objectMapper = new ObjectMapper(); // JSON 파싱용
     private final WebClient webClient = WebClient.create("https://api.openai.com/v1");
 
     @Value("${openai.api-key}")
@@ -91,5 +96,44 @@ public class GptClientImpl implements GptClient {
                 .block();
 
         return response.choices().getFirst().message().content();
+    }
+
+    @Override
+    public void streamChatApi(List<Map<String, Object>> messages, Consumer<String> onDelta, Runnable onComplete, Consumer<Throwable> onError) {
+        Map<String, Object> requestBody = Map.of(
+                "model", model,
+                "messages", messages,
+                "stream", true
+        );
+
+        webClient.post()
+                .uri("/chat/completions")
+                .header("Authorization", "Bearer " + apiKey)
+                .header("Content-Type", "application/json")
+                .bodyValue(requestBody)
+                .retrieve()
+                .bodyToFlux(String.class) // SSE 형식의 텍스트 라인 스트림
+                .flatMap(line -> {
+                    if (line.startsWith("data: ")) {
+                        String data = line.substring("data: ".length()).trim();
+                        if ("[DONE]".equals(data)) {
+                            onComplete.run();
+                            return Flux.empty();
+                        }
+                        try {
+                            JsonNode root = objectMapper.readTree(data);
+                            JsonNode contentNode = root.path("choices").get(0).path("delta").path("content");
+                            if (!contentNode.isMissingNode()) {
+                                return Flux.just(contentNode.asText());
+                            }
+                        } catch (Exception e) {
+                            onError.accept(e);
+                        }
+                    }
+                    return Flux.empty();
+                })
+                .doOnNext(onDelta)
+                .doOnError(onError)
+                .subscribe();
     }
 }

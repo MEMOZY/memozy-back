@@ -1,6 +1,7 @@
 package com.memozy.memozy_back.domain.memory.dto;
 
 
+import com.memozy.memozy_back.domain.file.service.FileService;
 import com.memozy.memozy_back.domain.memory.domain.Memory;
 import com.memozy.memozy_back.domain.memory.constant.MemoryCategory;
 import com.memozy.memozy_back.domain.memory.domain.MemoryItem;
@@ -19,7 +20,7 @@ public record MemoryDto(
         @NotNull List<MemoryItemDto> memoryItems,
         @NotNull List<Long> sharedUserIds
 ) {
-    public static MemoryDto from(Memory memory) {
+    public static MemoryDto from(Memory memory, FileService fileService) {
         return new MemoryDto(
                 memory.getId(),
                 memory.getTitle(),
@@ -27,8 +28,12 @@ public record MemoryDto(
                 memory.getEndDate(),
                 memory.getCategory(),
                 memory.getMemoryItems().stream()
-                        .map(MemoryItemDto::from)
-                        .toList(),
+                        .map(item -> {
+                            String presignedUrl = fileService
+                                    .generatePresignedUrlToRead(item.getFileKey())
+                                    .preSignedUrl();
+                            return MemoryItemDto.from(item, presignedUrl);
+                        }).toList(),
                 memory.getSharedUsers().stream()
                         .map(MemoryShared::getId)
                         .toList()

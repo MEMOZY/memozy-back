@@ -6,10 +6,10 @@ public record TempMemoryItemDto(
         String tempId,
         MemoryItemDto memoryItem
 ) {
-    public static TempMemoryItemDto from(MemoryItem memoryItem) {
+    public static TempMemoryItemDto of(MemoryItem memoryItem, String presignedUrl) {
         return new TempMemoryItemDto(
-                String.valueOf(memoryItem.getTempId()),
-                MemoryItemDto.from(memoryItem)
+                memoryItem.getTempId(),
+                MemoryItemDto.from(memoryItem, presignedUrl)
         );
     }
 }

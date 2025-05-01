@@ -6,6 +6,7 @@ import com.memozy.memozy_back.domain.file.dto.PreSignedUrlDto;
 import com.memozy.memozy_back.global.exception.BusinessException;
 import com.memozy.memozy_back.global.exception.ErrorCode;
 import java.io.InputStream;
+import java.net.URI;
 import java.time.Duration;
 import java.util.Base64;
 import java.util.UUID;
@@ -43,6 +44,7 @@ public class S3FileServiceImpl implements FileService {
         var putObjectRequest = PutObjectRequest.builder()
                 .bucket(bucket)
                 .key(fileKey)
+                .contentType(guessContentType(fileName))
                 .build();
 
         var preSignRequest = PutObjectPresignRequest.builder()
@@ -54,7 +56,6 @@ public class S3FileServiceImpl implements FileService {
 
         return PreSignedUrlDto.builder()
                 .preSignedUrl(preSignedRequest.url().toExternalForm())
-                .fileKey(fileKey)
                 .build();
     }
 
@@ -73,7 +74,6 @@ public class S3FileServiceImpl implements FileService {
         var presignedRequest = s3Presigner.presignGetObject(presignRequest);
 
         return PreSignedUrlDto.builder()
-                .fileKey(fileKey)
                 .preSignedUrl(presignedRequest.url().toExternalForm())
                 .build();
     }
@@ -114,9 +114,24 @@ public class S3FileServiceImpl implements FileService {
         return true;
     }
 
+    @Override
+    public String extractFileKeyFromPresignedUrl(String presignedUrl) {
+        try {
+            URI uri = URI.create(presignedUrl);
+            String path = uri.getPath(); // 예: /temp/memory/abc.jpg
+            if (path.startsWith("/")) {
+                path = path.substring(1); // 슬래시 제거 → temp/memory/abc.jpg
+            }
+            return path;
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+    }
+
     // 파일 이동
     @Override
     public String moveFile(String fileKey) {
+        validateFileKey(fileKey);
 
         if (!fileKey.startsWith("temp/")) {
             return fileKey; // 이미 file/이면 이동할 필요 없음
@@ -141,5 +156,15 @@ public class S3FileServiceImpl implements FileService {
         return (isTemporary ? TEMPORARY_FILE_PREFIX : FILE_PREFIX) + "/" + directory + "/" + UUID.randomUUID()
                 + fileName;
     }
+
+    private String guessContentType(String fileName) {
+        if (fileName.endsWith(".jpg") || fileName.endsWith(".jpeg")) return "image/jpeg";
+        if (fileName.endsWith(".png")) return "image/png";
+        if (fileName.endsWith(".pdf")) return "application/pdf";
+        if (fileName.endsWith(".mp4")) return "video/mp4";
+        // 기타 필요한 타입들...
+        return "application/octet-stream"; // 기본값
+    }
+
 
 }

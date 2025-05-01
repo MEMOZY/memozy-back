@@ -1,5 +1,6 @@
 package com.memozy.memozy_back.domain.memory.dto.response;
 
+import com.memozy.memozy_back.domain.file.service.FileService;
 import com.memozy.memozy_back.domain.memory.domain.MemoryItem;
 import com.memozy.memozy_back.domain.memory.dto.TempMemoryItemDto;
 import java.util.List;
@@ -7,9 +8,12 @@ import java.util.List;
 public record GetTempMemoryResponse(
         List<TempMemoryItemDto> memoryItems
 ) {
-    public static GetTempMemoryResponse from(List<MemoryItem> memoryItemList) {
+    public static GetTempMemoryResponse of(List<MemoryItem> memoryItemList, FileService fileService) {
         List<TempMemoryItemDto> items = memoryItemList.stream()
-                .map(TempMemoryItemDto::from)
+                .map(item -> {
+                    String presignedUrl = fileService.generatePresignedUrlToRead(item.getFileKey()).preSignedUrl();
+                    return TempMemoryItemDto.of(item, presignedUrl);
+                })
                 .toList();
         return new GetTempMemoryResponse(items);
     }

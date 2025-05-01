@@ -11,14 +11,13 @@ import java.time.LocalDate;
 import java.util.List;
 
 public record CreateMemoryRequest(
-        @Schema(
-                description = "임시 Memory를 생성했을 때 발급받은 세션 ID - 세션 ID에 해당하는 Memory를 찾아 DB에 저장"
-        )
-        @NotBlank String sessionId,
         @NotBlank String title,
         @NotNull MemoryCategory category,
         @NotNull LocalDate startDate,
         @NotNull LocalDate endDate,
-        @NotNull List<MemoryItemDto> memoryItems,
+
+        @Schema(description = "임시 저장소에 있던 memoryItems 불러오기 위함", example = "sessionId")
+        @NotBlank String sessionId,
+
         List<Long> sharedUsersId
 ) {}

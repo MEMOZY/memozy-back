@@ -1,7 +1,6 @@
 package com.memozy.memozy_back.domain.memory.domain;
 
 import com.memozy.memozy_back.domain.memory.constant.MemoryCategory;
-import com.memozy.memozy_back.domain.memory.dto.MemoryItemDto;
 import com.memozy.memozy_back.domain.user.domain.User;
 import com.memozy.memozy_back.global.entity.BaseTimeEntity;
 import jakarta.persistence.*;
@@ -42,7 +41,7 @@ public class Memory extends BaseTimeEntity {
     @OneToMany(mappedBy = "memory", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<MemoryShared> sharedUsers = new ArrayList<>();
 
-    public static Memory init(
+    public static Memory create(
             User owner,
             String title,
             MemoryCategory category,
@@ -58,7 +57,7 @@ public class Memory extends BaseTimeEntity {
                 .build();
     }
 
-    public static Memory initWithoutBasicInfo(User owner) {
+    public static Memory createWithoutBasicInfo(User owner) {
         return Memory.builder()
                 .owner(owner)
                 .memoryItems(new ArrayList<>())

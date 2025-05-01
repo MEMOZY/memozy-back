@@ -11,7 +11,9 @@ public interface FileService {
 
     boolean isUploaded(String fileName);
 
-    String moveFile(String imageUrl);
+    String extractFileKeyFromPresignedUrl(String presignedUrl);
+
+    String moveFile(String fileKey);
 
     void deleteFile(String fileKey);
 

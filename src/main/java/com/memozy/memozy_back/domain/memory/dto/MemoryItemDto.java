@@ -9,16 +9,16 @@ import jakarta.validation.constraints.NotNull;
 public record MemoryItemDto(
         @NotBlank
         @Schema(
-                description = "S3에 업로드된 파일의 키",
-                example = "temp/memory/bab.jpeg"
+                description = "S3에 업로드된 파일 경로",
+                example = "presignedUrl"
         )
-        String fileKey,
-        @NotBlank String content,
+        String imageUrl,
+        @Nullable String content,
         @NotNull Integer sequence
 ) {
-    public static MemoryItemDto from(MemoryItem memoryItem) {
+    public static MemoryItemDto from(MemoryItem memoryItem, String presignedUrl) {
         return new MemoryItemDto(
-                memoryItem.getFileKey(),
+                presignedUrl,
                 memoryItem.getContent(),
                 memoryItem.getSequence()
         );
