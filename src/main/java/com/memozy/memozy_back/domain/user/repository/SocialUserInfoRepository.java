@@ -5,8 +5,7 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
-public interface SocialUserInfoRepository extends
-        JpaRepository<SocialUserInfo, Long> {
+public interface SocialUserInfoRepository extends JpaRepository<SocialUserInfo, Long> {
 
     @Query("select s from SocialUserInfo s "
             + "left join fetch s.user u "

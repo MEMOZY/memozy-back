@@ -118,10 +118,13 @@ public class MemoryServiceImpl implements MemoryService {
 
     @Override
     @Transactional
-    public MemoryDto updateMemory(Long memoryId, UpdateMemoryRequest request) {
+    public MemoryDto updateMemory(Long userId, Long memoryId, UpdateMemoryRequest request) {
         Memory memory = memoryRepository.findById(memoryId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION));
 
+        if (!memory.getOwner().getId().equals(userId)) {
+            throw new BusinessException(ErrorCode.INVALID_ACCESS_EXCEPTION);
+        }
         // 기존 MemoryItem 삭제 후 새로 추가
         memory.getMemoryItems().clear();
         for (MemoryItemDto itemDto : request.memoryItems()) {

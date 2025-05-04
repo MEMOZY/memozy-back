@@ -10,6 +10,7 @@ import com.memozy.memozy_back.domain.user.repository.UserRepository;
 import com.memozy.memozy_back.global.exception.BusinessException;
 import com.memozy.memozy_back.global.exception.ErrorCode;
 import java.util.List;
+import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,7 +28,7 @@ public class FriendshipServiceImpl implements FriendshipService {
         User sender = getUserById(senderId);
         User receiver = getUserById(receiverId);
 
-        if (friendshipRepository.existsBySenderAndReceiver(sender, receiver)) {
+        if (friendshipRepository.existsFriendship(senderId, receiverId)) {
             throw new BusinessException(ErrorCode.DUPLICATE_RESOURCE_EXCEPTION);
         }
 
@@ -38,7 +39,7 @@ public class FriendshipServiceImpl implements FriendshipService {
     @Override
     @Transactional
     public void acceptFriendRequest(Long senderId, Long receiverId) {
-        Friendship friendship = friendshipRepository.findBySenderIdAndReceiverId(senderId, receiverId)
+        Friendship friendship = friendshipRepository.findRequest(senderId, receiverId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION));
         friendship.accept();
     }
@@ -46,7 +47,7 @@ public class FriendshipServiceImpl implements FriendshipService {
     @Override
     @Transactional
     public void rejectFriendRequest(Long senderId, Long receiverId) {
-        Friendship friendship = friendshipRepository.findBySenderIdAndReceiverId(senderId, receiverId)
+        Friendship friendship = friendshipRepository.findRequest(senderId, receiverId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION));
         friendshipRepository.delete(friendship);
     }
@@ -60,7 +61,11 @@ public class FriendshipServiceImpl implements FriendshipService {
     @Override
     @Transactional(readOnly = true)
     public GetFriendInfoListResponse getFriends(Long userId) {
-        List<FriendInfoDto> friends = friendshipRepository.findAcceptedFriends(userId).stream()
+        List<User> sent = friendshipRepository.findAcceptedFriendsSentBy(userId);
+        List<User> received = friendshipRepository.findAcceptedFriendsReceivedBy(userId);
+        List<FriendInfoDto> friends = Stream.concat(sent.stream(), received.stream())
+                .distinct() // 중복 제거
+                .toList().stream()
                 .map(FriendInfoDto::from)
                 .toList();
         return GetFriendInfoListResponse.from(friends);
