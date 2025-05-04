@@ -67,9 +67,10 @@ public class MemoryController {
     // 기록 수정
     @PutMapping("/{memoryId}")
     public ResponseEntity<MemoryDto> updateMemoryInfo(
+            @CurrentUserId Long userId,
             @PathVariable Long memoryId,
             @RequestBody UpdateMemoryRequest request) {
-        return ResponseEntity.ok(memoryService.updateMemory(memoryId, request));
+        return ResponseEntity.ok(memoryService.updateMemory(userId, memoryId, request));
     }
 
     // 기록 삭제

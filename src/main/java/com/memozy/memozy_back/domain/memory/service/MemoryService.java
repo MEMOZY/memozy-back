@@ -11,7 +11,7 @@ import com.memozy.memozy_back.domain.memory.dto.response.GetTempMemoryResponse;
 public interface MemoryService {
     MemoryDto createMemory(Long userId, CreateMemoryRequest request);
     GetMemoryListResponse getAllByOwnerId(Long userId);
-    MemoryDto updateMemory(Long memoryId, UpdateMemoryRequest request);
+    MemoryDto updateMemory(Long userId, Long memoryId, UpdateMemoryRequest request);
     void deleteMemory(Long memoryId);
 
     String createTemporaryMemory(Long userId, CreateTempMemoryRequest request);

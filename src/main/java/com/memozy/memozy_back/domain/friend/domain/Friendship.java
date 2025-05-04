@@ -3,6 +3,8 @@ package com.memozy.memozy_back.domain.friend.domain;
 import com.memozy.memozy_back.domain.friend.constant.FriendshipStatus;
 import com.memozy.memozy_back.domain.user.domain.User;
 import com.memozy.memozy_back.global.entity.BaseTimeEntity;
+import com.memozy.memozy_back.global.exception.BusinessException;
+import com.memozy.memozy_back.global.exception.ErrorCode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -31,7 +33,7 @@ public class Friendship extends BaseTimeEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "requester_id", nullable = false)
+    @JoinColumn(name = "sender_id", nullable = false)
     private User sender;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -53,7 +55,7 @@ public class Friendship extends BaseTimeEntity {
 
     public void accept() {
         if (this.status != FriendshipStatus.REQUESTED) {
-            throw new IllegalStateException("요청받은 상태가 아닙니다");
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
         }
         this.status = FriendshipStatus.ACCEPTED;
     }
