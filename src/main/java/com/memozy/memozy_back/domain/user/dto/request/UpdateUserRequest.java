@@ -7,9 +7,6 @@ import jakarta.validation.constraints.NotBlank;
 
 
 public record UpdateUserRequest(
-        @Schema(description = "이름", example = "digi1k@naver.com")
-        String username,
-
         @Schema(description = "닉네임", example = "신민규")
         String nickname,
 
