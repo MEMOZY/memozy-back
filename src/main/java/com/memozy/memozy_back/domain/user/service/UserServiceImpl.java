@@ -31,7 +31,7 @@ public class UserServiceImpl implements UserService {
     public User updateUserWithInfo(Long userId, UpdateUserRequest updateUserRequest) {
         var user = userRepository.findById(userId).orElseThrow(() -> new BusinessException(
                 ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION));
-
+        user.updateUserInfo(updateUserRequest);
         return user;
     }
 

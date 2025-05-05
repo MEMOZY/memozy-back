@@ -1,6 +1,7 @@
 package com.memozy.memozy_back.domain.user.domain;
 
 import com.memozy.memozy_back.domain.user.constant.UserRole;
+import com.memozy.memozy_back.domain.user.dto.request.UpdateUserRequest;
 import com.memozy.memozy_back.global.entity.BaseTimeEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -61,4 +62,10 @@ public class User extends BaseTimeEntity {
     }
 
 
+    public void updateUserInfo(UpdateUserRequest updateUserRequest) {
+        this.profileImageUrl = updateUserRequest.profileImageUrl();
+        this.nickname = updateUserRequest.nickname();
+        this.phoneNumber = updateUserRequest.phoneNumber();
+        this.email = updateUserRequest.email();
+    }
 }
