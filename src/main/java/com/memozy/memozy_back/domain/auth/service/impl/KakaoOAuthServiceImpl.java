@@ -7,7 +7,6 @@ import com.memozy.memozy_back.domain.user.domain.User;
 import com.memozy.memozy_back.domain.user.constant.UserRole;
 import com.memozy.memozy_back.domain.user.repository.SocialUserInfoRepository;
 import com.memozy.memozy_back.domain.user.repository.UserRepository;
-import com.memozy.memozy_back.global.feign.oauth.kakao.KakaoClientProperty;
 import com.memozy.memozy_back.global.feign.oauth.kakao.KakaoServerClient;
 import com.memozy.memozy_back.global.feign.oauth.kakao.KakaoSocialUserProfile;
 import com.memozy.memozy_back.global.jwt.JwtProperty;

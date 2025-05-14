@@ -44,7 +44,6 @@ public class GptChatService {
         Executors.newSingleThreadExecutor().submit(() -> {
             try {
 
-
                 gptChatStore.initChat(firstItem.getTempId());
 
                 String base64Image = fileService.transferToBase64(fileKey);
