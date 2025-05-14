@@ -2,6 +2,7 @@ package com.memozy.memozy_back.domain.user.domain;
 
 import com.memozy.memozy_back.domain.user.constant.UserRole;
 import com.memozy.memozy_back.domain.user.dto.request.UpdateUserRequest;
+import com.memozy.memozy_back.domain.user.util.FriendCodeGenerator;
 import com.memozy.memozy_back.global.entity.BaseTimeEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -53,14 +54,17 @@ public class User extends BaseTimeEntity {
     @Column(length = 2048)
     private String email;
 
-    public static User from(UserRole userRole, String nickname, String profileImageUrl) {
+    @Column(unique = true, nullable = false)
+    private String friendCode;
+
+    public static User create(UserRole userRole, String nickname, String profileImageUrl) {
         return User.builder()
                 .userRole(userRole)
                 .nickname(nickname)
                 .profileImageUrl(profileImageUrl)
+                .friendCode(FriendCodeGenerator.generateRandomId())
                 .build();
     }
-
 
     public void updateUserInfo(UpdateUserRequest updateUserRequest) {
         this.profileImageUrl = updateUserRequest.profileImageUrl();

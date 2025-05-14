@@ -2,6 +2,7 @@ package com.memozy.memozy_back.domain.user.facade;
 
 import com.memozy.memozy_back.domain.user.dto.UserInfoDto;
 import com.memozy.memozy_back.domain.user.dto.request.UpdateUserRequest;
+import com.memozy.memozy_back.domain.user.dto.response.GetFriendCodeResponse;
 import com.memozy.memozy_back.domain.user.dto.response.GetUserInfoResponse;
 import com.memozy.memozy_back.domain.user.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -51,7 +52,12 @@ public class UserFacadeImpl implements UserFacade {
     }
 
     @Override
-    public GetUserInfoResponse getUserInfo(Long userId) {
-        return GetUserInfoResponse.from(userService.getById(userId));
+    public GetUserInfoResponse getUserInfoByFriendCode(String friendCode) {
+        return GetUserInfoResponse.from(userService.getUserByFriendCode(friendCode));
+    }
+
+    @Override
+    public GetFriendCodeResponse getFriendCode(Long userId) {
+        return GetFriendCodeResponse.from(userService.getFriendCode(userId));
     }
 }

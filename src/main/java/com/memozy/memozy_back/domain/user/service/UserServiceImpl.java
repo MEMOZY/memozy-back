@@ -68,4 +68,17 @@ public class UserServiceImpl implements UserService {
 
         userRepository.delete(user); // 완전 삭제
     }
+
+    @Override
+    public String getFriendCode(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_USER_EXCEPTION));
+        return user.getFriendCode();
+    }
+
+    @Override
+    public User getUserByFriendCode(String friendCode) {
+        return userRepository.findByFriendCode(friendCode)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_USER_EXCEPTION));
+    }
 }

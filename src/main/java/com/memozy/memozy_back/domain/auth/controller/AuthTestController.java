@@ -32,7 +32,7 @@ public class AuthTestController {
     ) {
         User user = userId != null
                 ? userRepository.findById(userId).orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_USER_EXCEPTION))
-                : userRepository.save(User.from(UserRole.MEMBER, "test-user", "https://example.com/image.jpg"));
+                : userRepository.save(User.create(UserRole.MEMBER, "test-user", "https://example.com/image.jpg"));
 
         TokenResponse tokenResponse = TokenResponse.from(
                 jwtProvider.createTokenCollection(

@@ -13,4 +13,8 @@ public interface UserService {
 //    List<UserPolicyAgreement> updatePolicyAgreement(Long userId, List<PolicyAgreementDto> policyAgreementDtoList);
 
     void withdrawUser(Long userId);
+
+    String getFriendCode(Long userId);
+
+    User getUserByFriendCode(String friendCode);
 }
