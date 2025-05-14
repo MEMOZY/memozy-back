@@ -9,12 +9,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @Component
+@Slf4j
 @RequiredArgsConstructor
 public class GptClientImpl implements GptClient {
 
@@ -92,6 +96,16 @@ public class GptClientImpl implements GptClient {
                 .header("Content-Type", "application/json")
                 .bodyValue(requestBody)
                 .retrieve()
+                .onStatus(
+                        status -> status.is5xxServerError(),  // 람다로 변경
+                        rsp -> {
+                            log.error("OpenAI 서버 오류: {}", rsp.statusCode());
+                            return rsp.bodyToMono(String.class).flatMap(body -> {
+                                log.error("응답 바디: {}", body);
+                                return Mono.error(new RuntimeException("OpenAI 서버 오류"));
+                            });
+                        }
+                )
                 .bodyToMono(OpenAiChatResponse.class)
                 .block();
 
