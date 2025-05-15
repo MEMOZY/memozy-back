@@ -45,7 +45,8 @@ public class KakaoOAuthServiceImpl implements OAuthService {
 
         String socialCode = SocialUserInfo.calculateSocialCode(
                 SocialPlatform.KAKAO,
-                String.valueOf(socialUserProfile.getId()));
+                String.valueOf(socialUserProfile.getId())
+        );
 
         return socialUserInfoRepository
                 .findBySocialCode(socialCode)
@@ -53,7 +54,7 @@ public class KakaoOAuthServiceImpl implements OAuthService {
                 .orElseGet(() -> {
                     // 회원가입
                     User newUser = userRepository.save(
-                            User.from(
+                            User.create(
                                     UserRole.MEMBER,
                                     socialUserProfile.getNickname(),
                                     socialUserProfile.getProfileImageUrl()

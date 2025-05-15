@@ -2,10 +2,10 @@ package com.memozy.memozy_back.domain.user.controller;
 
 import com.memozy.memozy_back.domain.user.dto.request.UpdateUserRequest;
 import com.memozy.memozy_back.domain.user.dto.UserInfoDto;
+import com.memozy.memozy_back.domain.user.dto.response.GetFriendCodeResponse;
 import com.memozy.memozy_back.domain.user.dto.response.GetUserInfoResponse;
 import com.memozy.memozy_back.domain.user.facade.UserFacade;
 import com.memozy.memozy_back.global.annotation.CurrentUserId;
-import com.memozy.memozy_back.global.annotation.V1;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -15,10 +15,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -37,11 +34,19 @@ public class UserController {
         return ResponseEntity.ok(userFacade.getUserWithInfo(userId));
     }
 
-    @GetMapping("/{userId}")
+    @GetMapping("/{friendCode}")
     public ResponseEntity<GetUserInfoResponse> getUserInfoById(
-            @PathVariable Long userId) {
+            @PathVariable String friendCode) {
         return ResponseEntity.ok(
-                userFacade.getUserInfo(userId)
+                userFacade.getUserInfoByFriendCode(friendCode)
+        );
+    }
+
+    @GetMapping("/friend-code")
+    public ResponseEntity<GetFriendCodeResponse> getFriendCode(
+            @CurrentUserId Long userId) {
+        return  ResponseEntity.ok(
+                userFacade.getFriendCode(userId)
         );
     }
 
@@ -51,6 +56,8 @@ public class UserController {
             @Valid @RequestBody UpdateUserRequest updateUserRequest) {
         return ResponseEntity.ok(userFacade.updateUserWithInfo(userId, updateUserRequest));
     }
+
+
 
 //    @GetMapping("/policy-agreement")
 //    public ResponseEntity<GetPolicyAgreementResponse> getPolicyAgreement(

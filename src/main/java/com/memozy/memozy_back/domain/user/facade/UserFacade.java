@@ -2,8 +2,8 @@ package com.memozy.memozy_back.domain.user.facade;
 
 import com.memozy.memozy_back.domain.user.dto.UserInfoDto;
 import com.memozy.memozy_back.domain.user.dto.request.UpdateUserRequest;
+import com.memozy.memozy_back.domain.user.dto.response.GetFriendCodeResponse;
 import com.memozy.memozy_back.domain.user.dto.response.GetUserInfoResponse;
-import java.util.List;
 
 public interface UserFacade {
 
@@ -20,5 +20,8 @@ public interface UserFacade {
     void withdrawUser(Long userId);
 
     // 타 유저 정보 조회
-    GetUserInfoResponse getUserInfo(Long userId);
+    GetUserInfoResponse getUserInfoByFriendCode(String friendCode);
+
+    // 친구 코드 조회
+    GetFriendCodeResponse getFriendCode(Long userId);
 }
