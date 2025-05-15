@@ -7,7 +7,8 @@ public record UserInfoDto(
         String nickname,
         String profileImageUrl,
         String email,
-        String phoneNumber
+        String phoneNumber,
+        String friendCode
 ) {
     public static UserInfoDto from(User user) {
         return new UserInfoDto(
@@ -15,7 +16,8 @@ public record UserInfoDto(
                 user.getNickname(),
                 user.getProfileImageUrl(),
                 user.getEmail(),
-                user.getPhoneNumber()
+                user.getPhoneNumber(),
+                user.getFriendCode()
         );
     }
 }
