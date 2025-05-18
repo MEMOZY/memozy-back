@@ -19,4 +19,4 @@ else
 fi
 
 echo "> 새 애플리케이션 배포: $JAR_PATH"
-nohup java -jar "$JAR_PATH" > jarExecute.log 2>&1 < /dev/null &
+nohup java -Djava.net.preferIPv4Stack=true -jar "$JAR_PATH" > jarExecute.log 2>&1 < /dev/null &
