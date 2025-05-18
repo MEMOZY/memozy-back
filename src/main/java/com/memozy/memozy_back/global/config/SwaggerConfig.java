@@ -14,13 +14,11 @@ import org.springframework.http.HttpHeaders;
 @Configuration
 public class SwaggerConfig {
 
-    @Value("${swagger.server-url}")
-    private String serverUrl;
-
     @Bean
     public OpenAPI openAPI() {
         return new OpenAPI()
-                .addServersItem(new Server().url(serverUrl))
+                .addServersItem(new Server().url("https://memozy.shop"))
+                .addServersItem(new Server().url("http://localhost:8080"))
                 .addSecurityItem(new SecurityRequirement().addList("JWT"))
                 .components(new Components()
                         .addSecuritySchemes("JWT", new SecurityScheme()
