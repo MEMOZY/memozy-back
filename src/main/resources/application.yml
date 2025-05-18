@@ -56,6 +56,3 @@ server:
 openai:
   api-key: ${OPENAI_API_KEY}
   model: ${OPENAI_API_MODEL}
-
-swagger:
-  server-url: http://localhost:8080
