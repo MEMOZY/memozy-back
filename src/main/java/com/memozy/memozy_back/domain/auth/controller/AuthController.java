@@ -43,8 +43,6 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
-
-
 //    @GetMapping("/social/{socialPlatform}/login-page")
 //    public ResponseEntity<SocialLoginResponse> getSocialLoginPageUrl(
 //            @RequestHeader("Origin") String origin,

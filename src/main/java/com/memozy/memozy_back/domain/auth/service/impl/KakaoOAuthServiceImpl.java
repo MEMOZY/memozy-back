@@ -11,10 +11,12 @@ import com.memozy.memozy_back.global.feign.oauth.kakao.KakaoServerClient;
 import com.memozy.memozy_back.global.feign.oauth.kakao.KakaoSocialUserProfile;
 import com.memozy.memozy_back.global.jwt.JwtProperty;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 @Component
+@Slf4j
 @RequiredArgsConstructor
 public class KakaoOAuthServiceImpl implements OAuthService {
 
@@ -47,6 +49,10 @@ public class KakaoOAuthServiceImpl implements OAuthService {
                 SocialPlatform.KAKAO,
                 String.valueOf(socialUserProfile.getId())
         );
+
+        log.info("카카오 사용자 ID: {}", socialUserProfile.getId());
+        log.info("닉네임: {}", socialUserProfile.getNickname());
+        log.info("프로필 이미지: {}", socialUserProfile.getProfileImageUrl());
 
         return socialUserInfoRepository
                 .findBySocialCode(socialCode)
