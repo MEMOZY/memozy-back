@@ -23,7 +23,7 @@ public class SwaggerConfig {
                 .components(new Components()
                         .addSecuritySchemes("JWT", new SecurityScheme()
                                 .type(SecurityScheme.Type.HTTP)
-                                .scheme("bearer")
+                                .scheme("bearer")   // 스웨거 Bearer 자동 설정
                                 .bearerFormat("JWT")
                                 .in(SecurityScheme.In.HEADER)
                                 .name(HttpHeaders.AUTHORIZATION)))

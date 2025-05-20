@@ -1,5 +1,7 @@
 package com.memozy.memozy_back.domain.memory.service.impl;
 
+import com.memozy.memozy_back.domain.friend.constant.FriendshipStatus;
+import com.memozy.memozy_back.domain.friend.repository.FriendshipRepository;
 import com.memozy.memozy_back.domain.memory.domain.Memory;
 import com.memozy.memozy_back.domain.memory.domain.MemoryItem;
 import com.memozy.memozy_back.domain.memory.domain.MemoryShared;
@@ -8,6 +10,7 @@ import com.memozy.memozy_back.domain.memory.dto.MemoryItemDto;
 import com.memozy.memozy_back.domain.memory.dto.request.CreateMemoryRequest;
 import com.memozy.memozy_back.domain.memory.dto.request.CreateTempMemoryRequest;
 import com.memozy.memozy_back.domain.memory.dto.request.UpdateMemoryRequest;
+import com.memozy.memozy_back.domain.memory.dto.response.CreateMemoryResponse;
 import com.memozy.memozy_back.domain.memory.dto.response.GetMemoryListResponse;
 import com.memozy.memozy_back.domain.memory.dto.response.GetTempMemoryResponse;
 import com.memozy.memozy_back.domain.memory.repository.MemoryRepository;
@@ -20,6 +23,7 @@ import com.memozy.memozy_back.global.exception.ErrorCode;
 import com.memozy.memozy_back.domain.file.service.FileService;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,11 +36,12 @@ public class MemoryServiceImpl implements MemoryService {
     private final MemoryRepository memoryRepository;
     private final UserRepository userRepository;
     private final FileService fileService;
+    private final FriendshipRepository friendshipRepository;
     private final TemporaryMemoryStore temporaryMemoryStore;
 
     @Override
     @Transactional
-    public MemoryDto createMemory(Long ownerId, CreateMemoryRequest request) {
+    public CreateMemoryResponse createMemory(Long ownerId, CreateMemoryRequest request) {
         String sessionId = request.sessionId();
 
         Memory memory = temporaryMemoryStore.load(sessionId);
@@ -53,13 +58,16 @@ public class MemoryServiceImpl implements MemoryService {
         );
 
         List<User> newSharedUsers = userRepository.findAllById(request.sharedUsersId());
+
+        memory.getSharedUsers().clear();
         for (User sharedUser : newSharedUsers) {
+            // 친구 관계 검증
+            checkFriendShip(sharedUser, memory);
             addSharedUser(sharedUser, memory);
         }
 
-        return MemoryDto.from(
-                memoryRepository.save(memory)
-                , fileService
+        return CreateMemoryResponse.from(
+                memoryRepository.save(memory).getId()
         );
     }
 
@@ -76,7 +84,7 @@ public class MemoryServiceImpl implements MemoryService {
                     fileKey
             );
             memory.addMemoryItem(
-                    MemoryItem.createTemp(
+                    MemoryItem.createTempMemoryItem(
                             memory,
                             fileKey,
                             itemDto.content(),
@@ -109,11 +117,24 @@ public class MemoryServiceImpl implements MemoryService {
     @Override
     @Transactional(readOnly = true)
     public GetMemoryListResponse getAllByOwnerId(Long userId) {
-        var memoryInfoDtoList = memoryRepository.findAllByOwnerId(userId).stream()
-                .map(memory -> MemoryDto.from(memory, fileService))
+        var ownMemories = memoryRepository.findAllByOwnerId(userId);
+        var sharedMemories = memoryRepository.findAllSharedByUser(userId);
+
+        var memoryDtoList = Stream.concat(
+                ownMemories.stream(), sharedMemories.stream())
+                .map(memory -> MemoryDto.from(
+                        memory,
+                        memory.getMemoryItems().stream()
+                                .map(item -> MemoryItemDto.from(
+                                        item,
+                                        fileService.generatePresignedUrlToRead(item.getFileKey())
+                                                .preSignedUrl()
+                                )).toList(),
+                        fileService)
+                )
                 .toList();
 
-        return GetMemoryListResponse.from(memoryInfoDtoList);
+        return GetMemoryListResponse.from(memoryDtoList);
     }
 
     @Override
@@ -146,7 +167,18 @@ public class MemoryServiceImpl implements MemoryService {
                 request.endDate()
         );
 
-        return MemoryDto.from(memory, fileService);
+        var memoryItemDtoList = memory.getMemoryItems().stream()
+                .map(item -> MemoryItemDto.from(
+                        item,
+                        fileService.generatePresignedUrlToRead(item.getFileKey())
+                                .preSignedUrl()
+                )).toList();
+
+        return MemoryDto.from(memory, memoryItemDtoList, fileService);
+    }
+
+    private static void addSharedUser(User user, Memory memory) {
+        memory.addSharedUser(MemoryShared.of(memory, user));
     }
 
     @Override
@@ -168,7 +200,13 @@ public class MemoryServiceImpl implements MemoryService {
         );
     }
 
-    private static void addSharedUser(User user, Memory memory) {
-        memory.addSharedUser(MemoryShared.of(memory, user));
+    private void checkFriendShip(User sharedUser, Memory memory) {
+        boolean isFriend = friendshipRepository.existsFriendshipBetweenUsers(
+                memory.getOwner(), sharedUser, FriendshipStatus.ACCEPTED
+        );
+
+        if (!isFriend) {
+            throw new BusinessException(ErrorCode.FORBIDDEN_FRIEND_ACCESS);
+        }
     }
 }

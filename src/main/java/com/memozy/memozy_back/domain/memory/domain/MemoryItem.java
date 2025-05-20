@@ -57,7 +57,7 @@ public class MemoryItem extends BaseTimeEntity {
                 .build();
     }
 
-    public static MemoryItem createTemp(Memory memory, String fileKey, String content, int sequence) {
+    public static MemoryItem createTempMemoryItem(Memory memory, String fileKey, String content, int sequence) {
         return MemoryItem.builder()
                 .tempId(UUID.randomUUID().toString())
                 .fileKey(fileKey)
