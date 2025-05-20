@@ -13,6 +13,7 @@ import java.util.List;
 
 public record MemoryDto(
         @NotNull Long id,
+        @NotNull Long ownerId,
         @NotBlank String title,
         @NotNull LocalDate startDate,
         @NotNull LocalDate endDate,
@@ -20,20 +21,15 @@ public record MemoryDto(
         @NotNull List<MemoryItemDto> memoryItems,
         @NotNull List<Long> sharedUserIds
 ) {
-    public static MemoryDto from(Memory memory, FileService fileService) {
+    public static MemoryDto from(Memory memory, List<MemoryItemDto> memoryItems, FileService fileService) {
         return new MemoryDto(
                 memory.getId(),
+                memory.getOwner().getId(),
                 memory.getTitle(),
                 memory.getStartDate(),
                 memory.getEndDate(),
                 memory.getCategory(),
-                memory.getMemoryItems().stream()
-                        .map(item -> {
-                            String presignedUrl = fileService
-                                    .generatePresignedUrlToRead(item.getFileKey())
-                                    .preSignedUrl();
-                            return MemoryItemDto.from(item, presignedUrl);
-                        }).toList(),
+                memoryItems,
                 memory.getSharedUsers().stream()
                         .map(MemoryShared::getId)
                         .toList()

@@ -49,8 +49,9 @@ public enum ErrorCode {
             "같은 약관을 한 번에 여러 번 동의할 수 없습니다."),
 
     DUPLICATE_RESOURCE_EXCEPTION(HttpStatus.BAD_REQUEST, "user-friendship-1",
-            "이미 친구 요청을 보냈습니다.");
+            "이미 친구 요청을 보냈습니다."),
 
+    FORBIDDEN_FRIEND_ACCESS(HttpStatus.FORBIDDEN, "friend-1", "해당 유저와 친구 관계가 아닙니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

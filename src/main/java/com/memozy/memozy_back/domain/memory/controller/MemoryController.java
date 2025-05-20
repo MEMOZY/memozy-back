@@ -1,7 +1,7 @@
 package com.memozy.memozy_back.domain.memory.controller;
 
-import com.memozy.memozy_back.domain.memory.dto.MemoryItemDto;
 import com.memozy.memozy_back.domain.memory.dto.request.CreateTempMemoryRequest;
+import com.memozy.memozy_back.domain.memory.dto.response.CreateMemoryResponse;
 import com.memozy.memozy_back.domain.memory.dto.response.CreateTempMemoryResponse;
 import com.memozy.memozy_back.domain.memory.dto.MemoryDto;
 import com.memozy.memozy_back.domain.memory.dto.request.CreateMemoryRequest;
@@ -14,7 +14,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -33,7 +32,7 @@ public class MemoryController {
 
     // 기록 생성
     @PostMapping
-    public ResponseEntity<MemoryDto> createMemory(
+    public ResponseEntity<CreateMemoryResponse> createMemory(
             @CurrentUserId Long userId,
             @RequestBody CreateMemoryRequest request) {
         return ResponseEntity.ok(memoryService.createMemory(userId, request));
@@ -57,9 +56,9 @@ public class MemoryController {
     }
 
 
-    // 내 기록 전체 조회
+    // 내 기록 및 친구가 공유한 기록 전체 조회
     @GetMapping
-    public ResponseEntity<GetMemoryListResponse> getMyMemories(
+    public ResponseEntity<GetMemoryListResponse> getAllMemories(
             @CurrentUserId Long userId) {
         return ResponseEntity.ok(memoryService.getAllByOwnerId(userId));
     }

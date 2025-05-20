@@ -1,5 +1,6 @@
 package com.memozy.memozy_back.domain.friend.repository;
 
+import com.memozy.memozy_back.domain.friend.constant.FriendshipStatus;
 import com.memozy.memozy_back.domain.friend.domain.Friendship;
 import com.memozy.memozy_back.domain.user.domain.User;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -54,4 +55,18 @@ public interface FriendshipRepository extends JpaRepository<Friendship, Long> {
         WHERE f.receiver.id = :userId AND f.status = com.memozy.memozy_back.domain.friend.constant.FriendshipStatus.REQUESTED
     """)
     List<User> findReceivedRequests(Long userId);
+
+    @Query("""
+    SELECT CASE WHEN COUNT(f) > 0 THEN true ELSE false END
+    FROM Friendship f
+    WHERE 
+      ((f.sender = :user1 AND f.receiver = :user2) OR 
+       (f.sender = :user2 AND f.receiver = :user1))
+      AND f.status = :status
+""")
+    boolean existsFriendshipBetweenUsers(
+            @Param("user1") User user1,
+            @Param("user2") User user2,
+            @Param("status") FriendshipStatus status
+    );
 }
