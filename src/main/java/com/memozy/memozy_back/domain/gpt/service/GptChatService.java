@@ -9,8 +9,6 @@ import com.memozy.memozy_back.domain.memory.domain.MemoryItem;
 import com.memozy.memozy_back.domain.memory.service.TemporaryMemoryStore;
 import com.memozy.memozy_back.global.exception.BusinessException;
 import com.memozy.memozy_back.global.exception.ErrorCode;
-import java.io.IOException;
-import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -25,7 +23,7 @@ public class GptChatService {
 
     private final TemporaryMemoryStore temporaryMemoryStore;
     private final FileService fileService;
-    private final GptChatStore gptChatStore;
+    private final RedisTemporaryChatStore gptChatStore;
     private final GptClient gptClient;
 
     public void generateInitialPrompts(String sessionId, SseEmitter emitter) {

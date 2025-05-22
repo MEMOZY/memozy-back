@@ -75,6 +75,11 @@ dependencies {
     // ✅ OpenFeign (REST Client)
     implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
 
+    // ✅ Redis
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
+    implementation 'io.netty:netty-resolver-dns-native-macos:4.1.100.Final:osx-aarch_64'
+
 }
 
 tasks.named('test') {
