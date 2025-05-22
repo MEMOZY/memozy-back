@@ -57,10 +57,11 @@ public class User extends BaseTimeEntity {
     @Column(unique = true, nullable = false)
     private String friendCode;
 
-    public static User create(UserRole userRole, String nickname, String profileImageUrl) {
+    public static User create(UserRole userRole, String nickname, String email, String profileImageUrl) {
         return User.builder()
                 .userRole(userRole)
                 .nickname(nickname)
+                .email(email)
                 .profileImageUrl(profileImageUrl)
                 .friendCode(FriendCodeGenerator.generateRandomId())
                 .build();

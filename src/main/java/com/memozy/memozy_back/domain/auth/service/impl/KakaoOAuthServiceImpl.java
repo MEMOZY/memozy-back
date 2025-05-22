@@ -63,6 +63,7 @@ public class KakaoOAuthServiceImpl implements OAuthService {
                             User.create(
                                     UserRole.MEMBER,
                                     socialUserProfile.getNickname(),
+                                    null,
                                     socialUserProfile.getProfileImageUrl()
                             )
                     );
