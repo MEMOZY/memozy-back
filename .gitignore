@@ -42,6 +42,8 @@ gradle-app.setting
 .env
 .env.*
 application-prod.yml
+docker-compose.yml
+docker-compose.prod.yml
 
 # ====================
 # IntelliJ / IDE

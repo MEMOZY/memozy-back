@@ -35,6 +35,10 @@ jobs:
       - name: Create application.yml
         run: echo "${{ secrets.APPLICATION_PROD_YML }}" > src/main/resources/application.yml
 
+      - name: Generate docker-compose.yml from GitHub Secret
+        run: |
+          echo "${{ secrets.DOCKER_COMPOSE_PROD_YML }}" > docker-compose.yml
+
       # gradlew 파일 실행권한 설정
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
@@ -42,11 +46,6 @@ jobs:
       # 빌드 시작
       - name: Build with Gradle
         run: ./gradlew build -x test
-
-      # 프로젝트 zip파일로 압축
-      - name: Make Zip File
-        if: github.event_name == 'push'
-        run: zip -qq -r ./$GITHUB_SHA.zip .
 
       # aws 접근 id, key
       - name: Configure AWS credentials
@@ -57,18 +56,27 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ap-northeast-2
 
-      # s3에 압축한 zip파일 업로드
-      - name: Upload to S3
-        if: github.event_name == 'push'
-        run: aws s3 cp --region ap-northeast-2 ./$GITHUB_SHA.zip s3://$BUCKET_NAME/$PROJECT_NAME/$GITHUB_SHA.zip
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
 
-      # s3에 업로드한 파일 code Deploy에서 배포 요청
-      # Deploy with AWS CodeDeploy
-      - name: Deploy with AWS CodeDeploy
-        if: github.event_name == 'push'
-        run: |
-          aws deploy create-deployment \
-            --application-name $CODE_DEPLOY_APP_NAME \
-            --deployment-config-name CodeDeployDefault.AllAtOnce \
-            --deployment-group-name $DEPLOYMENT_GROUP_NAME \
-            --s3-location bucket=$BUCKET_NAME,bundleType=zip,key=$PROJECT_NAME/$GITHUB_SHA.zip
+      - name: Docker Image Build And Push
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:prod}
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            aws ecr get-login-password | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
+            docker pull ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:prod
+            docker stop spring || true
+            docker rm spring || true
+            docker compose -f /home/ubuntu/memozy-back/docker-compose.yml up -d
