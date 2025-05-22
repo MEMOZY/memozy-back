@@ -2,7 +2,7 @@ FROM eclipse-temurin:21-jdk
 
 ARG PROFILE
 ARG TZ=Asia/Seoul
-ARG JAR_FILE=./build/libs/app.jar
+ARG JAR_FILE=./build/libs/*.jar
 COPY ${JAR_FILE} app.jar
 ENV PROFILE=${PROFILE}
 EXPOSE 8080
