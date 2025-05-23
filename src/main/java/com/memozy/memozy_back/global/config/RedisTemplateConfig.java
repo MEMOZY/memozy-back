@@ -1,7 +1,8 @@
 package com.memozy.memozy_back.global.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.memozy.memozy_back.domain.gpt.dto.ChatMessage;
-import com.memozy.memozy_back.domain.memory.domain.Memory;
+import com.memozy.memozy_back.domain.memory.dto.TempMemoryDto;
 import java.util.List;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,11 +15,11 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 public class RedisTemplateConfig {
 
     @Bean
-    public RedisTemplate<String, Memory> memoryRedisTemplate(RedisConnectionFactory connectionFactory) {
-        RedisTemplate<String, Memory> template = new RedisTemplate<>();
+    public RedisTemplate<String, TempMemoryDto> tempMemoryDtoRedisTemplate(RedisConnectionFactory connectionFactory) {
+        RedisTemplate<String, TempMemoryDto> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
         template.setKeySerializer(new StringRedisSerializer());
-        template.setValueSerializer(new GenericJackson2JsonRedisSerializer()); // 또는 Jackson2JsonRedisSerializer<>(Memory.class)
+        template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
         return template;
     }
 

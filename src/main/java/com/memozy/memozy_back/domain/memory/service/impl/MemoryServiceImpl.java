@@ -7,6 +7,8 @@ import com.memozy.memozy_back.domain.memory.domain.MemoryItem;
 import com.memozy.memozy_back.domain.memory.domain.MemoryShared;
 import com.memozy.memozy_back.domain.memory.dto.MemoryDto;
 import com.memozy.memozy_back.domain.memory.dto.MemoryItemDto;
+import com.memozy.memozy_back.domain.memory.dto.TempMemoryDto;
+import com.memozy.memozy_back.domain.memory.dto.TempMemoryItemDto;
 import com.memozy.memozy_back.domain.memory.dto.request.CreateMemoryRequest;
 import com.memozy.memozy_back.domain.memory.dto.request.CreateTempMemoryRequest;
 import com.memozy.memozy_back.domain.memory.dto.request.UpdateMemoryRequest;
@@ -76,25 +78,23 @@ public class MemoryServiceImpl implements MemoryService {
     public String createTemporaryMemory(Long userId, CreateTempMemoryRequest request) {
         User owner = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_USER_EXCEPTION));
-        Memory memory = Memory.createWithoutBasicInfo(owner);
 
-        for (MemoryItemDto itemDto : request.memoryItems()) {
+        List<TempMemoryItemDto> tempItems = request.memoryItems().stream().map(itemDto -> {
             String fileKey = fileService.extractFileKeyFromImageUrl(itemDto.imageUrl());
-            fileService.validateFileKey(
-                    fileKey
+            fileService.validateFileKey(fileKey);
+            MemoryItem memoryItem = MemoryItem.createTempMemoryItem(
+                    null, // Memory는 임시 객체이므로 null로 시작, 어차피 toDomain에서 다시 할당됨
+                    fileKey,
+                    itemDto.content(),
+                    itemDto.sequence()
             );
-            memory.addMemoryItem(
-                    MemoryItem.createTempMemoryItem(
-                            memory,
-                            fileKey,
-                            itemDto.content(),
-                            itemDto.sequence()
-                    )
-            );
-        }
+            String presignedUrl = fileService.generatePresignedUrlToRead(fileKey).preSignedUrl();
+            return TempMemoryItemDto.from(memoryItem, presignedUrl);
+        }).toList();
 
+        TempMemoryDto tempDto = new TempMemoryDto(owner.getId(), tempItems);
         String sessionId = UUID.randomUUID().toString();
-        temporaryMemoryStore.save(sessionId, memory);
+        temporaryMemoryStore.save(sessionId, tempDto);
         return sessionId;
     }
 
@@ -108,10 +108,7 @@ public class MemoryServiceImpl implements MemoryService {
             throw new BusinessException(ErrorCode.UNAUTHORIZED_EXCEPTION);
         }
 
-        List<MemoryItem> memoryItems = memory.getMemoryItems().stream()
-                .toList();
-
-        return GetTempMemoryResponse.of(memoryItems, fileService);
+        return GetTempMemoryResponse.of(memory.getMemoryItems(), fileService);
     }
 
     @Override
