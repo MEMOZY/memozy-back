@@ -1,8 +1,13 @@
 #!/bin/bash
 
-echo "> Docker 이미지 Pull"
-aws ecr get-login-password | docker login --username AWS --password-stdin $ECR_REGISTRY
-docker pull 665373354552.dkr.ecr.ap-northeast-2.amazonaws.com/memozy/server:prod
+ECR_REGISTRY="665373354552.dkr.ecr.ap-northeast-2.amazonaws.com"
+ECR_REPOSITORY="memozy/server"
+TAG="prod"
+
+aws ecr get-login-password --region ap-northeast-2 \
+| docker login --username AWS --password-stdin $ECR_REGISTRY
+
+docker pull $ECR_REGISTRY/$ECR_REPOSITORY:$TAG
 
 echo "> 기존 컨테이너 중지 및 삭제"
 docker stop spring || true
