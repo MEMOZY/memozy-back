@@ -49,6 +49,7 @@ public class GoogleOAuthServiceImpl implements OAuthService {
 
         GoogleSocialUserProfile socialUserProfile = googleServerClient.getUserInformation(
                 jwtProperty.getBearerPrefix() + " " + googleAccessToken);
+        log.info("📦 GoogleSocialUserProfile: {}", socialUserProfile);
 
         String socialCode = SocialUserInfo.calculateSocialCode(
                 SocialPlatform.GOOGLE,
