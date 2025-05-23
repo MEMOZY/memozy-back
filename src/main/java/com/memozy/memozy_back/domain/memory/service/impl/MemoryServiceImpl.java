@@ -85,7 +85,7 @@ public class MemoryServiceImpl implements MemoryService {
             MemoryItem memoryItem = MemoryItem.createTempMemoryItem(
                     null, // Memory는 임시 객체이므로 null로 시작, 어차피 toDomain에서 다시 할당됨
                     fileKey,
-                    itemDto.content(),
+                    "",
                     itemDto.sequence()
             );
             String presignedUrl = fileService.generatePresignedUrlToRead(fileKey).preSignedUrl();
