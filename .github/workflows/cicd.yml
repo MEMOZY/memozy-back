@@ -17,6 +17,7 @@ env:
   DEPLOYMENT_GROUP_NAME: memozy-group
   ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
   ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
+  AWS_REGION: ap-northeast-2
 
 jobs:
   build:
@@ -49,6 +50,11 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew build -x test
 
+      - name: Mask Secrets
+        run: |
+          echo "::add-mask::${{ secrets.AWS_ACCESS_KEY_ID }}"
+          echo "::add-mask::${{ secrets.AWS_SECRET_ACCESS_KEY }}"
+
       # aws 접근 id, key
       - name: Configure AWS credentials
         if: github.event_name == 'push'
@@ -56,11 +62,13 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ap-northeast-2
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
+        env:
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Docker Image Build And Push
         uses: docker/build-push-action@v2
