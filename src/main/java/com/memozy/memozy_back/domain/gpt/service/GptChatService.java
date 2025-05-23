@@ -6,6 +6,8 @@ import com.memozy.memozy_back.domain.gpt.dto.ChatMessage;
 import com.memozy.memozy_back.domain.gpt.dto.request.UserAnswerRequest;
 import com.memozy.memozy_back.domain.memory.domain.Memory;
 import com.memozy.memozy_back.domain.memory.domain.MemoryItem;
+import com.memozy.memozy_back.domain.memory.dto.TempMemoryDto;
+import com.memozy.memozy_back.domain.memory.dto.TempMemoryItemDto;
 import com.memozy.memozy_back.domain.memory.service.TemporaryMemoryStore;
 import com.memozy.memozy_back.global.exception.BusinessException;
 import com.memozy.memozy_back.global.exception.ErrorCode;
@@ -100,6 +102,19 @@ public class GptChatService {
                 if (isEndCommand || isThirdTurn) {
                     String story = gptClient.generateStoryFromChatAndImage(messageHistory, base64Image);
                     currentItem.updateContent(story);
+                    TempMemoryDto updatedDto = TempMemoryDto.from(
+                            memory,
+                            memory.getMemoryItems().stream()
+                                    .map(item -> new TempMemoryItemDto(
+                                            item.getTempId(),
+                                            fileService.generatePresignedUrlToRead(item.getFileKey()).preSignedUrl(),
+                                            item.getContent(),
+                                            item.getSequence()
+                                    ))
+                                    .toList()
+                    );
+                    temporaryMemoryStore.save(sessionId, updatedDto); // 해당 memoryItem의 최종 일기를 redis에 다시 저장
+
                     gptChatStore.removeChat(memoryItemTempId);
 
                     int currentIndex = sortedMemoryItems.indexOf(currentItem);

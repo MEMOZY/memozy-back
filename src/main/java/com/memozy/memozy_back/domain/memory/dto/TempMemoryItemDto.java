@@ -1,15 +1,21 @@
 package com.memozy.memozy_back.domain.memory.dto;
 
 import com.memozy.memozy_back.domain.memory.domain.MemoryItem;
+import java.io.Serializable;
 
 public record TempMemoryItemDto(
         String tempId,
-        MemoryItemDto memoryItem
-) {
-    public static TempMemoryItemDto of(MemoryItem memoryItem, String presignedUrl) {
+        String imageUrl,
+        String content,
+        int sequence
+) implements Serializable {
+
+    public static TempMemoryItemDto from(MemoryItem item, String presignedUrl) {
         return new TempMemoryItemDto(
-                memoryItem.getTempId(),
-                MemoryItemDto.from(memoryItem, presignedUrl)
+                item.getTempId(),
+                presignedUrl,
+                item.getContent(),
+                item.getSequence()
         );
     }
 }

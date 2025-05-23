@@ -67,6 +67,24 @@ public class MemoryItem extends BaseTimeEntity {
                 .build();
     }
 
+    public static MemoryItem fromTempDto(
+            Memory memory,
+            String fileKey,
+            String content,
+            int sequence,
+            String tempId
+    ) {
+        return MemoryItem.builder()
+                .tempId(tempId)
+                .fileKey(fileKey)
+                .content(content)
+                .sequence(sequence)
+                .memory(memory)
+                .build();
+    }
+
+
+
     public void updateContent(String content) {
         this.content = content;
     }
