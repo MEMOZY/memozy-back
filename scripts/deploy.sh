@@ -1,22 +1,15 @@
 #!/bin/bash
 
-PROJECT_NAME=memozy-back
-REPOSITORY=/home/ubuntu/$PROJECT_NAME
-JAR_NAME=$(ls $REPOSITORY/build/libs | grep 'SNAPSHOT.jar' | tail -n 1)
-JAR_PATH=$REPOSITORY/build/libs/$JAR_NAME
+echo "> Docker 이미지 Pull"
+aws ecr get-login-password | docker login --username AWS --password-stdin $ECR_REGISTRY
+docker pull $ECR_REGISTRY/$ECR_REPOSITORY:prod
 
-cd $REPOSITORY
+echo "> 기존 컨테이너 중지 및 삭제"
+docker stop spring || true
+docker rm spring || true
 
-echo "> 현재 실행 중인 애플리케이션 PID 확인"
-CURRENT_PID=$(pgrep -f $PROJECT_NAME)
+echo "> Docker Compose 실행"
+docker compose -f /home/ubuntu/memozy-back/docker-compose.yml up -d
 
-if [ -z "$CURRENT_PID" ]; then
-  echo "> 현재 실행 중인 애플리케이션이 없습니다."
-else
-  echo "> kill -15 $CURRENT_PID"
-  kill -15 $CURRENT_PID
-  sleep 5
-fi
-
-echo "> 새 애플리케이션 배포: $JAR_PATH"
-nohup java -Djava.net.preferIPv4Stack=true -jar "$JAR_PATH" > jarExecute.log 2>&1 < /dev/null &
+echo "> 이미지 정리"
+docker image prune -af

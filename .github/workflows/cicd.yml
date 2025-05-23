@@ -15,6 +15,8 @@ env:
   BUCKET_NAME: memozy-bucket
   CODE_DEPLOY_APP_NAME: memozy
   DEPLOYMENT_GROUP_NAME: memozy-group
+  ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
+  ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
 
 jobs:
   build:
@@ -68,15 +70,16 @@ jobs:
           push: true
           tags: ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:prod
 
-      - name: Deploy to EC2
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            aws ecr get-login-password | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
-            docker pull ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:prod
-            docker stop spring || true
-            docker rm spring || true
-            docker compose -f /home/ubuntu/memozy-back/docker-compose.yml up -d
+      - name: Make deployment zip
+        run: zip -qq -r ${{ github.sha }}.zip . -x '*.git*'
+
+      - name: Upload to S3
+        run: aws s3 cp ./${{ github.sha }}.zip s3://${{ env.BUCKET_NAME }}/${{ env.PROJECT_NAME }}/${{ github.sha }}.zip
+
+      - name: Create CodeDeploy Deployment
+        run: |
+          aws deploy create-deployment \
+            --application-name ${{ env.CODE_DEPLOY_APP_NAME }} \
+            --deployment-config-name CodeDeployDefault.AllAtOnce \
+            --deployment-group-name ${{ env.DEPLOYMENT_GROUP_NAME }} \
+            --s3-location bucket=${{ env.BUCKET_NAME }},bundleType=zip,key=${{ env.PROJECT_NAME }}/${{ github.sha }}.zip
