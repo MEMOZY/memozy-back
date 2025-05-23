@@ -36,6 +36,7 @@ public class KakaoSocialUserProfile {
 
     @Getter
     @NoArgsConstructor(access = AccessLevel.PRIVATE)
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Properties {
         private String nickname;
 
@@ -45,11 +46,13 @@ public class KakaoSocialUserProfile {
 
     @Getter
     @NoArgsConstructor(access = AccessLevel.PRIVATE)
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class KakaoAccount {
         private Profile profile;
 
         @Getter
         @NoArgsConstructor(access = AccessLevel.PRIVATE)
+        @JsonIgnoreProperties(ignoreUnknown = true)
         public static class Profile {
             private String nickname;
 
