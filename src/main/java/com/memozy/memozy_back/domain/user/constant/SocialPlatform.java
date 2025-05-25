@@ -11,7 +11,9 @@ public enum SocialPlatform {
 
     KAKAO("kakao"),
     GOOGLE("google"),
+    APPLE("apple"),
     ;
+
     private final String name;
 
     public static SocialPlatform of(String name) {

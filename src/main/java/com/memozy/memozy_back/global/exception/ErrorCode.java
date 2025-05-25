@@ -31,6 +31,9 @@ public enum ErrorCode {
     INVALID_REFRESH_TOKEN_EXCEPTION(HttpStatus.UNAUTHORIZED, "auth-5", "유효하지 않은 리프레시 토큰입니다."),
     UNSUPPORTED_JWT_TOKEN_EXCEPTION(HttpStatus.UNAUTHORIZED, "auth-6", "지원하지 않는 JWT 토큰입니다."),
     UNSUPPORTED_SOCIAL_PLATFORM_EXCEPTION(HttpStatus.UNAUTHORIZED, "auth-7", "지원하지 않는 소셜 플랫폼입니다."),
+    APPLE_MISSING_NAME(HttpStatus.BAD_REQUEST, "auth-8", "Apple 최초 로그인 시 name 값이 필요합니다."),
+    APPLE_INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "auth-9", "Apple ID Token 검증에 실패했습니다."),
+    APPLE_INVALID_ISSUER(HttpStatus.UNAUTHORIZED, "auth-10" , "애플 토큰의 발급자(issuer)가 유효하지 않습니다." ),
 
     /**
      * resource. code prefix: resource-
