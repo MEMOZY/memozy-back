@@ -39,7 +39,9 @@ public class AuthController {
     ) {
         TokenResponse response = authFacade.socialLogin(
                 socialPlatform,
-                request.socialAccessToken());
+                request.token(),
+                request.name()
+        );
         return ResponseEntity.ok(response);
     }
 

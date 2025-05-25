@@ -35,7 +35,7 @@ public class KakaoOAuthServiceImpl implements OAuthService {
     //public User socialUserLogin(String authorizationCode) {
     @Override
     @Transactional
-    public User socialUserLogin(String kakaoAccessToken) {
+    public User socialUserLogin(String kakaoAccessToken, String username) {
 //        OAuthToken oAuthToken = kakaoAuthServerClient.getOAuth2AccessToken(
 //                kakaoClientProperty.getContentType(),
 //                kakaoClientProperty.getGrantType(),

@@ -79,6 +79,9 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
 
+    // Apple login
+    implementation 'com.nimbusds:nimbus-jose-jwt:9.37.3'
+
     implementation 'io.netty:netty-resolver-dns-native-macos:4.1.100.Final:osx-aarch_64'
 
 }

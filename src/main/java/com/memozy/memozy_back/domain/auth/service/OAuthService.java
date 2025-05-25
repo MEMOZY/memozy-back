@@ -7,7 +7,7 @@ public interface OAuthService {
 
     boolean support(SocialPlatform socialPlatform);
 
-    User socialUserLogin(String socialAccessToken);
+    User socialUserLogin(String idToken, String username);
 
 //    String getLoginPageUrl(String origin);
 }

@@ -27,9 +27,11 @@ public class AuthFacadeImpl implements AuthFacade {
     @Transactional
     public TokenResponse socialLogin(
             SocialPlatform socialPlatform,
-            String oauthAccessToken) {
+            String oauthAccessToken,
+            String username
+    ) {
         OAuthService oAuthService = oAuthServiceProvider.getService(socialPlatform);
-        User user = oAuthService.socialUserLogin(oauthAccessToken);
+        User user = oAuthService.socialUserLogin(oauthAccessToken, username);
         return TokenResponse.from(
                 jwtProvider.createTokenCollection(
                         TokenInfo.from(user)));
@@ -51,6 +53,8 @@ public class AuthFacadeImpl implements AuthFacade {
                 jwtProvider.createTokenCollection(
                         TokenInfo.from(user)));
     }
+
+
 
 //    @Override
 //    @Transactional(readOnly = true)

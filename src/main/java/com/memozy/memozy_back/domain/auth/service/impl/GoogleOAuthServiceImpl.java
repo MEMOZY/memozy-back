@@ -7,9 +7,6 @@ import com.memozy.memozy_back.domain.user.domain.SocialUserInfo;
 import com.memozy.memozy_back.domain.user.domain.User;
 import com.memozy.memozy_back.domain.user.repository.SocialUserInfoRepository;
 import com.memozy.memozy_back.domain.user.repository.UserRepository;
-import com.memozy.memozy_back.global.feign.OAuthToken;
-import com.memozy.memozy_back.global.feign.oauth.google.GoogleAuthServerClient;
-import com.memozy.memozy_back.global.feign.oauth.google.GoogleClientProperty;
 import com.memozy.memozy_back.global.feign.oauth.google.GoogleServerClient;
 import com.memozy.memozy_back.global.feign.oauth.google.GoogleSocialUserProfile;
 import com.memozy.memozy_back.global.jwt.JwtProperty;
@@ -38,7 +35,7 @@ public class GoogleOAuthServiceImpl implements OAuthService {
     //public User socialUserLogin(String origin, String authorizationCode) {
     @Override
     @Transactional
-    public User socialUserLogin(String googleAccessToken) {
+    public User socialUserLogin(String googleAccessToken, String username) {
 //        OAuthToken oAuthToken = googleAuthServerClient.getOAuth2AccessToken(
 //                googleClientProperty.getContentType(),
 //                googleClientProperty.getGrantType(),
@@ -80,6 +77,8 @@ public class GoogleOAuthServiceImpl implements OAuthService {
                     return newUser;
                 });
     }
+
+
 
 //    @Override
 //    public String getLoginPageUrl(String origin) {
