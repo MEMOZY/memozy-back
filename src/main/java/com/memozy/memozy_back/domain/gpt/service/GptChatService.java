@@ -81,12 +81,17 @@ public class GptChatService {
         String activeMemoryItemId = temporaryChatStore.getActiveMemoryItemId(sessionId);
         if (!memoryItemTempId.equals(activeMemoryItemId)) {
             log.warn("잘못된 memoryItemId 요청: expected={}, received={}", activeMemoryItemId, memoryItemTempId);
-            throw new BusinessException(ErrorCode.INVALID_MEMORY_ITEM_ID);
-        }
 
+            // error payload에 올바른 memoryItemTempId를 같이 담아 보냄
+            sendEmitterPayload(emitter, "error", activeMemoryItemId,
+                    "잘못된 memoryItemId 요청입니다. expected=" + activeMemoryItemId,
+                    "");
+            emitter.complete();
+            return;
+        }
         String presignedUrl = getPresignedUrl(currentItem.getFileKey());
 
-        // ✅ 역할별로 분리된 history 가져오기
+        // 역할별로 분리된 history 가져오기
         Map<String, List<String>> messageHistoryByRole = temporaryChatStore.getChatHistorySplitByRole(sessionId, memoryItemTempId);
 
         String gptReply = flaskServer.sendMessage(sessionId, presignedUrl, userMessage, messageHistoryByRole);
