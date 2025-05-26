@@ -90,7 +90,7 @@ public class GptChatService {
         if (isEndCommand || isThirdTurn) {
             handleStoryGeneration(sessionId, memory, currentItem, messageHistory, emitter);
         } else {
-            sendEmitterPayload(emitter, "reply", currentItem.getTempId(), gptReply, null);
+            sendEmitterPayload(emitter, "reply", currentItem.getTempId(), gptReply, "");
         }
     }
 
