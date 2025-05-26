@@ -35,8 +35,8 @@ public class RedisTemplateConfig {
     }
 
     @Bean
-    public RedisTemplate<String, Map<String, List<ChatMessage>>> chatMessageRedisTemplate(RedisConnectionFactory connectionFactory) {
-        RedisTemplate<String, Map<String, List<ChatMessage>>> template = new RedisTemplate<>();
+    public RedisTemplate<String, Map<String, Map<String, List<String>>>> chatMessageRedisTemplate(RedisConnectionFactory connectionFactory) {
+        RedisTemplate<String, Map<String, Map<String, List<String>>>> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
         template.setKeySerializer(new StringRedisSerializer());
         template.setValueSerializer(new GenericJackson2JsonRedisSerializer()); // 타입 보존

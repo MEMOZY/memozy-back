@@ -43,11 +43,11 @@ public class FlaskServerImpl implements FlaskServer {
     }
 
     @Override
-    public String sendMessage(String sessionId, String presignedUrl, String userMessage, List<String> messages) {
+    public String sendMessage(String sessionId, String presignedUrl, String userMessage, Map<String, List<String>> history) {
         Map<String, Object> requestBody = Map.of(
                 "session_id", sessionId,
                 "img_url", presignedUrl,
-                "history", Map.of("user", messages, "assistant", List.of()),
+                "history", history,
                 "message", userMessage
         );
 
@@ -68,11 +68,11 @@ public class FlaskServerImpl implements FlaskServer {
     }
 
     @Override
-    public String generateDiaryFromChatAndImageUrl(String sessionId, List<String> messages, String presignedUrl) {
+    public String generateDiaryFromChatAndImageUrl(String sessionId, Map<String, List<String>> history, String presignedUrl) {
         Map<String, Object> requestBody = Map.of(
                 "session_id", sessionId,
                 "img_url", presignedUrl,
-                "history", Map.of("user", messages, "assistant", List.of())
+                "history", history
         );
 
         log.info("Request to /diary: {}", requestBody);
