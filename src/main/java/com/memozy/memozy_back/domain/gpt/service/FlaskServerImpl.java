@@ -1,0 +1,81 @@
+package com.memozy.memozy_back.domain.gpt.service;
+
+import com.memozy.memozy_back.global.exception.BusinessException;
+import com.memozy.memozy_back.global.exception.ErrorCode;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.stereotype.Component;
+import org.springframework.web.reactive.function.client.WebClient;
+
+@Component
+@Slf4j
+@RequiredArgsConstructor
+public class FlaskServerImpl implements FlaskServer {
+
+    private final WebClient webClient = WebClient.create("http://memozy-ai:5000");
+
+    @Override
+    public String initiateChatWithImageUrl(String sessionId, String presignedImageUrl) {
+        Map<String, Object> requestBody = Map.of(
+                "session_id", sessionId,
+                "img_url", presignedImageUrl,
+                "history", Map.of("user", List.of(), "assistant", List.of())
+        );
+
+        Map<String, Object> response = webClient.post()
+                .uri("/image")
+                .bodyValue(requestBody)
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+                .block();
+
+        return Optional.ofNullable(response)
+                .map(r -> (String) r.get("message"))
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_RESPONSE_FLASK_SERVER));
+    }
+
+    @Override
+    public String sendMessage(String sessionId, String presignedUrl, String userMessage, List<String> messages) {
+        Map<String, Object> requestBody = Map.of(
+                "session_id", sessionId,
+                "img_url", presignedUrl,
+                "history", Map.of("user", messages, "assistant", List.of()),
+                "message", messages.get(messages.size() - 1)
+        );
+
+        Map<String, Object> response = webClient.post()
+                .uri("/message")
+                .bodyValue(requestBody)
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+                .block();
+
+        return Optional.ofNullable(response)
+                .map(r -> (String) r.get("message"))
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_RESPONSE_FLASK_SERVER));
+    }
+
+    @Override
+    public String generateDiaryFromChatAndImageUrl(String sessionId, List<String> messages, String presignedUrl) {
+        Map<String, Object> requestBody = Map.of(
+                "session_id", sessionId,
+                "img_url", presignedUrl,
+                "history", Map.of("user", messages, "assistant", List.of())
+        );
+
+        Map<String, Object> response = webClient.post()
+                .uri("/diary")
+                .bodyValue(requestBody)
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+                .block();
+
+        return Optional.ofNullable(response)
+                .map(r -> (String) r.get("diary"))
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_RESPONSE_FLASK_SERVER));
+    }
+}
