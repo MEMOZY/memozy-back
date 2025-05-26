@@ -77,27 +77,30 @@ public class GptChatService {
         MemoryItem currentItem = getMemoryItemById(memory, memoryItemTempId);
 
         String presignedUrl = getPresignedUrl(currentItem.getFileKey());
-        List<String> messageHistory = temporaryChatStore.getChatAll(sessionId, memoryItemTempId)
-                .stream().map(ChatMessage::content).toList();
 
-        String gptReply = flaskServer.sendMessage(sessionId, presignedUrl, userMessage, messageHistory);
+        // ✅ 역할별로 분리된 history 가져오기
+        Map<String, List<String>> messageHistoryByRole = temporaryChatStore.getChatHistorySplitByRole(sessionId, memoryItemTempId);
+
+        String gptReply = flaskServer.sendMessage(sessionId, presignedUrl, userMessage, messageHistoryByRole);
+
         temporaryChatStore.addUserMessage(sessionId, memoryItemTempId, userMessage);
         temporaryChatStore.addAssistantMessage(sessionId, memoryItemTempId, gptReply);
 
         boolean isEndCommand = PromptText.GENERATE_STORY.getText().equalsIgnoreCase(userMessage);
-        boolean isThirdTurn = temporaryChatStore.getUserMessageCount(sessionId, memoryItemTempId) >= 3;
+        boolean isThirdTurn = temporaryChatStore.getTurnCount(sessionId, memoryItemTempId) >= 3;
 
         if (isEndCommand || isThirdTurn) {
-            handleStoryGeneration(sessionId, memory, currentItem, messageHistory, emitter);
+            handleStoryGeneration(sessionId, memory, currentItem, messageHistoryByRole, emitter);
         } else {
             sendEmitterPayload(emitter, "reply", currentItem.getTempId(), gptReply, "");
         }
     }
 
     private void handleStoryGeneration(String sessionId, Memory memory, MemoryItem currentItem,
-            List<String> messageHistory, SseEmitter emitter) throws IOException {
+            Map<String, List<String>> messageHistoryByRole, SseEmitter emitter) throws IOException {
+
         String presignedUrl = getPresignedUrl(currentItem.getFileKey());
-        String story = flaskServer.generateDiaryFromChatAndImageUrl(sessionId, messageHistory, presignedUrl);
+        String story = flaskServer.generateDiaryFromChatAndImageUrl(sessionId, messageHistoryByRole, presignedUrl);
         currentItem.updateContent(story);
 
         TempMemoryDto updatedDto = TempMemoryDto.from(memory,
@@ -122,7 +125,10 @@ public class GptChatService {
             temporaryChatStore.initChat(sessionId, nextItem.getTempId());
 
             String nextPresignedUrl = getPresignedUrl(nextItem.getFileKey());
-            String nextQuestion = flaskServer.generateDiaryFromChatAndImageUrl(sessionId, messageHistory, nextPresignedUrl);
+
+            // 다음 질문 뽑을 때 initiateChatWithImageUrl 사용
+            String nextQuestion = flaskServer.initiateChatWithImageUrl(sessionId, nextPresignedUrl);
+
             temporaryChatStore.addAssistantMessage(sessionId, nextItem.getTempId(), nextQuestion);
 
             sendEmitterPayload(emitter, "question", nextItem.getTempId(), nextQuestion, nextPresignedUrl);
