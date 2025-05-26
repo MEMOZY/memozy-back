@@ -22,8 +22,13 @@ public class SessionManager {
     }
 
     public void validateSessionOwner(Long userId, String sessionId) {
-        Long ownerId = redisTemplate.opsForValue().get(SESSION_PREFIX + sessionId);
-        if (ownerId == null || !ownerId.equals(userId)) {
+        Number storedValue = redisTemplate.opsForValue().get(SESSION_PREFIX + sessionId);
+        if (storedValue == null) {
+            throw new BusinessException(ErrorCode.UNAUTHORIZED_EXCEPTION);
+        }
+        Long ownerId = storedValue.longValue();
+
+        if (!ownerId.equals(userId)) {
             throw new BusinessException(ErrorCode.UNAUTHORIZED_EXCEPTION);
         }
     }
