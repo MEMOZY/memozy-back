@@ -1,9 +1,8 @@
-package com.memozy.memozy_back.domain.memory.service.impl;
+package com.memozy.memozy_back.global.redis;
 
 import com.memozy.memozy_back.domain.file.service.FileService;
 import com.memozy.memozy_back.domain.memory.domain.Memory;
 import com.memozy.memozy_back.domain.memory.dto.TempMemoryDto;
-import com.memozy.memozy_back.domain.memory.service.TemporaryMemoryStore;
 import com.memozy.memozy_back.domain.user.domain.User;
 import com.memozy.memozy_back.domain.user.repository.UserRepository;
 import com.memozy.memozy_back.global.exception.BusinessException;
@@ -17,7 +16,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 @Profile("!test")
-public class RedisTemporaryMemoryStoreImpl implements TemporaryMemoryStore {
+public class TemporaryMemoryStoreImpl implements TemporaryMemoryStore {
 
     private final RedisTemplate<String, TempMemoryDto> memoryRedisTemplate;
     private final UserRepository userRepository;

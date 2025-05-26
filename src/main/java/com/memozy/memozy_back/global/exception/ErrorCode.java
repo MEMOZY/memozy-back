@@ -54,7 +54,13 @@ public enum ErrorCode {
     DUPLICATE_RESOURCE_EXCEPTION(HttpStatus.BAD_REQUEST, "user-friendship-1",
             "이미 친구 요청을 보냈습니다."),
 
-    FORBIDDEN_FRIEND_ACCESS(HttpStatus.FORBIDDEN, "friend-1", "해당 유저와 친구 관계가 아닙니다.");
+
+    FORBIDDEN_FRIEND_ACCESS(HttpStatus.FORBIDDEN, "friend-1", "해당 유저와 친구 관계가 아닙니다."),
+
+    /**
+     * flask, code prefix: flask-
+     */
+    NOT_RESPONSE_FLASK_SERVER(HttpStatus.BAD_GATEWAY, "flask-1", "Flask 서버에서 유효한 응답을 받지 못했습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

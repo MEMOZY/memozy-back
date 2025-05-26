@@ -61,7 +61,7 @@ public class GptClientImpl implements GptClient {
     }
 
     @Override
-    public String generateStoryFromChatAndImage(List<String> messagesSoFar, String base64Image) {
+    public String generateDiaryFromChatAndImage(List<String> messagesSoFar, String base64Image) {
         List<Map<String, Object>> messages = new ArrayList<>();
 
         messages.add(Map.of("role", "user", "content", PromptText.IMG_PROMPT.getText()));

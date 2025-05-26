@@ -12,5 +12,5 @@ public interface GptClient {
 
     void streamChatApi(List<Map<String, Object>> messages, Consumer<String> onDelta, Runnable onComplete, Consumer<Throwable> onError);
 
-    String generateStoryFromChatAndImage(List<String> messages, String base64Image);
+    String generateDiaryFromChatAndImage(List<String> messages, String base64Image);
 }

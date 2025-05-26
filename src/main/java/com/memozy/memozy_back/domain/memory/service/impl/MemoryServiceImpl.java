@@ -17,7 +17,8 @@ import com.memozy.memozy_back.domain.memory.dto.response.GetMemoryListResponse;
 import com.memozy.memozy_back.domain.memory.dto.response.GetTempMemoryResponse;
 import com.memozy.memozy_back.domain.memory.repository.MemoryRepository;
 import com.memozy.memozy_back.domain.memory.service.MemoryService;
-import com.memozy.memozy_back.domain.memory.service.TemporaryMemoryStore;
+import com.memozy.memozy_back.global.redis.SessionManager;
+import com.memozy.memozy_back.global.redis.TemporaryMemoryStore;
 import com.memozy.memozy_back.domain.user.domain.User;
 import com.memozy.memozy_back.domain.user.repository.UserRepository;
 import com.memozy.memozy_back.global.exception.BusinessException;
@@ -40,17 +41,15 @@ public class MemoryServiceImpl implements MemoryService {
     private final FileService fileService;
     private final FriendshipRepository friendshipRepository;
     private final TemporaryMemoryStore temporaryMemoryStore;
+    private final SessionManager sessionManager;
 
     @Override
     @Transactional
     public CreateMemoryResponse createMemory(Long ownerId, CreateMemoryRequest request) {
         String sessionId = request.sessionId();
+        sessionManager.validateSessionOwner(ownerId, sessionId);
 
         Memory memory = temporaryMemoryStore.load(sessionId);
-
-        if (!memory.getOwner().getId().equals(ownerId)) {
-            throw new BusinessException(ErrorCode.UNAUTHORIZED_EXCEPTION);
-        }
 
         memory.updateBasicInfo(
                 request.title(),
@@ -67,6 +66,10 @@ public class MemoryServiceImpl implements MemoryService {
             checkFriendShip(sharedUser, memory);
             addSharedUser(sharedUser, memory);
         }
+
+        // redis 비우기
+        sessionManager.removeSession(sessionId);
+        temporaryMemoryStore.remove(sessionId);
 
         return CreateMemoryResponse.from(
                 memoryRepository.save(memory).getId()
@@ -93,7 +96,7 @@ public class MemoryServiceImpl implements MemoryService {
         }).toList();
 
         TempMemoryDto tempDto = new TempMemoryDto(owner.getId(), tempItems);
-        String sessionId = UUID.randomUUID().toString();
+        String sessionId = sessionManager.createSession(owner.getId());
         temporaryMemoryStore.save(sessionId, tempDto);
         return sessionId;
     }
@@ -104,9 +107,7 @@ public class MemoryServiceImpl implements MemoryService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_USER_EXCEPTION));
         Memory memory = temporaryMemoryStore.load(sessionId);
 
-        if (!memory.getOwner().getId().equals(owner.getId())) {
-            throw new BusinessException(ErrorCode.UNAUTHORIZED_EXCEPTION);
-        }
+        sessionManager.validateSessionOwner(owner.getId(), sessionId);
 
         return GetTempMemoryResponse.of(memory.getMemoryItems(), fileService);
     }

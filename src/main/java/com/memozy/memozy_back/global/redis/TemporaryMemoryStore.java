@@ -1,4 +1,4 @@
-package com.memozy.memozy_back.domain.memory.service;
+package com.memozy.memozy_back.global.redis;
 
 import com.memozy.memozy_back.domain.memory.domain.Memory;
 import com.memozy.memozy_back.domain.memory.dto.TempMemoryDto;

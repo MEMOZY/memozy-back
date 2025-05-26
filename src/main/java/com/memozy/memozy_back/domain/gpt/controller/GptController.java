@@ -2,8 +2,11 @@ package com.memozy.memozy_back.domain.gpt.controller;
 
 import com.memozy.memozy_back.domain.gpt.dto.request.UserAnswerRequest;
 import com.memozy.memozy_back.domain.gpt.service.GptChatService;
+import com.memozy.memozy_back.global.annotation.CurrentUserId;
 import com.memozy.memozy_back.global.exception.BusinessException;
+import com.memozy.memozy_back.global.exception.ErrorCode;
 import com.memozy.memozy_back.global.exception.ErrorResponse;
+import com.memozy.memozy_back.global.redis.SessionManager;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
@@ -27,9 +30,11 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 public class GptController {
 
     private final GptChatService gptChatService;
+    private final SessionManager sessionManager;
 
     @GetMapping(value = "/start", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public SseEmitter start(@RequestParam String sessionId) {
+    public SseEmitter start(@CurrentUserId Long userId, @RequestParam String sessionId) {
+        sessionManager.validateSessionOwner(userId, sessionId);
         SseEmitter emitter = new SseEmitter(300_000L);
         gptChatService.generateInitialPrompts(sessionId, emitter);
         return emitter;
@@ -37,13 +42,13 @@ public class GptController {
 
     @PostMapping(value = "/answer", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter answerWithStream(
+            @CurrentUserId Long userId,
             @RequestParam String sessionId,
             @RequestBody UserAnswerRequest request
     ) {
-        SseEmitter emitter = new SseEmitter(300_000L); // 응답 대기 시간
-
-        gptChatService.handleUserAnswer(sessionId, request, emitter); // emitter 넘겨주기
-
+        sessionManager.validateSessionOwner(userId, sessionId);
+        SseEmitter emitter = new SseEmitter(300_000L);
+        gptChatService.handleUserAnswer(sessionId, request, emitter);
         return emitter;
     }
 }

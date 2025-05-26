@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.memozy.memozy_back.domain.gpt.dto.ChatMessage;
 import com.memozy.memozy_back.domain.memory.dto.TempMemoryDto;
 import java.util.List;
+import java.util.Map;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -24,8 +25,17 @@ public class RedisTemplateConfig {
     }
 
     @Bean
-    public RedisTemplate<String, List<ChatMessage>> chatMessageRedisTemplate(RedisConnectionFactory connectionFactory) {
-        RedisTemplate<String, List<ChatMessage>> template = new RedisTemplate<>();
+    public RedisTemplate<String, Long> userIdSessionIdRedisTemplate(RedisConnectionFactory connectionFactory) {
+        RedisTemplate<String, Long> template = new RedisTemplate<>();
+        template.setConnectionFactory(connectionFactory);
+        template.setKeySerializer(new StringRedisSerializer());
+        template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
+        return template;
+    }
+
+    @Bean
+    public RedisTemplate<String, Map<String, List<ChatMessage>>> chatMessageRedisTemplate(RedisConnectionFactory connectionFactory) {
+        RedisTemplate<String, Map<String, List<ChatMessage>>> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
         template.setKeySerializer(new StringRedisSerializer());
         template.setValueSerializer(new GenericJackson2JsonRedisSerializer()); // 타입 보존
