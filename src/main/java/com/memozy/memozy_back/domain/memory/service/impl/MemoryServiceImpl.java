@@ -18,6 +18,7 @@ import com.memozy.memozy_back.domain.memory.dto.response.GetTempMemoryResponse;
 import com.memozy.memozy_back.domain.memory.repository.MemoryRepository;
 import com.memozy.memozy_back.domain.memory.service.MemoryService;
 import com.memozy.memozy_back.global.redis.SessionManager;
+import com.memozy.memozy_back.global.redis.TemporaryChatStore;
 import com.memozy.memozy_back.global.redis.TemporaryMemoryStore;
 import com.memozy.memozy_back.domain.user.domain.User;
 import com.memozy.memozy_back.domain.user.repository.UserRepository;
@@ -42,6 +43,7 @@ public class MemoryServiceImpl implements MemoryService {
     private final FriendshipRepository friendshipRepository;
     private final TemporaryMemoryStore temporaryMemoryStore;
     private final SessionManager sessionManager;
+    private final TemporaryChatStore temporaryChatStore;
 
     @Override
     @Transactional
@@ -70,6 +72,7 @@ public class MemoryServiceImpl implements MemoryService {
         // redis 비우기
         sessionManager.removeSession(sessionId);
         temporaryMemoryStore.remove(sessionId);
+        temporaryChatStore.removeSession(sessionId);
 
         return CreateMemoryResponse.from(
                 memoryRepository.save(memory).getId()
