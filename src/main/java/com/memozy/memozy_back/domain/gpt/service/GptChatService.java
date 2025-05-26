@@ -84,7 +84,7 @@ public class GptChatService {
 
             // error payload에 올바른 memoryItemTempId를 같이 담아 보냄
             sendEmitterPayload(emitter, "error", activeMemoryItemId,
-                    "잘못된 memoryItemId 요청입니다. expected=" + activeMemoryItemId,
+                    "잘못된 memoryItemId 요청입니다. 다시 요청해주세요",
                     "");
             emitter.complete();
             return;
@@ -103,6 +103,7 @@ public class GptChatService {
         boolean isThirdTurn = temporaryChatStore.getTurnCount(sessionId, memoryItemTempId) >= 3;
 
         if (isEndCommand || isThirdTurn) {
+            messageHistoryByRole = temporaryChatStore.getChatHistorySplitByRole(sessionId, memoryItemTempId); // 마지막 유저 응답
             handleStoryGeneration(sessionId, memory, currentItem, messageHistoryByRole, emitter);
         } else {
             sendEmitterPayload(emitter, "reply", currentItem.getTempId(), gptReply, "");
