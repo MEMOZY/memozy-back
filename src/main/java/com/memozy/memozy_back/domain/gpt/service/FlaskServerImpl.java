@@ -26,12 +26,16 @@ public class FlaskServerImpl implements FlaskServer {
                 "history", Map.of("user", List.of(), "assistant", List.of())
         );
 
+        log.info("Request to /image: {}", requestBody);
+
         Map<String, Object> response = webClient.post()
                 .uri("/image")
                 .bodyValue(requestBody)
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
                 .block();
+
+        log.info("Response from /image: {}", response);
 
         return Optional.ofNullable(response)
                 .map(r -> (String) r.get("message"))
@@ -44,8 +48,10 @@ public class FlaskServerImpl implements FlaskServer {
                 "session_id", sessionId,
                 "img_url", presignedUrl,
                 "history", Map.of("user", messages, "assistant", List.of()),
-                "message", messages.get(messages.size() - 1)
+                "message", userMessage
         );
+
+        log.info("Request to /message: {}", requestBody);
 
         Map<String, Object> response = webClient.post()
                 .uri("/message")
@@ -53,6 +59,8 @@ public class FlaskServerImpl implements FlaskServer {
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
                 .block();
+
+        log.info("Response from /message: {}", response);
 
         return Optional.ofNullable(response)
                 .map(r -> (String) r.get("message"))
@@ -67,12 +75,16 @@ public class FlaskServerImpl implements FlaskServer {
                 "history", Map.of("user", messages, "assistant", List.of())
         );
 
+        log.info("Request to /diary: {}", requestBody);
+
         Map<String, Object> response = webClient.post()
                 .uri("/diary")
                 .bodyValue(requestBody)
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
                 .block();
+
+        log.info("Response from /diary: {}", response);
 
         return Optional.ofNullable(response)
                 .map(r -> (String) r.get("diary"))
