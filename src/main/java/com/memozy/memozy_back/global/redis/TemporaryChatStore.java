@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 public class TemporaryChatStore {
 
     private final RedisTemplate<String, Map<String, Map<String, List<String>>>> chatRedisTemplate;
+    private final RedisTemplate<String, String> activeMemoryItemRedisTemplate;
     private static final Duration TTL = Duration.ofMinutes(1440);
 
     public void initSession(String sessionId) {
@@ -23,11 +24,19 @@ public class TemporaryChatStore {
 
     public void initChat(String sessionId, String memoryItemId) {
         Map<String, Map<String, List<String>>> sessionChats = getChatsAll(sessionId);
-        Map<String, List<String>> roleMap = new ConcurrentHashMap<>();
-        roleMap.put("user", new ArrayList<>());
-        roleMap.put("assistant", new ArrayList<>());
-        sessionChats.put(memoryItemId, roleMap);
+        sessionChats.put(memoryItemId, initRoleMap());
         chatRedisTemplate.opsForValue().set(sessionId, sessionChats, TTL);
+
+        // 현재 활성 memoryItemId 업데이트
+        setActiveMemoryItemId(sessionId, memoryItemId);
+    }
+
+    public void setActiveMemoryItemId(String sessionId, String memoryItemId) {
+        activeMemoryItemRedisTemplate.opsForValue().set(sessionId + ":active", memoryItemId, TTL);
+    }
+
+    public String getActiveMemoryItemId(String sessionId) {
+        return activeMemoryItemRedisTemplate.opsForValue().get(sessionId + ":active");
     }
 
     public void addUserMessage(String sessionId, String memoryItemId, String content) {
@@ -42,25 +51,9 @@ public class TemporaryChatStore {
         chatRedisTemplate.opsForValue().set(sessionId, sessionChats, TTL);
     }
 
-    public List<String> getUserMessages(String sessionId, String memoryItemId) {
-        Map<String, Map<String, List<String>>> sessionChats = getChatsAll(sessionId);
-        return sessionChats.getOrDefault(memoryItemId, initRoleMap()).get("user");
-    }
-
-    public List<String> getAssistantMessages(String sessionId, String memoryItemId) {
-        Map<String, Map<String, List<String>>> sessionChats = getChatsAll(sessionId);
-        return sessionChats.getOrDefault(memoryItemId, initRoleMap()).get("assistant");
-    }
-
     public Map<String, List<String>> getChatHistorySplitByRole(String sessionId, String memoryItemId) {
         Map<String, Map<String, List<String>>> sessionChats = getChatsAll(sessionId);
         return sessionChats.getOrDefault(memoryItemId, initRoleMap());
-    }
-
-    public void removeChat(String sessionId, String memoryItemId) {
-        Map<String, Map<String, List<String>>> sessionChats = getChatsAll(sessionId);
-        sessionChats.remove(memoryItemId);
-        chatRedisTemplate.opsForValue().set(sessionId, sessionChats, TTL);
     }
 
     public int getTurnCount(String sessionId, String memoryItemId) {
@@ -69,6 +62,12 @@ public class TemporaryChatStore {
         List<String> assistantMessages = sessionChats.getOrDefault(memoryItemId, initRoleMap()).get("assistant");
         return Math.min(userMessages.size(), assistantMessages.size());
     }
+
+    public void removeSession(String sessionId) {
+        chatRedisTemplate.delete(sessionId);
+        activeMemoryItemRedisTemplate.delete(sessionId + ":active");
+    }
+
 
     private Map<String, Map<String, List<String>>> getChatsAll(String sessionId) {
         Map<String, Map<String, List<String>>> sessionChats = chatRedisTemplate.opsForValue().get(sessionId);

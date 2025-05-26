@@ -60,7 +60,12 @@ public enum ErrorCode {
     /**
      * flask, code prefix: flask-
      */
-    NOT_RESPONSE_FLASK_SERVER(HttpStatus.BAD_GATEWAY, "flask-1", "Flask 서버에서 유효한 응답을 받지 못했습니다.");
+    NOT_RESPONSE_FLASK_SERVER(HttpStatus.BAD_GATEWAY, "flask-1", "Flask 서버에서 유효한 응답을 받지 못했습니다."),
+
+    /**
+     * chat, code prefix: chat-
+     */
+    INVALID_MEMORY_ITEM_ID(HttpStatus.BAD_REQUEST, "chat-1", "잘못된 memoryItemId 요청입니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

@@ -42,4 +42,14 @@ public class RedisTemplateConfig {
         template.setValueSerializer(new GenericJackson2JsonRedisSerializer()); // 타입 보존
         return template;
     }
+
+    @Bean
+    public RedisTemplate<String, String> activeMemoryItemRedisTemplate(RedisConnectionFactory connectionFactory) {
+        RedisTemplate<String, String> template = new RedisTemplate<>();
+        template.setConnectionFactory(connectionFactory);
+        template.setKeySerializer(new StringRedisSerializer());
+        template.setValueSerializer(new StringRedisSerializer());
+        return template;
+    }
+
 }
