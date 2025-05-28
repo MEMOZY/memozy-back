@@ -15,6 +15,11 @@ public class ProfileService {
     private final FileService fileService;
 
     public String generatePresignedUrlToRead(String profileImageUrl) {
+        if (profileImageUrl == null || profileImageUrl.isBlank()) {
+            log.warn("Profile image URL is null or blank");
+            return "Not Found";
+        }
+
         if (isExternalUrl(profileImageUrl)) {
             // 외부 소셜 URL은 그대로 사용
             return profileImageUrl;
