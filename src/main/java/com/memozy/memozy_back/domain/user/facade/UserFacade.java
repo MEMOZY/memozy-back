@@ -1,19 +1,19 @@
 package com.memozy.memozy_back.domain.user.facade;
 
 import com.memozy.memozy_back.domain.user.dto.PolicyAgreementDto;
-import com.memozy.memozy_back.domain.user.dto.UserInfoDto;
+import com.memozy.memozy_back.domain.user.dto.UserDto;
 import com.memozy.memozy_back.domain.user.dto.request.UpdateUserRequest;
 import com.memozy.memozy_back.domain.user.dto.response.GetFriendCodeResponse;
 import com.memozy.memozy_back.domain.user.dto.response.GetUserInfoResponse;
+import com.memozy.memozy_back.domain.user.dto.response.GetUserProfileResponse;
+import com.memozy.memozy_back.domain.user.dto.response.UpdateUserResponse;
 import java.util.List;
 
 public interface UserFacade {
 
-    UserInfoDto getUserWithInfo(Long userId);
+    GetUserProfileResponse getUserProfile(Long userId);
 
-    default UserInfoDto updateUserWithInfo(Long userId, UpdateUserRequest updateUserRequest) {
-        return null;
-    }
+    UpdateUserResponse updateUserWithInfo(Long userId, UpdateUserRequest updateUserRequest);
 
     List<PolicyAgreementDto> getPolicyAgreementList(Long userId);
 

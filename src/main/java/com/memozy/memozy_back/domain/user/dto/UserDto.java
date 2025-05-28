@@ -2,7 +2,7 @@ package com.memozy.memozy_back.domain.user.dto;
 
 import com.memozy.memozy_back.domain.user.domain.User;
 
-public record UserInfoDto(
+public record UserDto(
         Long userId,
         String nickname,
         String profileImageUrl,
@@ -10,8 +10,8 @@ public record UserInfoDto(
         String phoneNumber,
         String friendCode
 ) {
-    public static UserInfoDto from(User user) {
-        return new UserInfoDto(
+    public static UserDto from(User user) {
+        return new UserDto(
                 user.getId(),
                 user.getNickname(),
                 user.getProfileImageUrl(),
