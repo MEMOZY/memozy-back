@@ -1,6 +1,7 @@
 package com.memozy.memozy_back.domain.user.service;
 
 import com.memozy.memozy_back.domain.file.service.FileService;
+import com.memozy.memozy_back.domain.user.constant.ProfileImage;
 import com.memozy.memozy_back.global.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,9 +16,10 @@ public class ProfileService {
     private final FileService fileService;
 
     public String generatePresignedUrlToRead(String profileImageUrl) {
+        String defaultImageUrl = ProfileImage.DEFAULT.getUrl();
         if (profileImageUrl == null || profileImageUrl.isBlank()) {
             log.warn("Profile image URL is null or blank");
-            return "Not Found";
+            return defaultImageUrl;
         }
 
         if (isExternalUrl(profileImageUrl)) {
@@ -32,14 +34,14 @@ public class ProfileService {
                 return fileService.generatePresignedUrlToRead(fileKey).preSignedUrl();
             } else {
                 log.warn("S3 file not found: {}", fileKey);
-                return "Not Found";
+                return defaultImageUrl;
             }
         } catch (BusinessException e) {
             log.warn("Invalid image URL provided: {}", profileImageUrl, e);
-            return "Not Found";
+            return defaultImageUrl;
         } catch (Exception e) {
             log.error("Unexpected error generating presigned URL for: {}", profileImageUrl, e);
-            return "Not Found";
+            return defaultImageUrl;
         }
     }
 
