@@ -46,7 +46,7 @@ public class UserController {
 
     @GetMapping("/{friendCode}")
     public ResponseEntity<GetUserInfoResponse> getUserInfoById(
-            @PathVariable String friendCode) {
+            @Valid @PathVariable String friendCode) {
         return ResponseEntity.ok(
                 userFacade.getUserInfoByFriendCode(friendCode)
         );

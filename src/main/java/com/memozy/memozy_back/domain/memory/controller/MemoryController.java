@@ -11,6 +11,7 @@ import com.memozy.memozy_back.domain.memory.dto.response.GetTempMemoryResponse;
 import com.memozy.memozy_back.domain.memory.service.MemoryService;
 import com.memozy.memozy_back.global.annotation.CurrentUserId;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -34,15 +35,16 @@ public class MemoryController {
     @PostMapping
     public ResponseEntity<CreateMemoryResponse> createMemory(
             @CurrentUserId Long userId,
-            @RequestBody CreateMemoryRequest request) {
+            @Valid @RequestBody CreateMemoryRequest request) {
         return ResponseEntity.ok(memoryService.createMemory(userId, request));
     }
 
     // 임시 기록 생성(서버 메모리 -> redis)
     @PostMapping("/temp")
     public ResponseEntity<CreateTempMemoryResponse> createTemporaryMemory(
-            @RequestBody CreateTempMemoryRequest request,
-            @CurrentUserId Long userId) {
+            @CurrentUserId Long userId,
+            @Valid @RequestBody CreateTempMemoryRequest request
+        ) {
         String sessionId = memoryService.createTemporaryMemory(userId, request);
         return ResponseEntity.ok(new CreateTempMemoryResponse(sessionId));
     }
@@ -50,8 +52,8 @@ public class MemoryController {
     // 임시 기록 조회(서버 메모리 -> redis)
     @GetMapping("/temp/{sessionId}/items")
     public ResponseEntity<GetTempMemoryResponse> getTemporaryMemoryItems(
-            @PathVariable String sessionId,
-            @CurrentUserId Long userId) {
+            @CurrentUserId Long userId,
+            @PathVariable String sessionId ) {
         return ResponseEntity.ok(memoryService.getTemporaryMemoryItems(sessionId, userId));
     }
 
@@ -68,7 +70,7 @@ public class MemoryController {
     public ResponseEntity<MemoryDto> updateMemoryInfo(
             @CurrentUserId Long userId,
             @PathVariable Long memoryId,
-            @RequestBody UpdateMemoryRequest request) {
+            @Valid @RequestBody UpdateMemoryRequest request) {
         return ResponseEntity.ok(memoryService.updateMemory(userId, memoryId, request));
     }
 
