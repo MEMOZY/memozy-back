@@ -28,6 +28,10 @@ public class FriendshipServiceImpl implements FriendshipService {
         User sender = getUserById(senderId);
         User receiver = getUserById(receiverId);
 
+        if (senderId.equals(receiverId)) {
+            throw new BusinessException(ErrorCode.SELF_FRIENDSHIP_EXCEPTION);
+        }
+
         if (friendshipRepository.existsFriendship(senderId, receiverId)) {
             throw new BusinessException(ErrorCode.DUPLICATE_RESOURCE_EXCEPTION);
         }
