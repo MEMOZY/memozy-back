@@ -36,10 +36,14 @@ public class UserServiceImpl implements UserService {
     public User updateUserWithInfo(Long userId, UpdateUserRequest updateUserRequest) {
         var user = userRepository.findById(userId).orElseThrow(() -> new BusinessException(
                 ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION));
-        // s3에 올라와있는지 검증
-        fileService.validateFileKey(
-                fileService.extractFileKeyFromImageUrl(updateUserRequest.profileImageUrl())
-        );
+        String profileImageUrl = updateUserRequest.profileImageUrl();
+        if (profileImageUrl != null && !profileImageUrl.isBlank()) {
+            // 수정하려는 이미지가 s3에 올라와있는지 검증
+            fileService.validateFileKey(
+                    fileService.extractFileKeyFromImageUrl(profileImageUrl)
+            );
+        }
+
         user.updateUserInfo(updateUserRequest);
         return user;
     }
