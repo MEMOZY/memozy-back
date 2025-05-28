@@ -51,11 +51,12 @@ public enum ErrorCode {
     DUPLICATED_POLICY_REQUEST_EXCEPTION(HttpStatus.BAD_REQUEST, "user-policy-agreement-1",
             "같은 약관을 한 번에 여러 번 동의할 수 없습니다."),
 
-    DUPLICATE_RESOURCE_EXCEPTION(HttpStatus.BAD_REQUEST, "user-friendship-1",
-            "이미 친구 요청을 보냈습니다."),
-
-
+    /**
+     * friendship. code prefix: friend-
+     */
     FORBIDDEN_FRIEND_ACCESS(HttpStatus.FORBIDDEN, "friend-1", "해당 유저와 친구 관계가 아닙니다."),
+    SELF_FRIENDSHIP_EXCEPTION(HttpStatus.BAD_REQUEST, "friend-2", "자기 자신에게 친구 요청을 보낼 수 없습니다."),
+    DUPLICATE_RESOURCE_EXCEPTION(HttpStatus.BAD_REQUEST, "friend-3", "이미 친구 요청을 보냈습니다."),
 
     /**
      * flask, code prefix: flask-
