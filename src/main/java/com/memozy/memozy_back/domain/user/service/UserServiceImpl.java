@@ -1,5 +1,6 @@
 package com.memozy.memozy_back.domain.user.service;
 
+import com.memozy.memozy_back.domain.file.service.FileService;
 import com.memozy.memozy_back.domain.user.domain.User;
 import com.memozy.memozy_back.domain.user.domain.UserPolicyAgreement;
 import com.memozy.memozy_back.domain.user.dto.PolicyAgreementDto;
@@ -21,7 +22,7 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final UserPolicyAgreementRepository userPolicyAgreementRepository;
-
+    private final FileService fileService;
 
     @Override
     @Transactional(readOnly = true)
@@ -35,6 +36,10 @@ public class UserServiceImpl implements UserService {
     public User updateUserWithInfo(Long userId, UpdateUserRequest updateUserRequest) {
         var user = userRepository.findById(userId).orElseThrow(() -> new BusinessException(
                 ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION));
+        // s3에 올라와있는지 검증
+        fileService.validateFileKey(
+                fileService.extractFileKeyFromImageUrl(updateUserRequest.profileImageUrl())
+        );
         user.updateUserInfo(updateUserRequest);
         return user;
     }

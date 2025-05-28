@@ -1,10 +1,14 @@
 package com.memozy.memozy_back.domain.user.facade;
 
+import com.memozy.memozy_back.domain.user.domain.User;
 import com.memozy.memozy_back.domain.user.dto.PolicyAgreementDto;
-import com.memozy.memozy_back.domain.user.dto.UserInfoDto;
+import com.memozy.memozy_back.domain.user.dto.UserDto;
 import com.memozy.memozy_back.domain.user.dto.request.UpdateUserRequest;
 import com.memozy.memozy_back.domain.user.dto.response.GetFriendCodeResponse;
 import com.memozy.memozy_back.domain.user.dto.response.GetUserInfoResponse;
+import com.memozy.memozy_back.domain.user.dto.response.GetUserProfileResponse;
+import com.memozy.memozy_back.domain.user.dto.response.UpdateUserResponse;
+import com.memozy.memozy_back.domain.user.service.ProfileService;
 import com.memozy.memozy_back.domain.user.service.UserService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -19,15 +23,24 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserFacadeImpl implements UserFacade {
 
     private final UserService userService;
+    private final ProfileService profileService;
 
     @Override
-    public UserInfoDto getUserWithInfo(Long userId) {
-        return UserInfoDto.from(userService.getById(userId));
+    public GetUserProfileResponse getUserProfile(Long userId) {
+        User user = userService.getById(userId);
+        return GetUserProfileResponse.of(
+                user,
+                profileService.generatePresignedUrlToRead(user.getProfileImageUrl())
+        );
     }
 
     @Override
-    public UserInfoDto updateUserWithInfo(Long userId, UpdateUserRequest updateUserRequest) {
-        return UserInfoDto.from(userService.updateUserWithInfo(userId, updateUserRequest));
+    public UpdateUserResponse updateUserWithInfo(Long userId, UpdateUserRequest updateUserRequest) {
+        User user = userService.updateUserWithInfo(userId, updateUserRequest);
+        return UpdateUserResponse.of(
+                user,
+                profileService.generatePresignedUrlToRead(user.getProfileImageUrl())
+        );
     }
 
     @Override

@@ -3,11 +3,12 @@ package com.memozy.memozy_back.domain.user.controller;
 import com.memozy.memozy_back.domain.user.dto.PolicyAgreementDto;
 import com.memozy.memozy_back.domain.user.dto.request.UpdatePolicyAgreementRequest;
 import com.memozy.memozy_back.domain.user.dto.request.UpdateUserRequest;
-import com.memozy.memozy_back.domain.user.dto.UserInfoDto;
 import com.memozy.memozy_back.domain.user.dto.response.GetFriendCodeResponse;
 import com.memozy.memozy_back.domain.user.dto.response.GetPolicyAgreementResponse;
 import com.memozy.memozy_back.domain.user.dto.response.GetUserInfoResponse;
+import com.memozy.memozy_back.domain.user.dto.response.GetUserProfileResponse;
 import com.memozy.memozy_back.domain.user.dto.response.UpdatePolicyAgreementResponse;
+import com.memozy.memozy_back.domain.user.dto.response.UpdateUserResponse;
 import com.memozy.memozy_back.domain.user.facade.UserFacade;
 import com.memozy.memozy_back.global.annotation.CurrentUserId;
 import com.memozy.memozy_back.global.exception.BusinessException;
@@ -36,9 +37,11 @@ public class UserController {
     private final UserFacade userFacade;
 
     @GetMapping()
-    public ResponseEntity<UserInfoDto> getUser(
+    public ResponseEntity<GetUserProfileResponse> getUser(
             @CurrentUserId Long userId) {
-        return ResponseEntity.ok(userFacade.getUserWithInfo(userId));
+        return ResponseEntity.ok(
+                userFacade.getUserProfile(userId)
+        );
     }
 
     @GetMapping("/{friendCode}")
@@ -58,10 +61,12 @@ public class UserController {
     }
 
     @PatchMapping()
-    public ResponseEntity<UserInfoDto> updateUser(
+    public ResponseEntity<UpdateUserResponse> updateUser(
             @CurrentUserId Long userId,
             @Valid @RequestBody UpdateUserRequest updateUserRequest) {
-        return ResponseEntity.ok(userFacade.updateUserWithInfo(userId, updateUserRequest));
+        return ResponseEntity.ok(
+                userFacade.updateUserWithInfo(userId, updateUserRequest)
+        );
     }
 
 
