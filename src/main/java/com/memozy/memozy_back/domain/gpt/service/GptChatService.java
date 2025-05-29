@@ -153,7 +153,7 @@ public class GptChatService {
         }
     }
 
-    public List<TempMemoryItemDto> generateFinalDiarys(String sessionId) {
+    public List<TempMemoryItemDto> generateFinalDiaries(String sessionId) {
         Memory tempMemory = loadMemory(sessionId);
 
         List<Map<String, String>> diaryList = tempMemory.getMemoryItems().stream()
