@@ -7,7 +7,8 @@ public record GetUserProfileResponse(
         String nickname,
         String profileImageUrl,
         String email,
-        String phoneNumber
+        String phoneNumber,
+        String friendCode
 ) {
 
     public static GetUserProfileResponse of(User user, String presignedUrl) {
@@ -16,7 +17,8 @@ public record GetUserProfileResponse(
                 user.getNickname(),
                 presignedUrl,
                 user.getEmail(),
-                user.getPhoneNumber()
+                user.getPhoneNumber(),
+                user.getFriendCode()
         );
     }
 }
