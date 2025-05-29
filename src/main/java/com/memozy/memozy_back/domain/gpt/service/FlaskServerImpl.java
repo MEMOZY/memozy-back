@@ -90,4 +90,27 @@ public class FlaskServerImpl implements FlaskServer {
                 .map(r -> (String) r.get("diary"))
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_RESPONSE_FLASK_SERVER));
     }
+
+    @Override
+    public List<Map<String, String>> generateFinalDiaries(String sessionId, List<Map<String, String>> diaryList) {
+        Map<String, Object> requestBody = Map.of(
+                "session_id", sessionId,
+                "diary", diaryList
+        );
+
+        log.info("Request to /final-diary: {}", requestBody);
+
+        Map<String, Object> response = webClient.post()
+                .uri("/final-diary")
+                .bodyValue(requestBody)
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+                .block();
+
+        log.info("Response from /final-diary: {}", response);
+
+        return Optional.ofNullable(response)
+                .map(r -> (List<Map<String, String>>) r.get("diary"))
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_RESPONSE_FLASK_SERVER));
+    }
 }
