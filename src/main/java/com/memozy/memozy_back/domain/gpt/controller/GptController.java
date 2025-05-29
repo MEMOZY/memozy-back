@@ -4,18 +4,11 @@ import com.memozy.memozy_back.domain.gpt.dto.request.UserAnswerRequest;
 import com.memozy.memozy_back.domain.gpt.dto.response.GetTempMemoryItems;
 import com.memozy.memozy_back.domain.gpt.service.GptChatService;
 import com.memozy.memozy_back.global.annotation.CurrentUserId;
-import com.memozy.memozy_back.global.exception.BusinessException;
-import com.memozy.memozy_back.global.exception.ErrorCode;
-import com.memozy.memozy_back.global.exception.ErrorResponse;
 import com.memozy.memozy_back.global.redis.SessionManager;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.HttpServletRequest;
-import java.io.IOException;
-import java.util.concurrent.Executors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -61,7 +54,7 @@ public class GptController {
         sessionManager.validateSessionOwner(userId, sessionId);
         return ResponseEntity.ok(
                 GetTempMemoryItems.from(
-                        gptChatService.generateFinalDiarys(sessionId)
+                        gptChatService.generateFinalDiaries(sessionId)
                 )
         );
     }
