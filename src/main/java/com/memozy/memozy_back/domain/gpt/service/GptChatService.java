@@ -2,7 +2,6 @@ package com.memozy.memozy_back.domain.gpt.service;
 
 import com.memozy.memozy_back.domain.file.service.FileService;
 import com.memozy.memozy_back.domain.gpt.constant.PromptText;
-import com.memozy.memozy_back.domain.gpt.dto.ChatMessage;
 import com.memozy.memozy_back.domain.gpt.dto.request.UserAnswerRequest;
 import com.memozy.memozy_back.domain.memory.domain.Memory;
 import com.memozy.memozy_back.domain.memory.domain.MemoryItem;
@@ -152,6 +151,41 @@ public class GptChatService {
                     "message", "일기 생성이 완료되었습니다."
             )));
         }
+    }
+
+    public List<TempMemoryItemDto> generateFinalDiarys(String sessionId) {
+        Memory tempMemory = loadMemory(sessionId);
+
+        List<Map<String, String>> diaryList = tempMemory.getMemoryItems().stream()
+                .map(item -> Map.of("caption_id", item.getTempId(), "caption", item.getContent()))
+                .toList();
+
+        List<Map<String, String>> improvedDiaries = flaskServer.generateFinalDiaries(sessionId, diaryList);
+
+        List<TempMemoryItemDto> updatedItems = improvedDiaries.stream()
+                .map(entry -> {
+                    String captionId = entry.get("caption_id");
+                    String improvedCaption = entry.get("caption");
+                    MemoryItem originalItem = tempMemory.getMemoryItems().stream()
+                            .filter(item -> item.getTempId().equals(captionId))
+                            .findFirst()
+                            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION));
+                    return new TempMemoryItemDto(
+                            originalItem.getTempId(),
+                            getPresignedUrl(originalItem.getFileKey()),  // presignedUrl 필요하다면
+                            improvedCaption,
+                            originalItem.getSequence()
+                    );
+                })
+                .toList();
+
+        TempMemoryDto updatedDto = new TempMemoryDto(
+                tempMemory.getOwner().getId(),
+                updatedItems
+        );
+        temporaryMemoryStore.save(sessionId, updatedDto);
+
+        return updatedItems;
     }
 
     private Memory loadMemory(String sessionId) {
