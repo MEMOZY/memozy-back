@@ -156,37 +156,49 @@ public class GptChatService {
     public List<TempMemoryItemDto> generateFinalDiaries(String sessionId) {
         Memory tempMemory = loadMemory(sessionId);
 
-        List<Map<String, String>> diaryList = tempMemory.getMemoryItems().stream()
-                .map(item -> Map.of("caption_id", item.getTempId(), "caption", item.getContent()))
-                .toList();
+        List<Map<String, String>> diaryList = buildDiaryRequestList(tempMemory);
 
         List<Map<String, String>> improvedDiaries = flaskServer.generateFinalDiaries(sessionId, diaryList);
 
         List<TempMemoryItemDto> updatedItems = improvedDiaries.stream()
-                .map(entry -> {
-                    String captionId = entry.get("caption_id");
-                    String improvedCaption = entry.get("caption");
-                    log.warn("향상된 일기 생성 실패 - {}", entry.get("warning"));
-                    MemoryItem originalItem = tempMemory.getMemoryItems().stream()
-                            .filter(item -> item.getTempId().equals(captionId))
-                            .findFirst()
-                            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION));
-                    return new TempMemoryItemDto(
-                            originalItem.getTempId(),
-                            getPresignedUrl(originalItem.getFileKey()),  // presignedUrl 필요하다면
-                            improvedCaption,
-                            originalItem.getSequence()
-                    );
-                })
+                .map(entry -> buildUpdatedItem(entry, tempMemory))
                 .toList();
 
-        TempMemoryDto updatedDto = new TempMemoryDto(
-                tempMemory.getOwner().getId(),
-                updatedItems
-        );
+        TempMemoryDto updatedDto = new TempMemoryDto(tempMemory.getOwner().getId(), updatedItems);
         temporaryMemoryStore.save(sessionId, updatedDto);
 
         return updatedItems;
+    }
+
+    private List<Map<String, String>> buildDiaryRequestList(Memory tempMemory) {
+        return tempMemory.getMemoryItems().stream()
+                .map(item -> Map.of("caption_id", item.getTempId(), "caption", item.getContent()))
+                .toList();
+    }
+
+    private TempMemoryItemDto buildUpdatedItem(Map<String, String> entry, Memory tempMemory) {
+        String captionId = entry.get("caption_id");
+        String improvedCaption = entry.get("caption");
+
+        if (entry.containsKey("warning")) {
+            log.warn("향상된 일기 생성 실패 - {}", entry.get("warning"));
+        }
+
+        MemoryItem originalItem = findMemoryItemByTempId(tempMemory, captionId);
+
+        return new TempMemoryItemDto(
+                originalItem.getTempId(),
+                getPresignedUrl(originalItem.getFileKey()),
+                improvedCaption,
+                originalItem.getSequence()
+        );
+    }
+
+    private MemoryItem findMemoryItemByTempId(Memory tempMemory, String tempId) {
+        return tempMemory.getMemoryItems().stream()
+                .filter(item -> item.getTempId().equals(tempId))
+                .findFirst()
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION));
     }
 
     private Memory loadMemory(String sessionId) {
