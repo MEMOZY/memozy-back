@@ -166,6 +166,7 @@ public class GptChatService {
                 .map(entry -> {
                     String captionId = entry.get("caption_id");
                     String improvedCaption = entry.get("caption");
+                    log.warn("향상된 일기 생성 실패 - {}", entry.get("warning"));
                     MemoryItem originalItem = tempMemory.getMemoryItems().stream()
                             .filter(item -> item.getTempId().equals(captionId))
                             .findFirst()
