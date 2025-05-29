@@ -3,7 +3,6 @@ package com.memozy.memozy_back.domain.user.controller;
 import com.memozy.memozy_back.domain.user.dto.PolicyAgreementDto;
 import com.memozy.memozy_back.domain.user.dto.request.UpdatePolicyAgreementRequest;
 import com.memozy.memozy_back.domain.user.dto.request.UpdateUserRequest;
-import com.memozy.memozy_back.domain.user.dto.response.GetFriendCodeResponse;
 import com.memozy.memozy_back.domain.user.dto.response.GetPolicyAgreementResponse;
 import com.memozy.memozy_back.domain.user.dto.response.GetUserInfoResponse;
 import com.memozy.memozy_back.domain.user.dto.response.GetUserProfileResponse;
@@ -40,7 +39,7 @@ public class UserController {
     public ResponseEntity<GetUserProfileResponse> getUser(
             @CurrentUserId Long userId) {
         return ResponseEntity.ok(
-                userFacade.getUserProfile(userId)
+                userFacade.getUser(userId)
         );
     }
 
@@ -52,13 +51,13 @@ public class UserController {
         );
     }
 
-    @GetMapping("/friend-code")
-    public ResponseEntity<GetFriendCodeResponse> getFriendCode(
-            @CurrentUserId Long userId) {
-        return  ResponseEntity.ok(
-                userFacade.getFriendCode(userId)
-        );
-    }
+//    @GetMapping("/friend-code")
+//    public ResponseEntity<GetFriendCodeResponse> getFriendCode(
+//            @CurrentUserId Long userId) {
+//        return  ResponseEntity.ok(
+//                userFacade.getFriendCode(userId)
+//        );
+//    }
 
     @PatchMapping()
     public ResponseEntity<UpdateUserResponse> updateUser(

@@ -26,7 +26,7 @@ public class UserFacadeImpl implements UserFacade {
     private final ProfileService profileService;
 
     @Override
-    public GetUserProfileResponse getUserProfile(Long userId) {
+    public GetUserProfileResponse getUser(Long userId) {
         User user = userService.getById(userId);
         return GetUserProfileResponse.of(
                 user,

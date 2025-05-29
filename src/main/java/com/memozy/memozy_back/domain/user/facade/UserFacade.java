@@ -1,7 +1,6 @@
 package com.memozy.memozy_back.domain.user.facade;
 
 import com.memozy.memozy_back.domain.user.dto.PolicyAgreementDto;
-import com.memozy.memozy_back.domain.user.dto.UserDto;
 import com.memozy.memozy_back.domain.user.dto.request.UpdateUserRequest;
 import com.memozy.memozy_back.domain.user.dto.response.GetFriendCodeResponse;
 import com.memozy.memozy_back.domain.user.dto.response.GetUserInfoResponse;
@@ -11,7 +10,7 @@ import java.util.List;
 
 public interface UserFacade {
 
-    GetUserProfileResponse getUserProfile(Long userId);
+    GetUserProfileResponse getUser(Long userId);
 
     UpdateUserResponse updateUserWithInfo(Long userId, UpdateUserRequest updateUserRequest);
 
