@@ -153,6 +153,9 @@ public class GptChatService {
         }
     }
 
+    /*
+     ** 최종 일기 생성 요청을 Flask 서버에 보내고, 결과를 받아서 임시 메모리에 저장합니다.
+     */
     public List<TempMemoryItemDto> generateFinalDiaries(String sessionId) {
         Memory tempMemory = loadMemory(sessionId);
 
@@ -170,9 +173,27 @@ public class GptChatService {
         return updatedItems;
     }
 
+    private MemoryItem getFirstMemoryItem(Memory memory) {
+        return memory.getMemoryItems().stream()
+                .sorted(Comparator.comparingInt(MemoryItem::getSequence))
+                .findFirst()
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION));
+    }
+
+    private MemoryItem getMemoryItemById(Memory memory, String memoryItemTempId) {
+        return memory.getMemoryItems().stream()
+                .filter(item -> item.getTempId().equals(memoryItemTempId))
+                .findFirst()
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION));
+    }
+
     private List<Map<String, String>> buildDiaryRequestList(Memory tempMemory) {
         return tempMemory.getMemoryItems().stream()
-                .map(item -> Map.of("caption_id", item.getTempId(), "caption", item.getContent()))
+                .sorted(Comparator.comparingInt(MemoryItem::getSequence)) // sequence 오름차순 정렬
+                .map(item -> Map.of(
+                        "caption_id", item.getTempId(),
+                        "caption", item.getContent()
+                ))
                 .toList();
     }
 
@@ -209,23 +230,11 @@ public class GptChatService {
         return memory;
     }
 
-    private MemoryItem getFirstMemoryItem(Memory memory) {
-        return memory.getMemoryItems().stream()
-                .sorted(Comparator.comparingInt(MemoryItem::getSequence))
-                .findFirst()
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION));
-    }
-
-    private MemoryItem getMemoryItemById(Memory memory, String memoryItemTempId) {
-        return memory.getMemoryItems().stream()
-                .filter(item -> item.getTempId().equals(memoryItemTempId))
-                .findFirst()
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION));
-    }
 
     private String getPresignedUrl(String fileKey) {
         return fileService.generatePresignedUrlToRead(fileKey).preSignedUrl();
     }
+
 
     private void sendEmitterPayload(SseEmitter emitter, String type, String memoryItemTempId,
             String message, String presignedUrl) throws IOException {
@@ -237,4 +246,6 @@ public class GptChatService {
         );
         emitter.send(SseEmitter.event().name(type).data(payload));
     }
+
+
 }
