@@ -5,6 +5,7 @@ import com.memozy.memozy_back.global.exception.ErrorCode;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
@@ -109,8 +110,22 @@ public class FlaskServerImpl implements FlaskServer {
 
         log.info("Response from /final-diary: {}", response);
 
-        return Optional.ofNullable(response)
-                .map(r -> (List<Map<String, String>>) r.get("diary"))
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_RESPONSE_FLASK_SERVER));
+        Object diaryObj = response != null ? response.get("diary") : null;
+        if (!(diaryObj instanceof List<?> diaryRawList)) {
+            throw new BusinessException(ErrorCode.NOT_RESPONSE_FLASK_SERVER);
+        }
+
+        return diaryRawList.stream()
+                .filter(e -> e instanceof Map)
+                .map(e -> {
+                    Map<?, ?> rawMap = (Map<?, ?>) e;
+
+                    return rawMap.entrySet().stream()
+                            .collect(Collectors.toMap(
+                                    entry -> String.valueOf(entry.getKey()),
+                                    entry -> entry.getValue() != null ? String.valueOf(entry.getValue()) : ""
+                            ));
+                })
+                .toList();
     }
 }
