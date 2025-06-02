@@ -52,7 +52,6 @@ public class FlaskServerImpl implements FlaskServer {
                     if (!isCompleted.get()) {
                         try {
                             sendEmitterPayload(emitter, "reply", memoryItemTempId, chunk, presignedImageUrl);
-                            emitter.send(SseEmitter.event().comment("ping"));
                         } catch (IllegalStateException ex) {
                             log.warn("SSEEmitter already completed, skipping send: {}", ex.getMessage());
                         } catch (IOException e) {
@@ -109,7 +108,6 @@ public class FlaskServerImpl implements FlaskServer {
 
                     try {
                         sendEmitterPayload(emitter, "reply", memoryItemTempId, chunk, presignedUrl);
-                        emitter.send(SseEmitter.event().comment("ping"));
                         log.info("✅ SPRING SENT reply chunk: {}", chunk);
                     } catch (IllegalStateException ex) {
                         log.warn("SSEEmitter already completed, skipping send: {}", ex.getMessage());
