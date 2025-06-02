@@ -100,6 +100,14 @@ public class FlaskServerImpl implements FlaskServer {
                     }
 
                     completeReply.append(chunk);
+
+                    try {
+                        sendEmitterPayload(emitter, "reply", memoryItemTempId, chunk, presignedUrl);
+                    } catch (IllegalStateException ex) {
+                        log.warn("SSEEmitter already completed, skipping send: {}", ex.getMessage());
+                    } catch (IOException e) {
+                        log.error("SSE 전송 중 IOException 발생", e);
+                    }
                 })
                 .doOnError(e -> {
                     log.error("❌ SPRING ERROR: {}", e.getMessage());
