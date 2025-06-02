@@ -41,13 +41,13 @@ public class TemporaryChatStore {
 
     public void addUserMessage(String sessionId, String memoryItemId, String content) {
         Map<String, Map<String, List<String>>> sessionChats = getChatsAll(sessionId);
-        sessionChats.computeIfAbsent(memoryItemId, k -> initRoleMap()).get("user").add(content);
+        sessionChats.computeIfAbsent(memoryItemId, k -> initRoleMap()).get("user").add(cleanContent(content));
         chatRedisTemplate.opsForValue().set(sessionId, sessionChats, TTL);
     }
 
     public void addAssistantMessage(String sessionId, String memoryItemId, String content) {
         Map<String, Map<String, List<String>>> sessionChats = getChatsAll(sessionId);
-        sessionChats.computeIfAbsent(memoryItemId, k -> initRoleMap()).get("assistant").add(content);
+        sessionChats.computeIfAbsent(memoryItemId, k -> initRoleMap()).get("assistant").add(cleanContent(content));
         chatRedisTemplate.opsForValue().set(sessionId, sessionChats, TTL);
     }
 
@@ -79,5 +79,9 @@ public class TemporaryChatStore {
         roleMap.put("user", new ArrayList<>());
         roleMap.put("assistant", new ArrayList<>());
         return roleMap;
+    }
+
+    private String cleanContent(String content) {
+        return content.replace("[DONE]", "").trim();
     }
 }
