@@ -110,21 +110,23 @@ public class FlaskServerImpl implements FlaskServer {
                 .doOnComplete(() -> {
                     log.info("✅ SPRING STREAM COMPLETE");
 
-                    // 마지막에 전체 reply 합본 or 종료 신호 전송
                     String finalMessage = completeReply.toString();
-                    if (!isCompleted.get()) {
-                        try {
-                            sendEmitterPayload(emitter, "reply", memoryItemTempId, finalMessage, presignedUrl);
-                            log.info("✅ SPRING SENT FINAL reply");
-                        } catch (IllegalStateException ex) {
-                            log.warn("SSEEmitter already completed, skipping final send: {}", ex.getMessage());
-                        } catch (IOException e) {
-                            log.error("SSE 전송 중 IOException 발생", e);
-                        }
+
+                    try {
+                        sendEmitterPayload(emitter, "reply", memoryItemTempId, finalMessage, presignedUrl);
+                        log.info("✅ SPRING SENT FINAL reply");
+                    } catch (IllegalStateException ex) {
+                        log.warn("SSEEmitter already completed, skipping final send: {}", ex.getMessage());
+                    } catch (IOException e) {
+                        log.error("SSE 전송 중 IOException 발생", e);
                     }
 
                     // Redis에 저장 (이건 기존처럼 유지)
                     temporaryChatStore.addAssistantMessage(sessionId, memoryItemTempId, finalMessage);
+
+                    if (isCompleted.compareAndSet(false, true)) {
+                        emitter.complete();
+                    }
                 })
                 .subscribe();
     }
