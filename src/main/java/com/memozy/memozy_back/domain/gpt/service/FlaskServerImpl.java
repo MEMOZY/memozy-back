@@ -38,6 +38,7 @@ public class FlaskServerImpl implements FlaskServer {
                 .retrieve()
                 .bodyToFlux(String.class)
                 .doOnNext(chunk -> {
+                    log.info("✅ /image received chunk: {}", chunk);
                     completeReply.append(chunk);
                     try {
                         emitter.send(SseEmitter.event().name("reply").data(chunk));
@@ -83,6 +84,7 @@ public class FlaskServerImpl implements FlaskServer {
                 .retrieve()
                 .bodyToFlux(String.class)
                 .doOnNext(chunk -> {
+                    log.info("✅ /message received chunk: {}", chunk);
                     completeReply.append(chunk);
                     try {
                         emitter.send(SseEmitter.event().name("reply").data(chunk));
