@@ -43,10 +43,15 @@ public class FlaskServerImpl implements FlaskServer {
                 .bodyToFlux(String.class)
                 .doOnNext(chunk -> {
                     log.info("✅ /image received chunk: {}", chunk);
+                    if (chunk.contains("[DONE]")) {
+                        log.info("✅ Detected [DONE], skipping send to client");
+                        return;  // [DONE] 신호는 클라이언트로 흘려보내지 않음
+                    }
+
                     completeReply.append(chunk);
                     if (!isCompleted.get()) {
                         try {
-                            sendEmitterPayload(emitter, "image", memoryItemTempId, chunk, presignedImageUrl);
+                            sendEmitterPayload(emitter, "reply", memoryItemTempId, chunk, presignedImageUrl);
                         } catch (IllegalStateException ex) {
                             log.warn("SSEEmitter already completed, skipping send: {}", ex.getMessage());
                         } catch (IOException e) {
