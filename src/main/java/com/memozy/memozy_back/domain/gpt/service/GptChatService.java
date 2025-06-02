@@ -2,6 +2,7 @@ package com.memozy.memozy_back.domain.gpt.service;
 
 import com.memozy.memozy_back.domain.file.service.FileService;
 import com.memozy.memozy_back.domain.gpt.constant.PromptText;
+import com.memozy.memozy_back.domain.gpt.dto.EmitterPayloadDto;
 import com.memozy.memozy_back.domain.gpt.dto.request.UserAnswerRequest;
 import com.memozy.memozy_back.domain.memory.domain.Memory;
 import com.memozy.memozy_back.domain.memory.domain.MemoryItem;
@@ -19,6 +20,7 @@ import java.util.concurrent.Executors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @Service
@@ -30,6 +32,7 @@ public class GptChatService {
     private final FileService fileService;
     private final TemporaryChatStore temporaryChatStore;
     private final FlaskServer flaskServer;
+    private final WebClient webClient = WebClient.create("http://memozy-ai:5000");
 
     public void generateInitialPrompts(String sessionId, SseEmitter emitter) {
         Executors.newSingleThreadExecutor().submit(() -> {
@@ -43,7 +46,7 @@ public class GptChatService {
         });
     }
 
-    private void handleInitialPrompt(String sessionId, SseEmitter emitter) throws IOException {
+    private void handleInitialPrompt(String sessionId, SseEmitter emitter) {
         Memory memory = loadMemory(sessionId);
         MemoryItem firstItem = getFirstMemoryItem(memory);
 
@@ -51,12 +54,25 @@ public class GptChatService {
         temporaryChatStore.initChat(sessionId, firstItem.getTempId());
 
         String presignedUrl = getPresignedUrl(firstItem.getFileKey());
-        String firstQuestion = flaskServer.initiateChatWithImageUrl(sessionId, presignedUrl);
 
-        temporaryChatStore.addAssistantMessage(sessionId, firstItem.getTempId(), firstQuestion);
-
-        sendEmitterPayload(emitter, "question", firstItem.getTempId(), firstQuestion, presignedUrl);
+        // ✅ streaming 메서드로 교체
+        flaskServer.initiateChatWithImageUrl(sessionId, presignedUrl, firstItem.getTempId(), emitter);
     }
+
+//    private void handleInitialPrompt(String sessionId, SseEmitter emitter) throws IOException {
+//        Memory memory = loadMemory(sessionId);
+//        MemoryItem firstItem = getFirstMemoryItem(memory);
+//
+//        temporaryChatStore.initSession(sessionId);
+//        temporaryChatStore.initChat(sessionId, firstItem.getTempId());
+//
+//        String presignedUrl = getPresignedUrl(firstItem.getFileKey());
+//        String firstQuestion = flaskServer.initiateChatWithImageUrl(sessionId, presignedUrl);
+//
+//        temporaryChatStore.addAssistantMessage(sessionId, firstItem.getTempId(), firstQuestion);
+//
+//        sendEmitterPayload(emitter, "question", firstItem.getTempId(), firstQuestion, presignedUrl);
+//    }
 
     public void handleUserAnswer(String sessionId, UserAnswerRequest request, SseEmitter emitter) {
         Executors.newSingleThreadExecutor().submit(() -> {
@@ -140,11 +156,12 @@ public class GptChatService {
             String nextPresignedUrl = getPresignedUrl(nextItem.getFileKey());
 
             // 다음 질문 뽑을 때 initiateChatWithImageUrl 사용
-            String nextQuestion = flaskServer.initiateChatWithImageUrl(sessionId, nextPresignedUrl);
-
-            temporaryChatStore.addAssistantMessage(sessionId, nextItem.getTempId(), nextQuestion);
-
-            sendEmitterPayload(emitter, "question", nextItem.getTempId(), nextQuestion, nextPresignedUrl);
+//            String nextQuestion = flaskServer.initiateChatWithImageUrl(sessionId, nextPresignedUrl, emitter);
+//
+//            temporaryChatStore.addAssistantMessage(sessionId, nextItem.getTempId(), nextQuestion);
+//
+//            sendEmitterPayload(emitter, "question", nextItem.getTempId(), nextQuestion, nextPresignedUrl);
+            flaskServer.initiateChatWithImageUrl(sessionId, nextPresignedUrl, nextItem.getTempId(), emitter);
         } else {
             emitter.send(SseEmitter.event().name("done").data(Map.of(
                     "type", "done",
@@ -238,11 +255,11 @@ public class GptChatService {
 
     private void sendEmitterPayload(SseEmitter emitter, String type, String memoryItemTempId,
             String message, String presignedUrl) throws IOException {
-        Map<String, Object> payload = Map.of(
-                "memoryItemTempId", memoryItemTempId,
-                "type", type,
-                "message", message,
-                "presignedUrl", presignedUrl
+        EmitterPayloadDto payload = new EmitterPayloadDto(
+                memoryItemTempId,
+                type,
+                message,
+                presignedUrl
         );
         emitter.send(SseEmitter.event().name(type).data(payload));
     }

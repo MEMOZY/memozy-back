@@ -6,6 +6,7 @@ import com.memozy.memozy_back.domain.user.dto.response.GetFriendCodeResponse;
 import com.memozy.memozy_back.domain.user.dto.response.GetUserInfoResponse;
 import com.memozy.memozy_back.domain.user.dto.response.GetUserProfileResponse;
 import com.memozy.memozy_back.domain.user.dto.response.UpdateUserResponse;
+import jakarta.validation.Valid;
 import java.util.List;
 
 public interface UserFacade {
@@ -25,4 +26,6 @@ public interface UserFacade {
 
     // 친구 코드 조회
     GetFriendCodeResponse getFriendCode(Long userId);
+
+    GetUserInfoResponse getUserInfoById(@Valid Long userId);
 }

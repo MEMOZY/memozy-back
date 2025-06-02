@@ -72,7 +72,14 @@ public class UserFacadeImpl implements UserFacade {
     }
 
     @Override
+    public GetUserInfoResponse getUserInfoById(Long userId) {
+        return GetUserInfoResponse.from(userService.getById(userId));
+
+    }
+
+    @Override
     public GetFriendCodeResponse getFriendCode(Long userId) {
         return GetFriendCodeResponse.from(userService.getFriendCode(userId));
     }
+
 }
