@@ -46,7 +46,7 @@ public class FlaskServerImpl implements FlaskServer {
                     completeReply.append(chunk);
                     if (!isCompleted.get()) {
                         try {
-                            emitter.send(SseEmitter.event().name("reply").data(chunk));
+                            sendEmitterPayload(emitter, "image", memoryItemTempId, chunk, presignedImageUrl);
                         } catch (IllegalStateException ex) {
                             log.warn("SSEEmitter already completed, skipping send: {}", ex.getMessage());
                         } catch (IOException e) {
@@ -85,11 +85,11 @@ public class FlaskServerImpl implements FlaskServer {
                         "message", userMessage
                 ))
                 .retrieve()
-                .bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {})
+                .bodyToFlux(String.class)
+                .filter(chunk -> chunk != null && !chunk.trim().isEmpty())
                 .doOnSubscribe(sub -> log.info("✅ SPRING SUBSCRIBED to /message stream"))
-                .doOnNext(event -> {
-                    String chunk = event.data();
-                    log.info("✅ SPRING RECEIVED SSE chunk: {}", chunk);
+                .doOnNext(chunk -> {
+                    log.info("✅ /message received chunk: {}", chunk);
                     completeReply.append(chunk);
                     if (!isCompleted.get()) {
                         try {
