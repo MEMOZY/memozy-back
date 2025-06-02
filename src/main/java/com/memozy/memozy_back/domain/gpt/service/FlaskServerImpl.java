@@ -76,6 +76,9 @@ public class FlaskServerImpl implements FlaskServer {
         StringBuilder completeReply = new StringBuilder();
         AtomicBoolean isCompleted = new AtomicBoolean(false);
 
+        log.info("✅ SPRING PREPARED body: sessionId={}, presignedUrl={}, history={}, userMessage={}",
+                sessionId, presignedUrl, history, userMessage);
+
         webClient.post()
                 .uri("/message")
                 .bodyValue(Map.of(
