@@ -92,15 +92,9 @@ public class GptChatService {
         }
 
         String presignedUrl = getPresignedUrl(currentItem.getFileKey());
+        Map<String, List<String>> messageHistoryByRole = temporaryChatStore.getChatHistorySplitByRole(sessionId, memoryItemTempId);
 
-        // ✅ 유저 메시지는 여기서 Redis 저장
         temporaryChatStore.addUserMessage(sessionId, memoryItemTempId, userMessage);
-
-        // ✅ 새로운 방식: Redis에서 역할별 메시지 리스트 가져오기
-        Map<String, List<String>> messageHistoryByRole = Map.of(
-                "user", temporaryChatStore.getMessages(sessionId, memoryItemTempId, "user"),
-                "assistant", temporaryChatStore.getMessages(sessionId, memoryItemTempId, "assistant")
-        );
 
         boolean isEndCommand = PromptText.GENERATE_STORY.getText().equalsIgnoreCase(userMessage);
         boolean isThirdTurn = temporaryChatStore.getTurnCount(sessionId, memoryItemTempId) >= 3;
