@@ -84,6 +84,7 @@ public class FlaskServerImpl implements FlaskServer {
                 ))
                 .retrieve()
                 .bodyToFlux(String.class)
+                .doOnSubscribe(sub -> log.info("✅ SPRING SUBSCRIBED to /message stream"))
                 .doOnNext(chunk -> {
                     log.info("✅ /message received chunk: {}", chunk);
                     completeReply.append(chunk);
@@ -112,6 +113,7 @@ public class FlaskServerImpl implements FlaskServer {
                 })
                 .subscribe();
     }
+
     @Override
     public String generateDiaryFromChatAndImageUrl(String sessionId, Map<String, List<String>> history, String presignedUrl) {
         Map<String, Object> requestBody = Map.of(
