@@ -124,12 +124,10 @@ public class FlaskServerImpl implements FlaskServer {
                     temporaryChatStore.addAssistantMessage(sessionId, memoryItemTempId, finalMessage);
 
                     try {
-                        // 최종 합본 메시지 전송 (optional, 이미 청크로 다 보냈다면 생략 가능)
-                        sendEmitterPayload(emitter, "reply", memoryItemTempId, finalMessage, presignedUrl);
                         log.info("✅ SPRING SENT FINAL reply");
 
                         // 마지막 완료 신호 전송
-                        sendEmitterPayload(emitter, "question", memoryItemTempId, "응답이 완료됐습니다.", presignedUrl);
+                        sendEmitterPayload(emitter, "done", memoryItemTempId, "응답이 완료됐습니다.", presignedUrl);
                         log.info("✅ SPRING SENT FINAL completion notice");
                     } catch (IllegalStateException ex) {
                         log.warn("SSEEmitter already completed, skipping final send: {}", ex.getMessage());
