@@ -40,7 +40,9 @@ public class FlaskServerImpl implements FlaskServer {
                 .doOnNext(chunk -> {
                     completeReply.append(chunk);
                     try {
-                        emitter.send(SseEmitter.event().name("question").data(chunk));
+                        emitter.send(SseEmitter.event().name("reply").data(chunk));
+                    } catch (IllegalStateException e) {
+                        log.warn("SSEEmitter already completed, skipping send: {}", e.getMessage());
                     } catch (IOException e) {
                         log.error("SSE 전송 중 오류 발생", e);
                         emitter.completeWithError(e);
@@ -48,12 +50,20 @@ public class FlaskServerImpl implements FlaskServer {
                 })
                 .doOnError(e -> {
                     log.error("Flask 요청 중 오류 발생", e);
-                    emitter.completeWithError(e);
+                    try {
+                        emitter.completeWithError(e);
+                    } catch (IllegalStateException ex) {
+                        log.warn("SSEEmitter already completed during completeWithError: {}", ex.getMessage());
+                    }
                 })
                 .doOnComplete(() -> {
                     log.info("Flask 스트리밍 완료, 최종 메시지 Redis 저장");
                     temporaryChatStore.addAssistantMessage(sessionId, memoryItemTempId, completeReply.toString());
-                    emitter.complete();
+                    try {
+                        emitter.complete();
+                    } catch (IllegalStateException ex) {
+                        log.warn("SSEEmitter already completed during complete: {}", ex.getMessage());
+                    }
                 })
                 .subscribe();
     }
@@ -76,23 +86,36 @@ public class FlaskServerImpl implements FlaskServer {
                     completeReply.append(chunk);
                     try {
                         emitter.send(SseEmitter.event().name("reply").data(chunk));
+                    } catch (IllegalStateException ex) {
+                        log.warn("SSEEmitter already completed, skipping send: {}", ex.getMessage());
                     } catch (IOException e) {
-                        log.error("SSE 전송 중 오류 발생", e);
-                        emitter.completeWithError(e);
+                        log.error("SSE 전송 중 IOException 발생", e);
+                        try {
+                            emitter.completeWithError(e);
+                        } catch (IllegalStateException ex2) {
+                            log.warn("SSEEmitter already completed during completeWithError: {}", ex2.getMessage());
+                        }
                     }
                 })
                 .doOnError(e -> {
                     log.error("Flask 요청 중 오류 발생", e);
-                    emitter.completeWithError(e);
+                    try {
+                        emitter.completeWithError(e);
+                    } catch (IllegalStateException ex) {
+                        log.warn("SSEEmitter already completed during completeWithError: {}", ex.getMessage());
+                    }
                 })
                 .doOnComplete(() -> {
                     log.info("Flask 스트리밍 완료, 최종 메시지 Redis 저장");
                     temporaryChatStore.addAssistantMessage(sessionId, memoryItemTempId, completeReply.toString());
-                    emitter.complete();
+                    try {
+                        emitter.complete();
+                    } catch (IllegalStateException ex) {
+                        log.warn("SSEEmitter already completed during complete: {}", ex.getMessage());
+                    }
                 })
                 .subscribe();
     }
-
     @Override
     public String generateDiaryFromChatAndImageUrl(String sessionId, Map<String, List<String>> history, String presignedUrl) {
         Map<String, Object> requestBody = Map.of(
