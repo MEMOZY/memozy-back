@@ -61,7 +61,7 @@ public enum ErrorCode {
     /**
      * flask, code prefix: flask-
      */
-    NOT_RESPONSE_FLASK_SERVER(HttpStatus.BAD_GATEWAY, "flask-1", "Flask 서버에서 유효한 응답을 받지 못했습니다."),
+    NO_RESPONSE_FLASK_SERVER(HttpStatus.BAD_GATEWAY, "flask-1", "Flask 서버에서 유효한 응답을 받지 못했습니다."),
 
     /**
      * chat, code prefix: chat-

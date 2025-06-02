@@ -2,6 +2,8 @@ package com.memozy.memozy_back.domain.gpt.service;
 
 import com.memozy.memozy_back.global.exception.BusinessException;
 import com.memozy.memozy_back.global.exception.ErrorCode;
+import com.memozy.memozy_back.global.redis.TemporaryChatStore;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -11,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @Component
 @Slf4j
@@ -18,29 +21,41 @@ import org.springframework.web.reactive.function.client.WebClient;
 public class FlaskServerImpl implements FlaskServer {
 
     private final WebClient webClient = WebClient.create("http://memozy-ai:5000");
+    private final TemporaryChatStore temporaryChatStore;
 
     @Override
-    public String initiateChatWithImageUrl(String sessionId, String presignedImageUrl) {
-        Map<String, Object> requestBody = Map.of(
-                "session_id", sessionId,
-                "img_url", presignedImageUrl,
-                "history", Map.of("user", List.of(), "assistant", List.of())
-        );
+    public void initiateChatWithImageUrl(String sessionId, String presignedImageUrl,
+            String memoryItemTempId, SseEmitter emitter) {
+        StringBuilder completeReply = new StringBuilder();
 
-        log.info("Request to /image: {}", requestBody);
-
-        Map<String, Object> response = webClient.post()
+        webClient.post()
                 .uri("/image")
-                .bodyValue(requestBody)
+                .bodyValue(Map.of(
+                        "session_id", sessionId,
+                        "img_url", presignedImageUrl,
+                        "history", Map.of("user", List.of(), "assistant", List.of())
+                ))
                 .retrieve()
-                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
-                .block();
-
-        log.info("Response from /image: {}", response);
-
-        return Optional.ofNullable(response)
-                .map(r -> (String) r.get("message"))
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_RESPONSE_FLASK_SERVER));
+                .bodyToFlux(String.class)
+                .doOnNext(chunk -> {
+                    completeReply.append(chunk);
+                    try {
+                        emitter.send(SseEmitter.event().name("question").data(chunk));
+                    } catch (IOException e) {
+                        log.error("SSE 전송 중 오류 발생", e);
+                        emitter.completeWithError(e);
+                    }
+                })
+                .doOnError(e -> {
+                    log.error("Flask 요청 중 오류 발생", e);
+                    emitter.completeWithError(e);
+                })
+                .doOnComplete(() -> {
+                    log.info("Flask 스트리밍 완료, 최종 메시지 Redis 저장");
+                    temporaryChatStore.addAssistantMessage(sessionId, memoryItemTempId, completeReply.toString());
+                    emitter.complete();
+                })
+                .subscribe();
     }
 
     @Override
@@ -65,7 +80,7 @@ public class FlaskServerImpl implements FlaskServer {
 
         return Optional.ofNullable(response)
                 .map(r -> (String) r.get("message"))
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_RESPONSE_FLASK_SERVER));
+                .orElseThrow(() -> new BusinessException(ErrorCode.NO_RESPONSE_FLASK_SERVER));
     }
 
     @Override
@@ -89,7 +104,7 @@ public class FlaskServerImpl implements FlaskServer {
 
         return Optional.ofNullable(response)
                 .map(r -> (String) r.get("diary"))
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_RESPONSE_FLASK_SERVER));
+                .orElseThrow(() -> new BusinessException(ErrorCode.NO_RESPONSE_FLASK_SERVER));
     }
 
     @Override
@@ -112,7 +127,7 @@ public class FlaskServerImpl implements FlaskServer {
 
         Object diaryObj = response != null ? response.get("diary") : null;
         if (!(diaryObj instanceof List<?> diaryRawList)) {
-            throw new BusinessException(ErrorCode.NOT_RESPONSE_FLASK_SERVER);
+            throw new BusinessException(ErrorCode.NO_RESPONSE_FLASK_SERVER);
         }
 
         return diaryRawList.stream()
