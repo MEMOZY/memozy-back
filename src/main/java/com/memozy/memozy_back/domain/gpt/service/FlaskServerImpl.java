@@ -1,5 +1,6 @@
 package com.memozy.memozy_back.domain.gpt.service;
 
+import com.memozy.memozy_back.domain.gpt.dto.EmitterPayloadDto;
 import com.memozy.memozy_back.global.exception.BusinessException;
 import com.memozy.memozy_back.global.exception.ErrorCode;
 import com.memozy.memozy_back.global.redis.TemporaryChatStore;
@@ -12,6 +13,7 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -44,7 +46,7 @@ public class FlaskServerImpl implements FlaskServer {
                     completeReply.append(chunk);
                     if (!isCompleted.get()) {
                         try {
-                            emitter.send(SseEmitter.event().name("reply").data(chunk));
+                            sendEmitterPayload(emitter, "image", memoryItemTempId, chunk, presignedImageUrl);
                         } catch (IllegalStateException ex) {
                             log.warn("SSEEmitter already completed, skipping send: {}", ex.getMessage());
                         } catch (IOException e) {
@@ -84,13 +86,14 @@ public class FlaskServerImpl implements FlaskServer {
                 ))
                 .retrieve()
                 .bodyToFlux(String.class)
+                .filter(chunk -> chunk != null && !chunk.trim().isEmpty())
                 .doOnSubscribe(sub -> log.info("✅ SPRING SUBSCRIBED to /message stream"))
                 .doOnNext(chunk -> {
                     log.info("✅ /message received chunk: {}", chunk);
                     completeReply.append(chunk);
                     if (!isCompleted.get()) {
                         try {
-                            emitter.send(SseEmitter.event().name("reply").data(chunk));
+                            sendEmitterPayload(emitter, "reply", memoryItemTempId, chunk, presignedUrl);
                         } catch (IllegalStateException ex) {
                             log.warn("SSEEmitter already completed, skipping send: {}", ex.getMessage());
                         } catch (IOException e) {
@@ -99,13 +102,13 @@ public class FlaskServerImpl implements FlaskServer {
                     }
                 })
                 .doOnError(e -> {
-                    log.error("Flask 요청 중 오류 발생", e);
+                    log.error("❌ SPRING ERROR: {}", e.getMessage());
                     if (isCompleted.compareAndSet(false, true)) {
                         emitter.completeWithError(e);
                     }
                 })
                 .doOnComplete(() -> {
-                    log.info("Flask 스트리밍 완료, 최종 메시지 Redis 저장");
+                    log.info("✅ SPRING STREAM COMPLETE");
                     temporaryChatStore.addAssistantMessage(sessionId, memoryItemTempId, completeReply.toString());
                     if (isCompleted.compareAndSet(false, true)) {
                         emitter.complete();
@@ -173,5 +176,10 @@ public class FlaskServerImpl implements FlaskServer {
                             ));
                 })
                 .toList();
+    }
+
+    private void sendEmitterPayload(SseEmitter emitter, String type, String tempId, String message, String presignedUrl) throws IOException {
+        EmitterPayloadDto payload = new EmitterPayloadDto(tempId, type, message, presignedUrl);
+        emitter.send(SseEmitter.event().name(type).data(payload));
     }
 }
