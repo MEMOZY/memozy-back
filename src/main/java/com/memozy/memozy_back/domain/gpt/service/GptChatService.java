@@ -51,7 +51,8 @@ public class GptChatService {
         });
     }
 
-    private void handleInitialPrompt(String sessionId, SseEmitter emitter, AtomicBoolean isCompleted) {
+    private void handleInitialPrompt(String sessionId, SseEmitter emitter, AtomicBoolean isCompleted)
+            throws IOException {
         Memory memory = loadMemory(sessionId);
         MemoryItem firstItem = getFirstMemoryItem(memory);
 
@@ -60,6 +61,7 @@ public class GptChatService {
 
         String presignedUrl = getPresignedUrl(firstItem.getFileKey());
 
+        sendEmitterPayload(emitter, "question", firstItem.getTempId(), "첫 이미지 질문을 시작합니다.", presignedUrl);
         flaskServer.initiateChatWithImageUrl(sessionId, presignedUrl, firstItem.getTempId(), wrapEmitter(emitter, isCompleted));
     }
 
@@ -128,12 +130,35 @@ public class GptChatService {
             temporaryChatStore.initChat(sessionId, nextItem.getTempId());
 
             String nextPresignedUrl = getPresignedUrl(nextItem.getFileKey());
+            sendEmitterPayload(emitter, "next", nextItem.getTempId(), "다음 이미지 질문을 시작합니다.", nextPresignedUrl);
             flaskServer.initiateChatWithImageUrl(sessionId, nextPresignedUrl, nextItem.getTempId(), wrapEmitter(emitter, isCompleted));
         } else {
-            emitter.send(SseEmitter.event().name("done").data(Map.of("type", "done", "message", "일기 생성이 완료되었습니다.")));
+            sendEmitterPayload(emitter, "done", "", "모든 이미지에 대한 질문이 완료되었습니다.", "");
             safeComplete(emitter, isCompleted);
         }
     }
+
+    /*
+     ** 최종 일기 생성 요청을 Flask 서버에 보내고, 결과를 받아서 임시 메모리에 저장합니다.
+     */
+    public List<TempMemoryItemDto> generateFinalDiaries(String sessionId) {
+        Memory tempMemory = loadMemory(sessionId);
+
+        List<Map<String, String>> diaryList = buildDiaryRequestList(tempMemory);
+
+        List<Map<String, String>> improvedDiaries = flaskServer.generateFinalDiaries(sessionId, diaryList);
+
+        List<TempMemoryItemDto> updatedItems = improvedDiaries.stream()
+                .map(entry -> buildUpdatedItem(entry, tempMemory))
+                .toList();
+
+        TempMemoryDto updatedDto = new TempMemoryDto(tempMemory.getOwner().getId(), updatedItems);
+        temporaryMemoryStore.save(sessionId, updatedDto);
+
+        return updatedItems;
+    }
+
+
 
     // ------------------- Helper Methods -------------------
 
@@ -197,5 +222,40 @@ public class GptChatService {
                 safeCompleteWithError(emitter, ex, isCompleted);
             }
         };
+    }
+
+    private List<Map<String, String>> buildDiaryRequestList(Memory tempMemory) {
+        return tempMemory.getMemoryItems().stream()
+                .sorted(Comparator.comparingInt(MemoryItem::getSequence)) // sequence 오름차순 정렬
+                .map(item -> Map.of(
+                        "caption_id", item.getTempId(),
+                        "caption", item.getContent()
+                ))
+                .toList();
+    }
+
+    private TempMemoryItemDto buildUpdatedItem(Map<String, String> entry, Memory tempMemory) {
+        String captionId = entry.get("caption_id");
+        String improvedCaption = entry.get("caption");
+
+        if (entry.containsKey("warning")) {
+            log.warn("향상된 일기 생성 실패 - {}", entry.get("warning"));
+        }
+
+        MemoryItem originalItem = findMemoryItemByTempId(tempMemory, captionId);
+
+        return new TempMemoryItemDto(
+                originalItem.getTempId(),
+                getPresignedUrl(originalItem.getFileKey()),
+                improvedCaption,
+                originalItem.getSequence()
+        );
+    }
+
+    private MemoryItem findMemoryItemByTempId(Memory tempMemory, String tempId) {
+        return tempMemory.getMemoryItems().stream()
+                .filter(item -> item.getTempId().equals(tempId))
+                .findFirst()
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION));
     }
 }
