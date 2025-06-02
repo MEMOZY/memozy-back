@@ -32,7 +32,6 @@ public class GptChatService {
     private final FileService fileService;
     private final TemporaryChatStore temporaryChatStore;
     private final FlaskServer flaskServer;
-    private final WebClient webClient = WebClient.create("http://memozy-ai:5000");
 
     public void generateInitialPrompts(String sessionId, SseEmitter emitter) {
         Executors.newSingleThreadExecutor().submit(() -> {
@@ -109,10 +108,8 @@ public class GptChatService {
         // 역할별로 분리된 history 가져오기
         Map<String, List<String>> messageHistoryByRole = temporaryChatStore.getChatHistorySplitByRole(sessionId, memoryItemTempId);
 
-        String gptReply = flaskServer.sendMessage(sessionId, presignedUrl, userMessage, messageHistoryByRole);
-
+        // ✅ 유저 메시지는 여기서 Redis 저장
         temporaryChatStore.addUserMessage(sessionId, memoryItemTempId, userMessage);
-        temporaryChatStore.addAssistantMessage(sessionId, memoryItemTempId, gptReply);
 
         boolean isEndCommand = PromptText.GENERATE_STORY.getText().equalsIgnoreCase(userMessage);
         boolean isThirdTurn = temporaryChatStore.getTurnCount(sessionId, memoryItemTempId) >= 3;
@@ -121,7 +118,8 @@ public class GptChatService {
             messageHistoryByRole = temporaryChatStore.getChatHistorySplitByRole(sessionId, memoryItemTempId); // 마지막 유저 응답
             handleStoryGeneration(sessionId, memory, currentItem, messageHistoryByRole, emitter);
         } else {
-            sendEmitterPayload(emitter, "reply", currentItem.getTempId(), gptReply, "");
+            // ✅ 이제 FlaskServerImpl에서 emitter를 직접 처리
+            flaskServer.sendMessage(sessionId, presignedUrl, userMessage, messageHistoryByRole, memoryItemTempId, emitter);
         }
     }
 

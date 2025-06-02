@@ -59,28 +59,38 @@ public class FlaskServerImpl implements FlaskServer {
     }
 
     @Override
-    public String sendMessage(String sessionId, String presignedUrl, String userMessage, Map<String, List<String>> history) {
-        Map<String, Object> requestBody = Map.of(
-                "session_id", sessionId,
-                "img_url", presignedUrl,
-                "history", history,
-                "message", userMessage
-        );
+    public void sendMessage(String sessionId, String presignedUrl, String userMessage, Map<String, List<String>> history, String memoryItemTempId, SseEmitter emitter) {
+        StringBuilder completeReply = new StringBuilder();
 
-        log.info("Request to /message: {}", requestBody);
-
-        Map<String, Object> response = webClient.post()
+        webClient.post()
                 .uri("/message")
-                .bodyValue(requestBody)
+                .bodyValue(Map.of(
+                        "session_id", sessionId,
+                        "img_url", presignedUrl,
+                        "history", history,
+                        "message", userMessage
+                ))
                 .retrieve()
-                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
-                .block();
-
-        log.info("Response from /message: {}", response);
-
-        return Optional.ofNullable(response)
-                .map(r -> (String) r.get("message"))
-                .orElseThrow(() -> new BusinessException(ErrorCode.NO_RESPONSE_FLASK_SERVER));
+                .bodyToFlux(String.class)
+                .doOnNext(chunk -> {
+                    completeReply.append(chunk);
+                    try {
+                        emitter.send(SseEmitter.event().name("reply").data(chunk));
+                    } catch (IOException e) {
+                        log.error("SSE 전송 중 오류 발생", e);
+                        emitter.completeWithError(e);
+                    }
+                })
+                .doOnError(e -> {
+                    log.error("Flask 요청 중 오류 발생", e);
+                    emitter.completeWithError(e);
+                })
+                .doOnComplete(() -> {
+                    log.info("Flask 스트리밍 완료, 최종 메시지 Redis 저장");
+                    temporaryChatStore.addAssistantMessage(sessionId, memoryItemTempId, completeReply.toString());
+                    emitter.complete();
+                })
+                .subscribe();
     }
 
     @Override
