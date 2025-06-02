@@ -35,6 +35,8 @@ public class GptController {
             @RequestParam String sessionId) {
         sessionManager.validateSessionOwner(userId, sessionId);
         SseEmitter emitter = new SseEmitter(0L);  // 2분 타임아웃
+        emitter.onTimeout(emitter::complete);
+        emitter.onError(e -> emitter.completeWithError(e));
         gptChatService.generateInitialPrompts(sessionId, emitter);
         return emitter;
     }
@@ -47,6 +49,8 @@ public class GptController {
             @RequestBody UserAnswerRequest request) {
         sessionManager.validateSessionOwner(userId, sessionId);
         SseEmitter emitter = new SseEmitter(0L);
+        emitter.onTimeout(emitter::complete);
+        emitter.onError(e -> emitter.completeWithError(e));
         gptChatService.handleUserAnswer(sessionId, request, emitter);
         return emitter;
     }
