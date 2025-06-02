@@ -122,18 +122,7 @@ public class FlaskServerImpl implements FlaskServer {
 
                     // Redis에 저장 (이건 기존처럼 유지)
                     temporaryChatStore.addAssistantMessage(sessionId, memoryItemTempId, finalMessage);
-
-                    try {
-                        log.info("✅ SPRING SENT FINAL reply");
-
-                        // 마지막 완료 신호 전송
-                        sendEmitterPayload(emitter, "done", memoryItemTempId, "응답이 완료됐습니다.", presignedUrl);
-                        log.info("✅ SPRING SENT FINAL completion notice");
-                    } catch (IllegalStateException ex) {
-                        log.warn("SSEEmitter already completed, skipping final send: {}", ex.getMessage());
-                    } catch (IOException e) {
-                        log.error("SSE 전송 중 IOException 발생", e);
-                    }
+                    log.info("✅ SPRING SENT FINAL reply");
 
                 })
                 .subscribe();

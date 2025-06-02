@@ -108,6 +108,7 @@ public class GptChatService {
         if (isEndCommand || isThirdTurn) {
             handleStoryGeneration(sessionId, memory, currentItem, messageHistoryByRole, emitter, isCompleted);
         } else {
+            sendEmitterPayload(emitter, "start", memoryItemTempId, "응답을 시작합니다.", presignedUrl);
             flaskServer.sendMessage(sessionId, presignedUrl, userMessage, messageHistoryByRole, memoryItemTempId, wrapEmitter(emitter, isCompleted));
         }
     }
