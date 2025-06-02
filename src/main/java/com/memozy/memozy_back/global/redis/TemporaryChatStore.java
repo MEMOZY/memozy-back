@@ -14,70 +14,60 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class TemporaryChatStore {
 
-    private final RedisTemplate<String, Map<String, Map<String, List<String>>>> chatRedisTemplate;
-    private final RedisTemplate<String, String> activeMemoryItemRedisTemplate;
+    private final RedisTemplate<String, String> redisTemplate;
     private static final Duration TTL = Duration.ofMinutes(1440);
 
     public void initSession(String sessionId) {
-        chatRedisTemplate.opsForValue().set(sessionId, new ConcurrentHashMap<>(), TTL);
+        // 별도로 초기화할 필요 없음
     }
 
     public void initChat(String sessionId, String memoryItemId) {
-        Map<String, Map<String, List<String>>> sessionChats = getChatsAll(sessionId);
-        sessionChats.put(memoryItemId, initRoleMap());
-        chatRedisTemplate.opsForValue().set(sessionId, sessionChats, TTL);
-
-        // 현재 활성 memoryItemId 업데이트
         setActiveMemoryItemId(sessionId, memoryItemId);
     }
 
     public void setActiveMemoryItemId(String sessionId, String memoryItemId) {
-        activeMemoryItemRedisTemplate.opsForValue().set(sessionId + ":active", memoryItemId, TTL);
+        redisTemplate.opsForValue().set(sessionId + ":active", memoryItemId, TTL);
     }
 
     public String getActiveMemoryItemId(String sessionId) {
-        return activeMemoryItemRedisTemplate.opsForValue().get(sessionId + ":active");
+        return redisTemplate.opsForValue().get(sessionId + ":active");
     }
 
     public void addUserMessage(String sessionId, String memoryItemId, String content) {
-        Map<String, Map<String, List<String>>> sessionChats = getChatsAll(sessionId);
-        sessionChats.computeIfAbsent(memoryItemId, k -> initRoleMap()).get("user").add(content);
-        chatRedisTemplate.opsForValue().set(sessionId, sessionChats, TTL);
+        addMessage(sessionId, memoryItemId, "user", content);
     }
 
     public void addAssistantMessage(String sessionId, String memoryItemId, String content) {
-        Map<String, Map<String, List<String>>> sessionChats = getChatsAll(sessionId);
-        sessionChats.computeIfAbsent(memoryItemId, k -> initRoleMap()).get("assistant").add(content);
-        chatRedisTemplate.opsForValue().set(sessionId, sessionChats, TTL);
+        addMessage(sessionId, memoryItemId, "assistant", content);
     }
 
-    public Map<String, List<String>> getChatHistorySplitByRole(String sessionId, String memoryItemId) {
-        Map<String, Map<String, List<String>>> sessionChats = getChatsAll(sessionId);
-        return sessionChats.getOrDefault(memoryItemId, initRoleMap());
+    private void addMessage(String sessionId, String memoryItemId, String role, String content) {
+        String key = sessionId + ":" + memoryItemId + ":" + role;
+        redisTemplate.opsForList().rightPush(key, content);
+        redisTemplate.expire(key, TTL);
+    }
+
+    public List<String> getMessages(String sessionId, String memoryItemId, String role) {
+        String key = sessionId + ":" + memoryItemId + ":" + role;
+        return redisTemplate.opsForList().range(key, 0, -1);
     }
 
     public int getTurnCount(String sessionId, String memoryItemId) {
-        Map<String, Map<String, List<String>>> sessionChats = getChatsAll(sessionId);
-        List<String> userMessages = sessionChats.getOrDefault(memoryItemId, initRoleMap()).get("user");
-        List<String> assistantMessages = sessionChats.getOrDefault(memoryItemId, initRoleMap()).get("assistant");
-        return Math.min(userMessages.size(), assistantMessages.size());
+        String userKey = sessionId + ":" + memoryItemId + ":user";
+        String assistantKey = sessionId + ":" + memoryItemId + ":assistant";
+        Long userCount = redisTemplate.opsForList().size(userKey);
+        Long assistantCount = redisTemplate.opsForList().size(assistantKey);
+        return Math.toIntExact(Math.min(
+                userCount != null ? userCount : 0,
+                assistantCount != null ? assistantCount : 0
+        ));
     }
 
-    public void removeSession(String sessionId) {
-        chatRedisTemplate.delete(sessionId);
-        activeMemoryItemRedisTemplate.delete(sessionId + ":active");
-    }
-
-
-    private Map<String, Map<String, List<String>>> getChatsAll(String sessionId) {
-        Map<String, Map<String, List<String>>> sessionChats = chatRedisTemplate.opsForValue().get(sessionId);
-        return sessionChats != null ? sessionChats : new ConcurrentHashMap<>();
-    }
-
-    private Map<String, List<String>> initRoleMap() {
-        Map<String, List<String>> roleMap = new ConcurrentHashMap<>();
-        roleMap.put("user", new ArrayList<>());
-        roleMap.put("assistant", new ArrayList<>());
-        return roleMap;
+    public void removeSession(String sessionId, List<String> memoryItemIds) {
+        redisTemplate.delete(sessionId + ":active");
+        for (String memoryItemId : memoryItemIds) {
+            redisTemplate.delete(sessionId + ":" + memoryItemId + ":user");
+            redisTemplate.delete(sessionId + ":" + memoryItemId + ":assistant");
+        }
     }
 }

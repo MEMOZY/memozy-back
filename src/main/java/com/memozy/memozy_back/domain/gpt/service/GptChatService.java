@@ -16,7 +16,9 @@ import java.io.IOException;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -33,19 +35,23 @@ public class GptChatService {
     private final TemporaryChatStore temporaryChatStore;
     private final FlaskServer flaskServer;
 
+    // ✅ 공용 ExecutorService (애플리케이션 종료 시 shutdown 필요)
+    private static final ExecutorService executor = Executors.newFixedThreadPool(4);
+
     public void generateInitialPrompts(String sessionId, SseEmitter emitter) {
-        Executors.newSingleThreadExecutor().submit(() -> {
+        AtomicBoolean isCompleted = new AtomicBoolean(false);
+
+        executor.submit(() -> {
             try {
-                handleInitialPrompt(sessionId, emitter);
+                handleInitialPrompt(sessionId, emitter, isCompleted);
             } catch (Exception e) {
-                emitter.completeWithError(e);
-            } finally {
-                emitter.complete();
+                log.error("Initial prompt 처리 중 오류", e);
+                safeCompleteWithError(emitter, e, isCompleted);
             }
         });
     }
 
-    private void handleInitialPrompt(String sessionId, SseEmitter emitter) {
+    private void handleInitialPrompt(String sessionId, SseEmitter emitter, AtomicBoolean isCompleted) {
         Memory memory = loadMemory(sessionId);
         MemoryItem firstItem = getFirstMemoryItem(memory);
 
@@ -54,38 +60,23 @@ public class GptChatService {
 
         String presignedUrl = getPresignedUrl(firstItem.getFileKey());
 
-        // ✅ streaming 메서드로 교체
-        flaskServer.initiateChatWithImageUrl(sessionId, presignedUrl, firstItem.getTempId(), emitter);
+        flaskServer.initiateChatWithImageUrl(sessionId, presignedUrl, firstItem.getTempId(), wrapEmitter(emitter, isCompleted));
     }
 
-//    private void handleInitialPrompt(String sessionId, SseEmitter emitter) throws IOException {
-//        Memory memory = loadMemory(sessionId);
-//        MemoryItem firstItem = getFirstMemoryItem(memory);
-//
-//        temporaryChatStore.initSession(sessionId);
-//        temporaryChatStore.initChat(sessionId, firstItem.getTempId());
-//
-//        String presignedUrl = getPresignedUrl(firstItem.getFileKey());
-//        String firstQuestion = flaskServer.initiateChatWithImageUrl(sessionId, presignedUrl);
-//
-//        temporaryChatStore.addAssistantMessage(sessionId, firstItem.getTempId(), firstQuestion);
-//
-//        sendEmitterPayload(emitter, "question", firstItem.getTempId(), firstQuestion, presignedUrl);
-//    }
-
     public void handleUserAnswer(String sessionId, UserAnswerRequest request, SseEmitter emitter) {
-        Executors.newSingleThreadExecutor().submit(() -> {
+        AtomicBoolean isCompleted = new AtomicBoolean(false);
+
+        executor.submit(() -> {
             try {
-                handleAnswerLogic(sessionId, request, emitter);
+                handleAnswerLogic(sessionId, request, emitter, isCompleted);
             } catch (Exception e) {
-                emitter.completeWithError(e);
-            } finally {
-                emitter.complete();
+                log.error("User answer 처리 중 오류", e);
+                safeCompleteWithError(emitter, e, isCompleted);
             }
         });
     }
 
-    private void handleAnswerLogic(String sessionId, UserAnswerRequest request, SseEmitter emitter) throws IOException {
+    private void handleAnswerLogic(String sessionId, UserAnswerRequest request, SseEmitter emitter, AtomicBoolean isCompleted) throws IOException {
         String memoryItemTempId = request.memoryItemTempId();
         String userMessage = request.userAnswer().trim();
 
@@ -95,50 +86,42 @@ public class GptChatService {
         String activeMemoryItemId = temporaryChatStore.getActiveMemoryItemId(sessionId);
         if (!memoryItemTempId.equals(activeMemoryItemId)) {
             log.warn("잘못된 memoryItemId 요청: expected={}, received={}", activeMemoryItemId, memoryItemTempId);
-
-            // error payload에 올바른 memoryItemTempId를 같이 담아 보냄
-            sendEmitterPayload(emitter, "error", activeMemoryItemId,
-                    "잘못된 memoryItemId 요청입니다. 다시 요청해주세요",
-                    "");
-            emitter.complete();
+            sendEmitterPayload(emitter, "error", activeMemoryItemId, "잘못된 memoryItemId 요청입니다. 다시 요청해주세요", "");
+            safeComplete(emitter, isCompleted);
             return;
         }
-        String presignedUrl = getPresignedUrl(currentItem.getFileKey());
 
-        // 역할별로 분리된 history 가져오기
-        Map<String, List<String>> messageHistoryByRole = temporaryChatStore.getChatHistorySplitByRole(sessionId, memoryItemTempId);
+        String presignedUrl = getPresignedUrl(currentItem.getFileKey());
 
         // ✅ 유저 메시지는 여기서 Redis 저장
         temporaryChatStore.addUserMessage(sessionId, memoryItemTempId, userMessage);
+
+        // ✅ 새로운 방식: Redis에서 역할별 메시지 리스트 가져오기
+        Map<String, List<String>> messageHistoryByRole = Map.of(
+                "user", temporaryChatStore.getMessages(sessionId, memoryItemTempId, "user"),
+                "assistant", temporaryChatStore.getMessages(sessionId, memoryItemTempId, "assistant")
+        );
 
         boolean isEndCommand = PromptText.GENERATE_STORY.getText().equalsIgnoreCase(userMessage);
         boolean isThirdTurn = temporaryChatStore.getTurnCount(sessionId, memoryItemTempId) >= 3;
 
         if (isEndCommand || isThirdTurn) {
-            messageHistoryByRole = temporaryChatStore.getChatHistorySplitByRole(sessionId, memoryItemTempId); // 마지막 유저 응답
-            handleStoryGeneration(sessionId, memory, currentItem, messageHistoryByRole, emitter);
+            handleStoryGeneration(sessionId, memory, currentItem, messageHistoryByRole, emitter, isCompleted);
         } else {
-            // ✅ 이제 FlaskServerImpl에서 emitter를 직접 처리
-            flaskServer.sendMessage(sessionId, presignedUrl, userMessage, messageHistoryByRole, memoryItemTempId, emitter);
+            flaskServer.sendMessage(sessionId, presignedUrl, userMessage, messageHistoryByRole, memoryItemTempId, wrapEmitter(emitter, isCompleted));
         }
     }
 
     private void handleStoryGeneration(String sessionId, Memory memory, MemoryItem currentItem,
-            Map<String, List<String>> messageHistoryByRole, SseEmitter emitter) throws IOException {
+            Map<String, List<String>> messageHistoryByRole, SseEmitter emitter, AtomicBoolean isCompleted) throws IOException {
 
         String presignedUrl = getPresignedUrl(currentItem.getFileKey());
         String story = flaskServer.generateDiaryFromChatAndImageUrl(sessionId, messageHistoryByRole, presignedUrl);
         currentItem.updateContent(story);
 
-        TempMemoryDto updatedDto = TempMemoryDto.from(memory,
-                memory.getMemoryItems().stream()
-                        .map(item -> new TempMemoryItemDto(
-                                item.getTempId(),
-                                getPresignedUrl(item.getFileKey()),
-                                item.getContent(),
-                                item.getSequence()))
-                        .toList());
-
+        TempMemoryDto updatedDto = TempMemoryDto.from(memory, memory.getMemoryItems().stream()
+                .map(item -> new TempMemoryItemDto(item.getTempId(), getPresignedUrl(item.getFileKey()), item.getContent(), item.getSequence()))
+                .toList());
         temporaryMemoryStore.save(sessionId, updatedDto);
 
         List<MemoryItem> sortedItems = memory.getMemoryItems().stream()
@@ -146,46 +129,24 @@ public class GptChatService {
                 .toList();
 
         int currentIndex = sortedItems.indexOf(currentItem);
-        boolean hasNextMemoryItem = currentIndex + 1 < sortedItems.size();
-        if (hasNextMemoryItem) {
+        if (currentIndex + 1 < sortedItems.size()) {
             MemoryItem nextItem = sortedItems.get(currentIndex + 1);
             temporaryChatStore.initChat(sessionId, nextItem.getTempId());
 
             String nextPresignedUrl = getPresignedUrl(nextItem.getFileKey());
-
-            // 다음 질문 뽑을 때 initiateChatWithImageUrl 사용
-//            String nextQuestion = flaskServer.initiateChatWithImageUrl(sessionId, nextPresignedUrl, emitter);
-//
-//            temporaryChatStore.addAssistantMessage(sessionId, nextItem.getTempId(), nextQuestion);
-//
-//            sendEmitterPayload(emitter, "question", nextItem.getTempId(), nextQuestion, nextPresignedUrl);
-            flaskServer.initiateChatWithImageUrl(sessionId, nextPresignedUrl, nextItem.getTempId(), emitter);
+            flaskServer.initiateChatWithImageUrl(sessionId, nextPresignedUrl, nextItem.getTempId(), wrapEmitter(emitter, isCompleted));
         } else {
-            emitter.send(SseEmitter.event().name("done").data(Map.of(
-                    "type", "done",
-                    "message", "일기 생성이 완료되었습니다."
-            )));
+            emitter.send(SseEmitter.event().name("done").data(Map.of("type", "done", "message", "일기 생성이 완료되었습니다.")));
+            safeComplete(emitter, isCompleted);
         }
     }
 
-    /*
-     ** 최종 일기 생성 요청을 Flask 서버에 보내고, 결과를 받아서 임시 메모리에 저장합니다.
-     */
-    public List<TempMemoryItemDto> generateFinalDiaries(String sessionId) {
-        Memory tempMemory = loadMemory(sessionId);
+    // ------------------- Helper Methods -------------------
 
-        List<Map<String, String>> diaryList = buildDiaryRequestList(tempMemory);
-
-        List<Map<String, String>> improvedDiaries = flaskServer.generateFinalDiaries(sessionId, diaryList);
-
-        List<TempMemoryItemDto> updatedItems = improvedDiaries.stream()
-                .map(entry -> buildUpdatedItem(entry, tempMemory))
-                .toList();
-
-        TempMemoryDto updatedDto = new TempMemoryDto(tempMemory.getOwner().getId(), updatedItems);
-        temporaryMemoryStore.save(sessionId, updatedDto);
-
-        return updatedItems;
+    private Memory loadMemory(String sessionId) {
+        Memory memory = temporaryMemoryStore.load(sessionId);
+        if (memory == null) throw new BusinessException(ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION);
+        return memory;
     }
 
     private MemoryItem getFirstMemoryItem(Memory memory) {
@@ -195,72 +156,52 @@ public class GptChatService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION));
     }
 
-    private MemoryItem getMemoryItemById(Memory memory, String memoryItemTempId) {
+    private MemoryItem getMemoryItemById(Memory memory, String tempId) {
         return memory.getMemoryItems().stream()
-                .filter(item -> item.getTempId().equals(memoryItemTempId))
-                .findFirst()
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION));
-    }
-
-    private List<Map<String, String>> buildDiaryRequestList(Memory tempMemory) {
-        return tempMemory.getMemoryItems().stream()
-                .sorted(Comparator.comparingInt(MemoryItem::getSequence)) // sequence 오름차순 정렬
-                .map(item -> Map.of(
-                        "caption_id", item.getTempId(),
-                        "caption", item.getContent()
-                ))
-                .toList();
-    }
-
-    private TempMemoryItemDto buildUpdatedItem(Map<String, String> entry, Memory tempMemory) {
-        String captionId = entry.get("caption_id");
-        String improvedCaption = entry.get("caption");
-
-        if (entry.containsKey("warning")) {
-            log.warn("향상된 일기 생성 실패 - {}", entry.get("warning"));
-        }
-
-        MemoryItem originalItem = findMemoryItemByTempId(tempMemory, captionId);
-
-        return new TempMemoryItemDto(
-                originalItem.getTempId(),
-                getPresignedUrl(originalItem.getFileKey()),
-                improvedCaption,
-                originalItem.getSequence()
-        );
-    }
-
-    private MemoryItem findMemoryItemByTempId(Memory tempMemory, String tempId) {
-        return tempMemory.getMemoryItems().stream()
                 .filter(item -> item.getTempId().equals(tempId))
                 .findFirst()
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION));
     }
 
-    private Memory loadMemory(String sessionId) {
-        Memory memory = temporaryMemoryStore.load(sessionId);
-        if (memory == null) {
-            throw new BusinessException(ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION);
-        }
-        return memory;
-    }
-
-
     private String getPresignedUrl(String fileKey) {
         return fileService.generatePresignedUrlToRead(fileKey).preSignedUrl();
     }
 
-
-    private void sendEmitterPayload(SseEmitter emitter, String type, String memoryItemTempId,
-            String message, String presignedUrl) throws IOException {
-        EmitterPayloadDto payload = new EmitterPayloadDto(
-                memoryItemTempId,
-                type,
-                message,
-                presignedUrl
-        );
+    private void sendEmitterPayload(SseEmitter emitter, String type, String tempId, String message, String presignedUrl) throws IOException {
+        EmitterPayloadDto payload = new EmitterPayloadDto(tempId, type, message, presignedUrl);
         emitter.send(SseEmitter.event().name(type).data(payload));
     }
 
+    private void safeComplete(SseEmitter emitter, AtomicBoolean isCompleted) {
+        if (isCompleted.compareAndSet(false, true)) {
+            emitter.complete();
+        }
+    }
 
+    private void safeCompleteWithError(SseEmitter emitter, Throwable e, AtomicBoolean isCompleted) {
+        if (isCompleted.compareAndSet(false, true)) {
+            emitter.completeWithError(e);
+        }
+    }
+
+    private SseEmitter wrapEmitter(SseEmitter emitter, AtomicBoolean isCompleted) {
+        return new SseEmitter() {
+            @Override
+            public void send(Object object) throws IOException {
+                if (!isCompleted.get()) {
+                    emitter.send(object);
+                }
+            }
+
+            @Override
+            public void complete() {
+                safeComplete(emitter, isCompleted);
+            }
+
+            @Override
+            public void completeWithError(Throwable ex) {
+                safeCompleteWithError(emitter, ex, isCompleted);
+            }
+        };
+    }
 }
