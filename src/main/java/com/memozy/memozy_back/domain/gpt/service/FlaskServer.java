@@ -5,7 +5,7 @@ import java.util.Map;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 public interface FlaskServer {
-    void initiateChatWithImageUrl(String sessionId, String presignedImageUrl, String memoryItemTempId, SseEmitter emitter);
+    void initiateChatWithImageUrl(String sessionId, String presignedImageUrl, String memoryItemTempId, SseEmitter emitter, Runnable onCompleteCallback);
 
     void sendMessage(String sessionId, String presignedUrl, String userMessage, Map<String, List<String>> history, String memoryItemTempId, SseEmitter emitter);
 
