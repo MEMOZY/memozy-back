@@ -47,7 +47,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             new AntPathRequestMatcher("/docs/**"),
             new AntPathRequestMatcher("/h2-console/**"),
             new AntPathRequestMatcher("/favicon.ico"),
-            new AntPathRequestMatcher("/auth/test-token")
+            new AntPathRequestMatcher("/auth/test-token"),
+            new AntPathRequestMatcher("/auth/reissue")
     );
 
     private static final List<AntPathRequestMatcher> whiteListPatternsForApi = List.of(
