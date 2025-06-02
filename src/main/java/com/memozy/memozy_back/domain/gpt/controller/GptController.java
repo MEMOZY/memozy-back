@@ -7,6 +7,7 @@ import com.memozy.memozy_back.global.annotation.CurrentUserId;
 import com.memozy.memozy_back.global.redis.SessionManager;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.concurrent.Executors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -61,5 +62,22 @@ public class GptController {
                         gptChatService.generateFinalDiaries(sessionId)
                 )
         );
+    }
+
+    @GetMapping("/test-sse")
+    public SseEmitter testSse() {
+        SseEmitter emitter = new SseEmitter(0L);
+        Executors.newSingleThreadExecutor().submit(() -> {
+            try {
+                for (int i = 0; i < 10; i++) {
+                    emitter.send(SseEmitter.event().name("ping").data("Ping " + i));
+                    Thread.sleep(1000);
+                }
+                emitter.complete();
+            } catch (Exception e) {
+                emitter.completeWithError(e);
+            }
+        });
+        return emitter;
     }
 }
