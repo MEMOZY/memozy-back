@@ -62,11 +62,7 @@ public class GptChatService {
         String presignedUrl = getPresignedUrl(firstItem.getFileKey());
 
         sendEmitterPayload(emitter, "first-question", firstItem.getTempId(), "첫 이미지 질문을 시작합니다.", presignedUrl);
-        flaskServer.initiateChatWithImageUrl(sessionId, presignedUrl, firstItem.getTempId(), wrapEmitter(emitter, isCompleted), () -> {
-            if (isCompleted.compareAndSet(false, true)) {
-                emitter.complete();
-            }
-        });
+        flaskServer.initiateChatWithImageUrl(sessionId, presignedUrl, firstItem.getTempId(), wrapEmitter(emitter, isCompleted));
     }
 
     public void handleUserAnswer(String sessionId, UserAnswerRequest request, SseEmitter emitter) {
@@ -137,7 +133,7 @@ public class GptChatService {
             String nextPresignedUrl = getPresignedUrl(nextItem.getFileKey());
             sendEmitterPayload(emitter, "next-question", nextItem.getTempId(), "다음 이미지 질문을 시작합니다.", nextPresignedUrl);
             flaskServer.initiateChatWithImageUrl(sessionId, nextPresignedUrl, nextItem.getTempId(),
-                    wrapEmitter(emitter, isCompleted), () -> {});
+                    wrapEmitter(emitter, isCompleted));
         } else {
             sendEmitterPayload(emitter, "done", "", "모든 이미지에 대한 질문이 완료되었습니다.", "");
             safeComplete(emitter, isCompleted);

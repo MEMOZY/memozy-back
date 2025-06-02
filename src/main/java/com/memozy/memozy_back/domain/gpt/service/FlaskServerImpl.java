@@ -28,7 +28,7 @@ public class FlaskServerImpl implements FlaskServer {
 
     @Override
     public void initiateChatWithImageUrl(String sessionId, String presignedImageUrl,
-            String memoryItemTempId, SseEmitter emitter, Runnable onCompleteCallback) {
+            String memoryItemTempId, SseEmitter emitter) {
         StringBuilder completeReply = new StringBuilder();
         AtomicBoolean isCompleted = new AtomicBoolean(false);
 
@@ -68,9 +68,7 @@ public class FlaskServerImpl implements FlaskServer {
                 .doOnComplete(() -> {
                     log.info("Flask 스트리밍 완료, 최종 메시지 Redis 저장");
                     temporaryChatStore.addAssistantMessage(sessionId, memoryItemTempId, completeReply.toString());
-                    if (onCompleteCallback != null) {
-                        onCompleteCallback.run();
-                    }
+                    safeComplete(emitter, isCompleted);
                 })
                 .subscribe();
     }
@@ -127,8 +125,7 @@ public class FlaskServerImpl implements FlaskServer {
 
                     // Redis에 저장 (이건 기존처럼 유지)
                     temporaryChatStore.addAssistantMessage(sessionId, memoryItemTempId, finalMessage);
-                    log.info("✅ SPRING SENT FINAL reply");
-
+                    safeComplete(emitter, isCompleted);
                 })
                 .subscribe();
     }
@@ -197,5 +194,11 @@ public class FlaskServerImpl implements FlaskServer {
     private void sendEmitterPayload(SseEmitter emitter, String type, String tempId, String message, String presignedUrl) throws IOException {
         EmitterPayloadDto payload = new EmitterPayloadDto(tempId, type, message, presignedUrl);
         emitter.send(SseEmitter.event().name(type).data(payload));
+    }
+
+    private void safeComplete(SseEmitter emitter, AtomicBoolean isCompleted) {
+        if (isCompleted.compareAndSet(false, true)) {
+            emitter.complete();
+        }
     }
 }
