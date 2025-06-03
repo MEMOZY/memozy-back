@@ -150,7 +150,7 @@ public class FlaskServerImpl implements FlaskServer {
         if (data.contains("[DONE]")) {
             log.info("✅ Detected [DONE], done 이벤트 전송 시도");
             try {
-                sendEmitterPayload(emitter, "done", tempId, "대화 종료", presignedUrl);
+                sendEmitterPayload(emitter, "done", tempId, "응답 종료", presignedUrl);
             } catch (Exception e) {
                 log.warn("Failed to send DONE event", e);
             }
