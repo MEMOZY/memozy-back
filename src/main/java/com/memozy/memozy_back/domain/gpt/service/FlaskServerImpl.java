@@ -30,7 +30,6 @@ public class FlaskServerImpl implements FlaskServer {
     public void initiateChatWithImageUrl(String sessionId, String presignedImageUrl,
             String memoryItemTempId, SseEmitter emitter, Runnable onCompleteCallback) {
         StringBuilder completeReply = new StringBuilder();
-        AtomicBoolean isCompleted = new AtomicBoolean(false);
 
         webClient.post()
                 .uri("/image")
@@ -42,41 +41,41 @@ public class FlaskServerImpl implements FlaskServer {
                 .retrieve()
                 .bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {})
                 .filter(chunk -> chunk != null && chunk.data() != null)
+                .doOnSubscribe(sub -> log.info("✅ SPRING SUBSCRIBED to /image stream"))
                 .doOnNext(chunk -> {
-                    String data = (String) chunk.data();
+                    String data = chunk.data();
                     log.info("✅ /image received chunk: {}", data);
 
                     if (data.contains("[DONE]")) {
-                        log.info("✅ Detected [DONE], skipping send to client");
-                        if (onCompleteCallback != null) {
-                            onCompleteCallback.run();
-                        }
-                        return;  // [DONE] 신호는 클라이언트로 흘려보내지 않음
+                        log.info("✅ Detected [DONE]");
+                        return;  // 마지막 청크, 클라이언트 송출 안 함
                     }
 
                     completeReply.append(data);
-                    if (!isCompleted.get()) {
-                        try {
-                            sendEmitterPayload(emitter, "reply", memoryItemTempId, data, presignedImageUrl);
-                        } catch (IllegalStateException ex) {
-                            log.warn("SSEEmitter already completed, skipping send: {}", ex.getMessage());
-                        } catch (IOException e) {
-                            log.error("SSE 전송 중 IOException 발생", e);
-                        }
+                    try {
+                        sendEmitterPayload(emitter, "reply", memoryItemTempId, data, presignedImageUrl);
+                    } catch (IllegalStateException ex) {
+                        log.warn("SSEEmitter already completed, skipping send: {}", ex.getMessage());
+                    } catch (IOException e) {
+                        log.error("SSE 전송 중 IOException 발생", e);
                     }
                 })
                 .doOnError(e -> {
-                    log.error("Flask 요청 중 오류 발생", e);
-                    if (isCompleted.compareAndSet(false, true)) {
-                        emitter.completeWithError(e);
-                    }
+                    log.error("❌ SPRING ERROR: {}", e.getMessage());
+                    emitter.completeWithError(e);
                 })
                 .doOnComplete(() -> {
-                    log.info("Flask 스트리밍 완료, 최종 메시지 Redis 저장");
-                    temporaryChatStore.addAssistantMessage(sessionId, memoryItemTempId, completeReply.toString());
+                    log.info("✅ SPRING STREAM COMPLETE");
+                    String finalMessage = completeReply.toString();
+
+                    temporaryChatStore.addAssistantMessage(sessionId, memoryItemTempId, finalMessage);
+                    log.info("✅ SPRING SENT FINAL reply");
+
                     if (onCompleteCallback != null) {
                         onCompleteCallback.run();
                     }
+
+                    emitter.complete();
                 })
                 .subscribe();
     }
@@ -85,7 +84,6 @@ public class FlaskServerImpl implements FlaskServer {
     public void sendMessage(String sessionId, String presignedUrl, String userMessage,
             Map<String, List<String>> history, String memoryItemTempId, SseEmitter emitter, Runnable onCompleteCallback) {
         StringBuilder completeReply = new StringBuilder();
-        AtomicBoolean isCompleted = new AtomicBoolean(false);
 
         log.info("✅ SPRING PREPARED body: sessionId={}, presignedUrl={}, history={}, userMessage={}",
                 sessionId, presignedUrl, history, userMessage);
@@ -103,42 +101,39 @@ public class FlaskServerImpl implements FlaskServer {
                 .filter(chunk -> chunk != null && chunk.data() != null)
                 .doOnSubscribe(sub -> log.info("✅ SPRING SUBSCRIBED to /message stream"))
                 .doOnNext(chunk -> {
-                    String data = (String) chunk.data();
+                    String data = chunk.data();
                     log.info("✅ /image received chunk: {}", data);
 
                     if (data.contains("[DONE]")) {
-                        log.info("✅ Detected [DONE], skipping send to client");
-                        if (onCompleteCallback != null) {
-                            onCompleteCallback.run();
-                        }
-                        return;  // [DONE] 신호는 클라이언트로 흘려보내지 않음
+                        log.info("✅ Detected [DONE]");
+                        return;  // 마지막 청크, 클라이언트 송출 안 함
                     }
 
                     completeReply.append(data);
-                    if (!isCompleted.get()) {
-                        try {
-                            sendEmitterPayload(emitter, "reply", memoryItemTempId, data, presignedUrl);
-                        } catch (IllegalStateException ex) {
-                            log.warn("SSEEmitter already completed, skipping send: {}", ex.getMessage());
-                        } catch (IOException e) {
-                            log.error("SSE 전송 중 IOException 발생", e);
-                        }
+                    try {
+                        sendEmitterPayload(emitter, "reply", memoryItemTempId, data, presignedUrl);
+                    } catch (IllegalStateException ex) {
+                        log.warn("SSEEmitter already completed, skipping send: {}", ex.getMessage());
+                    } catch (IOException e) {
+                        log.error("SSE 전송 중 IOException 발생", e);
                     }
                 })
                 .doOnError(e -> {
                     log.error("❌ SPRING ERROR: {}", e.getMessage());
-                    if (isCompleted.compareAndSet(false, true)) {
-                        emitter.completeWithError(e);
-                    }
+                    emitter.completeWithError(e);
                 })
                 .doOnComplete(() -> {
                     log.info("✅ SPRING STREAM COMPLETE");
                     String finalMessage = completeReply.toString();
 
-                    // Redis에 저장 (이건 기존처럼 유지)
                     temporaryChatStore.addAssistantMessage(sessionId, memoryItemTempId, finalMessage);
                     log.info("✅ SPRING SENT FINAL reply");
 
+                    if (onCompleteCallback != null) {
+                        onCompleteCallback.run();
+                    }
+
+                    emitter.complete();
                 })
                 .subscribe();
     }
