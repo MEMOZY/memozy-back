@@ -40,10 +40,13 @@ public class FlaskServerImpl implements FlaskServer {
                         "history", Map.of("user", List.of(), "assistant", List.of())
                 ))
                 .retrieve()
-                .bodyToFlux(String.class)
+                .bodyToFlux(ServerSentEvent.class)
+                .filter(chunk -> chunk != null && chunk.data() != null)
                 .doOnNext(chunk -> {
-                    log.info("✅ /image received chunk: {}", chunk);
-                    if (chunk.contains("[DONE]")) {
+                    String data = (String) chunk.data();
+                    log.info("✅ /image received chunk: {}", data);
+
+                    if (data.contains("[DONE]")) {
                         log.info("✅ Detected [DONE], skipping send to client");
                         if (onCompleteCallback != null) {
                             onCompleteCallback.run();
@@ -51,10 +54,10 @@ public class FlaskServerImpl implements FlaskServer {
                         return;  // [DONE] 신호는 클라이언트로 흘려보내지 않음
                     }
 
-                    completeReply.append(chunk);
+                    completeReply.append(data);
                     if (!isCompleted.get()) {
                         try {
-                            sendEmitterPayload(emitter, "reply", memoryItemTempId, chunk, presignedImageUrl);
+                            sendEmitterPayload(emitter, "reply", memoryItemTempId, data, presignedImageUrl);
                         } catch (IllegalStateException ex) {
                             log.warn("SSEEmitter already completed, skipping send: {}", ex.getMessage());
                         } catch (IOException e) {
@@ -96,13 +99,14 @@ public class FlaskServerImpl implements FlaskServer {
                         "message", userMessage
                 ))
                 .retrieve()
-                .bodyToFlux(String.class)
-                .filter(chunk -> chunk != null && !chunk.trim().isEmpty())
+                .bodyToFlux(ServerSentEvent.class)
+                .filter(chunk -> chunk != null && chunk.data() != null)
                 .doOnSubscribe(sub -> log.info("✅ SPRING SUBSCRIBED to /message stream"))
                 .doOnNext(chunk -> {
-                    log.info("✅ /message received chunk: {}", chunk);
+                    String data = (String) chunk.data();
+                    log.info("✅ /image received chunk: {}", data);
 
-                    if (chunk.contains("[DONE]")) {
+                    if (data.contains("[DONE]")) {
                         log.info("✅ Detected [DONE], skipping send to client");
                         if (onCompleteCallback != null) {
                             onCompleteCallback.run();
@@ -110,15 +114,15 @@ public class FlaskServerImpl implements FlaskServer {
                         return;  // [DONE] 신호는 클라이언트로 흘려보내지 않음
                     }
 
-                    completeReply.append(chunk);
-
-                    try {
-                        sendEmitterPayload(emitter, "reply", memoryItemTempId, chunk, presignedUrl);
-                        log.info("✅ SPRING SENT reply chunk: {}", chunk);
-                    } catch (IllegalStateException ex) {
-                        log.warn("SSEEmitter already completed, skipping send: {}", ex.getMessage());
-                    } catch (IOException e) {
-                        log.error("SSE 전송 중 IOException 발생", e);
+                    completeReply.append(data);
+                    if (!isCompleted.get()) {
+                        try {
+                            sendEmitterPayload(emitter, "reply", memoryItemTempId, data, presignedUrl);
+                        } catch (IllegalStateException ex) {
+                            log.warn("SSEEmitter already completed, skipping send: {}", ex.getMessage());
+                        } catch (IOException e) {
+                            log.error("SSE 전송 중 IOException 발생", e);
+                        }
                     }
                 })
                 .doOnError(e -> {
