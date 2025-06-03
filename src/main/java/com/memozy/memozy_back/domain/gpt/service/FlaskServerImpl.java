@@ -40,7 +40,7 @@ public class FlaskServerImpl implements FlaskServer {
                         "history", Map.of("user", List.of(), "assistant", List.of())
                 ))
                 .retrieve()
-                .bodyToFlux(ServerSentEvent.class)
+                .bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {})
                 .filter(chunk -> chunk != null && chunk.data() != null)
                 .doOnNext(chunk -> {
                     String data = (String) chunk.data();
@@ -99,7 +99,7 @@ public class FlaskServerImpl implements FlaskServer {
                         "message", userMessage
                 ))
                 .retrieve()
-                .bodyToFlux(ServerSentEvent.class)
+                .bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {})
                 .filter(chunk -> chunk != null && chunk.data() != null)
                 .doOnSubscribe(sub -> log.info("✅ SPRING SUBSCRIBED to /message stream"))
                 .doOnNext(chunk -> {
