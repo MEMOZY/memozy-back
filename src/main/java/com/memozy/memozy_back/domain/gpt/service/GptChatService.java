@@ -21,8 +21,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @Service
@@ -35,13 +36,12 @@ public class GptChatService {
     private final TemporaryChatStore temporaryChatStore;
     private final FlaskServer flaskServer;
 
-    // ✅ 공용 ExecutorService (애플리케이션 종료 시 shutdown 필요)
-    private static final ExecutorService executor = Executors.newFixedThreadPool(4);
+    private final TaskExecutor gptExecutor;
 
     public void generateInitialPrompts(String sessionId, SseEmitter emitter) {
         AtomicBoolean isCompleted = new AtomicBoolean(false);
 
-        executor.submit(() -> {
+        gptExecutor.execute(() -> {
             try {
                 Memory memory = loadMemory(sessionId);
                 MemoryItem firstItem = getFirstMemoryItem(memory);
@@ -53,10 +53,10 @@ public class GptChatService {
 
                 sendEmitterPayload(emitter, "first-question", firstItem.getTempId(), "첫 이미지 질문을 시작합니다.", presignedUrl);
 
-                executor.submit(() -> {
+                gptExecutor.execute(() -> {
                     flaskServer.initiateChatWithImageUrl(
                             sessionId, presignedUrl, firstItem.getTempId(),
-                            wrapEmitter(emitter, isCompleted),
+                            emitter,
                             () -> safeComplete(emitter, isCompleted)
                     );
                 });
@@ -70,7 +70,7 @@ public class GptChatService {
     public void handleUserAnswer(String sessionId, UserAnswerRequest request, SseEmitter emitter) {
         AtomicBoolean isCompleted = new AtomicBoolean(false);
 
-        executor.submit(() -> {
+        gptExecutor.execute(() -> {
             try {
                 handleAnswerLogic(sessionId, request, emitter, isCompleted);
             } catch (Exception e) {
@@ -108,13 +108,11 @@ public class GptChatService {
         } else {
             sendEmitterPayload(emitter, "next-reply", memoryItemTempId, "응답을 시작합니다.", presignedUrl);
 
-            executor.submit(() -> {
+            gptExecutor.execute(() -> {
                 flaskServer.sendMessage(
                         sessionId, presignedUrl, userMessage, messageHistoryByRole,
-                        memoryItemTempId, wrapEmitter(emitter, isCompleted),
-                        () -> {
-                            safeComplete(emitter, isCompleted);
-                        }
+                        memoryItemTempId, emitter,
+                        () -> safeComplete(emitter, isCompleted)
                 );
             });
         }
@@ -144,10 +142,10 @@ public class GptChatService {
             String nextPresignedUrl = getPresignedUrl(nextItem.getFileKey());
             sendEmitterPayload(emitter, "next-question", nextItem.getTempId(), "다음 이미지 질문을 시작합니다.", nextPresignedUrl);
 
-            executor.submit(() -> {
+            gptExecutor.execute(() -> {
                 flaskServer.initiateChatWithImageUrl(
                         sessionId, nextPresignedUrl, nextItem.getTempId(),
-                        wrapEmitter(emitter, isCompleted),
+                        emitter,
                         () -> safeComplete(emitter, isCompleted)
                 );
             });
@@ -220,27 +218,6 @@ public class GptChatService {
         if (isCompleted.compareAndSet(false, true)) {
             emitter.completeWithError(e);
         }
-    }
-
-    private SseEmitter wrapEmitter(SseEmitter emitter, AtomicBoolean isCompleted) {
-        return new SseEmitter() {
-            @Override
-            public void send(Object object) throws IOException {
-                if (!isCompleted.get()) {
-                    emitter.send(object);
-                }
-            }
-
-            @Override
-            public void complete() {
-                safeComplete(emitter, isCompleted);
-            }
-
-            @Override
-            public void completeWithError(Throwable ex) {
-                safeCompleteWithError(emitter, ex, isCompleted);
-            }
-        };
     }
 
     private List<Map<String, String>> buildDiaryRequestList(Memory tempMemory) {
