@@ -45,6 +45,9 @@ public class FlaskServerImpl implements FlaskServer {
                     log.info("✅ /image received chunk: {}", chunk);
                     if (chunk.contains("[DONE]")) {
                         log.info("✅ Detected [DONE], skipping send to client");
+                        if (onCompleteCallback != null) {
+                            onCompleteCallback.run();
+                        }
                         return;  // [DONE] 신호는 클라이언트로 흘려보내지 않음
                     }
 
@@ -77,7 +80,7 @@ public class FlaskServerImpl implements FlaskServer {
 
     @Override
     public void sendMessage(String sessionId, String presignedUrl, String userMessage,
-            Map<String, List<String>> history, String memoryItemTempId, SseEmitter emitter) {
+            Map<String, List<String>> history, String memoryItemTempId, SseEmitter emitter, Runnable onCompleteCallback) {
         StringBuilder completeReply = new StringBuilder();
         AtomicBoolean isCompleted = new AtomicBoolean(false);
 
@@ -101,6 +104,9 @@ public class FlaskServerImpl implements FlaskServer {
 
                     if (chunk.contains("[DONE]")) {
                         log.info("✅ Detected [DONE], skipping send to client");
+                        if (onCompleteCallback != null) {
+                            onCompleteCallback.run();
+                        }
                         return;  // [DONE] 신호는 클라이언트로 흘려보내지 않음
                     }
 

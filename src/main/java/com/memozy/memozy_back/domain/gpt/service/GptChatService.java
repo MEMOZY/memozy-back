@@ -111,7 +111,10 @@ public class GptChatService {
             executor.submit(() -> {
                 flaskServer.sendMessage(
                         sessionId, presignedUrl, userMessage, messageHistoryByRole,
-                        memoryItemTempId, wrapEmitter(emitter, isCompleted)
+                        memoryItemTempId, wrapEmitter(emitter, isCompleted),
+                        () -> {
+                            safeComplete(emitter, isCompleted);
+                        }
                 );
             });
         }
