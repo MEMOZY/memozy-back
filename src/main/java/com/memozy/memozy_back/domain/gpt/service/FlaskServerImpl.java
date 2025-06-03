@@ -44,29 +44,31 @@ public class FlaskServerImpl implements FlaskServer {
                 .doOnSubscribe(sub -> log.info("✅ SPRING SUBSCRIBED to /image stream"))
                 .doOnNext(chunk -> {
                     String data = chunk.data();
-                    log.info("✅ /image received chunk: {}", data);
+                    log.info("➡ doOnNext: chunk.data={}", data);
 
                     if (data.contains("[DONE]")) {
-                        log.info("✅ Detected [DONE]");
+                        log.info("✅ Detected [DONE], done 이벤트 전송 시도");
                         try {
                             sendEmitterPayload(emitter, "done", memoryItemTempId, "대화 종료", presignedImageUrl);
                         } catch (Exception e) {
                             log.warn("Failed to send DONE event", e);
                         }
-                        return;  // 마지막 청크, 더 이상 append는 안 함
+                        return;
                     }
 
                     completeReply.append(data);
                     try {
                         sendEmitterPayload(emitter, "reply", memoryItemTempId, data, presignedImageUrl);
                     } catch (IllegalStateException ex) {
-                        log.warn("SSEEmitter already completed, skipping send: {}", ex.getMessage());
+                        log.warn("❌ SSEEmitter already completed, skipping send: {}", ex.getMessage());
                     } catch (IOException e) {
-                        log.error("SSE 전송 중 IOException 발생", e);
+                        log.error("❌ SSE 전송 중 IOException 발생: {}", e.getMessage(), e);
+                    } catch (Exception e) {
+                        log.error("❌ 기타 전송 예외 발생: {}", e.getMessage(), e);
                     }
                 })
                 .doOnError(e -> {
-                    log.error("❌ SPRING ERROR: {}", e.getMessage());
+                    log.error("❌ SPRING ERROR: {}", e.getMessage(), e);
                     emitter.completeWithError(e);
                 })
                 .doOnComplete(() -> {
@@ -107,29 +109,31 @@ public class FlaskServerImpl implements FlaskServer {
                 .doOnSubscribe(sub -> log.info("✅ SPRING SUBSCRIBED to /message stream"))
                 .doOnNext(chunk -> {
                     String data = chunk.data();
-                    log.info("✅ /image received chunk: {}", data);
+                    log.info("➡ doOnNext: chunk.data={}", data);
 
                     if (data.contains("[DONE]")) {
-                        log.info("✅ Detected [DONE]");
+                        log.info("✅ Detected [DONE], done 이벤트 전송 시도");
                         try {
                             sendEmitterPayload(emitter, "done", memoryItemTempId, "대화 종료", presignedUrl);
                         } catch (Exception e) {
                             log.warn("Failed to send DONE event", e);
                         }
-                        return;  // 마지막 청크, 더 이상 append는 안 함
+                        return;
                     }
 
                     completeReply.append(data);
                     try {
                         sendEmitterPayload(emitter, "reply", memoryItemTempId, data, presignedUrl);
                     } catch (IllegalStateException ex) {
-                        log.warn("SSEEmitter already completed, skipping send: {}", ex.getMessage());
+                        log.warn("❌ SSEEmitter already completed, skipping send: {}", ex.getMessage());
                     } catch (IOException e) {
-                        log.error("SSE 전송 중 IOException 발생", e);
+                        log.error("❌ SSE 전송 중 IOException 발생: {}", e.getMessage(), e);
+                    } catch (Exception e) {
+                        log.error("❌ 기타 전송 예외 발생: {}", e.getMessage(), e);
                     }
                 })
                 .doOnError(e -> {
-                    log.error("❌ SPRING ERROR: {}", e.getMessage());
+                    log.error("❌ SPRING ERROR: {}", e.getMessage(), e);
                     emitter.completeWithError(e);
                 })
                 .doOnComplete(() -> {
@@ -211,6 +215,19 @@ public class FlaskServerImpl implements FlaskServer {
 
     private void sendEmitterPayload(SseEmitter emitter, String type, String tempId, String message, String presignedUrl) throws IOException {
         EmitterPayloadDto payload = new EmitterPayloadDto(tempId, type, message, presignedUrl);
-        emitter.send(SseEmitter.event().name(type).data(payload));
+        log.info("➡ sendEmitterPayload 진입: type={}, tempId={}, message={}, presignedUrl={}", type, tempId, message, presignedUrl);
+        try {
+            emitter.send(SseEmitter.event().name(type).data(payload));
+            log.info("✅ emitter.send 성공: type={}, tempId={}", type, tempId);
+        } catch (IllegalStateException ex) {
+            log.warn("❌ IllegalStateException 발생: emitter 이미 완료됨. type={}, tempId={}, message={}, 예외={}", type, tempId, message, ex.getMessage(), ex);
+            throw ex;
+        } catch (IOException ex) {
+            log.error("❌ IOException 발생: type={}, tempId={}, message={}, 예외={}", type, tempId, message, ex.getMessage(), ex);
+            throw ex;
+        } catch (Exception ex) {
+            log.error("❌ 기타 예외 발생: type={}, tempId={}, message={}, 예외={}", type, tempId, message, ex.getMessage(), ex);
+            throw ex;
+        }
     }
 }
