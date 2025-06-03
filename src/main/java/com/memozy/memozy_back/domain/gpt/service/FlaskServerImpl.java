@@ -16,7 +16,9 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import reactor.core.scheduler.Schedulers;
 
 @Component
 @Slf4j
@@ -41,49 +43,11 @@ public class FlaskServerImpl implements FlaskServer {
                 .retrieve()
                 .bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {})
                 .filter(chunk -> chunk != null && chunk.data() != null)
+                .publishOn(Schedulers.boundedElastic())  // ⚡ Reactor thread → boundedElastic
                 .doOnSubscribe(sub -> log.info("✅ SPRING SUBSCRIBED to /image stream"))
-                .doOnNext(chunk -> {
-                    String data = chunk.data();
-                    log.info("➡ doOnNext: chunk.data={}", data);
-
-                    if (data.contains("[DONE]")) {
-                        log.info("✅ Detected [DONE], done 이벤트 전송 시도");
-                        try {
-                            sendEmitterPayload(emitter, "done", memoryItemTempId, "대화 종료", presignedImageUrl);
-                        } catch (Exception e) {
-                            log.warn("Failed to send DONE event", e);
-                        }
-                        return;
-                    }
-
-                    completeReply.append(data);
-                    try {
-                        sendEmitterPayload(emitter, "reply", memoryItemTempId, data, presignedImageUrl);
-                    } catch (IllegalStateException ex) {
-                        log.warn("❌ SSEEmitter already completed, skipping send: {}", ex.getMessage());
-                    } catch (IOException e) {
-                        log.error("❌ SSE 전송 중 IOException 발생: {}", e.getMessage(), e);
-                    } catch (Exception e) {
-                        log.error("❌ 기타 전송 예외 발생: {}", e.getMessage(), e);
-                    }
-                })
-                .doOnError(e -> {
-                    log.error("❌ SPRING ERROR: {}", e.getMessage(), e);
-                    emitter.completeWithError(e);
-                })
-                .doOnComplete(() -> {
-                    log.info("✅ SPRING STREAM COMPLETE");
-                    String finalMessage = completeReply.toString();
-
-                    temporaryChatStore.addAssistantMessage(sessionId, memoryItemTempId, finalMessage);
-                    log.info("✅ SPRING SENT FINAL reply");
-
-                    if (onCompleteCallback != null) {
-                        onCompleteCallback.run();
-                    }
-
-                    emitter.complete();
-                })
+                .doOnNext(chunk -> handleChunk(emitter, completeReply, sessionId, memoryItemTempId, presignedImageUrl, chunk.data()))
+                .doOnError(e -> handleError(emitter, e))
+                .doOnComplete(() -> handleComplete(emitter, onCompleteCallback, completeReply.toString(), sessionId, memoryItemTempId))
                 .subscribe();
     }
 
@@ -106,49 +70,11 @@ public class FlaskServerImpl implements FlaskServer {
                 .retrieve()
                 .bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {})
                 .filter(chunk -> chunk != null && chunk.data() != null)
+                .publishOn(Schedulers.boundedElastic())  // ⚡ Reactor thread → boundedElastic
                 .doOnSubscribe(sub -> log.info("✅ SPRING SUBSCRIBED to /message stream"))
-                .doOnNext(chunk -> {
-                    String data = chunk.data();
-                    log.info("➡ doOnNext: chunk.data={}", data);
-
-                    if (data.contains("[DONE]")) {
-                        log.info("✅ Detected [DONE], done 이벤트 전송 시도");
-                        try {
-                            sendEmitterPayload(emitter, "done", memoryItemTempId, "대화 종료", presignedUrl);
-                        } catch (Exception e) {
-                            log.warn("Failed to send DONE event", e);
-                        }
-                        return;
-                    }
-
-                    completeReply.append(data);
-                    try {
-                        sendEmitterPayload(emitter, "reply", memoryItemTempId, data, presignedUrl);
-                    } catch (IllegalStateException ex) {
-                        log.warn("❌ SSEEmitter already completed, skipping send: {}", ex.getMessage());
-                    } catch (IOException e) {
-                        log.error("❌ SSE 전송 중 IOException 발생: {}", e.getMessage(), e);
-                    } catch (Exception e) {
-                        log.error("❌ 기타 전송 예외 발생: {}", e.getMessage(), e);
-                    }
-                })
-                .doOnError(e -> {
-                    log.error("❌ SPRING ERROR: {}", e.getMessage(), e);
-                    emitter.completeWithError(e);
-                })
-                .doOnComplete(() -> {
-                    log.info("✅ SPRING STREAM COMPLETE");
-                    String finalMessage = completeReply.toString();
-
-                    temporaryChatStore.addAssistantMessage(sessionId, memoryItemTempId, finalMessage);
-                    log.info("✅ SPRING SENT FINAL reply");
-
-                    if (onCompleteCallback != null) {
-                        onCompleteCallback.run();
-                    }
-
-                    emitter.complete();
-                })
+                .doOnNext(chunk -> handleChunk(emitter, completeReply, sessionId, memoryItemTempId, presignedUrl, chunk.data()))
+                .doOnError(e -> handleError(emitter, e))
+                .doOnComplete(() -> handleComplete(emitter, onCompleteCallback, completeReply.toString(), sessionId, memoryItemTempId))
                 .subscribe();
     }
 
@@ -211,6 +137,48 @@ public class FlaskServerImpl implements FlaskServer {
                             ));
                 })
                 .toList();
+    }
+
+    private void handleChunk(SseEmitter emitter, StringBuilder completeReply, String sessionId, String tempId, String presignedUrl, String data) {
+        log.info("➡ doOnNext: chunk.data={}", data);
+        if (data.contains("[DONE]")) {
+            log.info("✅ Detected [DONE], done 이벤트 전송 시도");
+            try {
+                sendEmitterPayload(emitter, "done", tempId, "대화 종료", presignedUrl);
+            } catch (Exception e) {
+                log.warn("Failed to send DONE event", e);
+            }
+            return;
+        }
+        completeReply.append(data);
+        try {
+            sendEmitterPayload(emitter, "reply", tempId, data, presignedUrl);
+        } catch (IllegalStateException ex) {
+            log.warn("❌ SSEEmitter already completed, skipping send: {}", ex.getMessage());
+        } catch (IOException e) {
+            log.error("❌ SSE 전송 중 IOException 발생: {}", e.getMessage(), e);
+        } catch (Exception e) {
+            log.error("❌ 기타 전송 예외 발생: {}", e.getMessage(), e);
+        }
+    }
+
+    private void handleError(SseEmitter emitter, Throwable e) {
+        if (e instanceof WebClientResponseException responseException) {
+            log.error("❌ SPRING ERROR (WebClient): {} - {}", responseException.getStatusCode(), responseException.getResponseBodyAsString(), e);
+        } else {
+            log.error("❌ SPRING ERROR: {}", e.getMessage(), e);
+        }
+        emitter.completeWithError(e);
+    }
+
+    private void handleComplete(SseEmitter emitter, Runnable onCompleteCallback, String finalMessage, String sessionId, String memoryItemTempId) {
+        log.info("✅ SPRING STREAM COMPLETE");
+        temporaryChatStore.addAssistantMessage(sessionId, memoryItemTempId, finalMessage);
+        log.info("✅ SPRING SENT FINAL reply");
+        if (onCompleteCallback != null) {
+            onCompleteCallback.run();
+        }
+        emitter.complete();
     }
 
     private void sendEmitterPayload(SseEmitter emitter, String type, String tempId, String message, String presignedUrl) throws IOException {
