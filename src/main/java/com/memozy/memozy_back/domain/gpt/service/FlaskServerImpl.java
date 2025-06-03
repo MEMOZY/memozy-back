@@ -191,7 +191,7 @@ public class FlaskServerImpl implements FlaskServer {
         EmitterPayloadDto payload = new EmitterPayloadDto(tempId, type, message, presignedUrl);
         log.info("➡ sendEmitterPayload 진입: type={}, tempId={}, message={}, presignedUrl={}", type, tempId, message, presignedUrl);
         try {
-            emitter.send(SseEmitter.event().name(type).reconnectTime(0).data(payload));
+            emitter.send(SseEmitter.event().name(type).data(payload));
             log.info("✅ emitter.send 성공: type={}, tempId={}", type, tempId);
         } catch (IllegalStateException ex) {
             log.warn("❌ IllegalStateException 발생: emitter 이미 완료됨. type={}, tempId={}, message={}, 예외={}", type, tempId, message, ex.getMessage(), ex);
