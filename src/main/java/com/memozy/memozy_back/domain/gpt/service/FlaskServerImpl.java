@@ -45,7 +45,7 @@ public class FlaskServerImpl implements FlaskServer {
                 .filter(chunk -> chunk != null && chunk.data() != null)
                 .publishOn(Schedulers.boundedElastic())  // ⚡ Reactor thread → boundedElastic
                 .doOnSubscribe(sub -> log.info("✅ SPRING SUBSCRIBED to /image stream"))
-                .doOnNext(chunk -> handleChunk(emitter, completeReply, sessionId, memoryItemTempId, presignedImageUrl, chunk.data()))
+                .doOnNext(chunk -> handleChunk(emitter, completeReply, memoryItemTempId, presignedImageUrl, chunk.data()))
                 .doOnError(e -> handleError(emitter, e))
                 .doOnComplete(() -> handleComplete(emitter, onCompleteCallback, completeReply.toString(), sessionId, memoryItemTempId))
                 .subscribe();
@@ -72,7 +72,7 @@ public class FlaskServerImpl implements FlaskServer {
                 .filter(chunk -> chunk != null && chunk.data() != null)
                 .publishOn(Schedulers.boundedElastic())  // ⚡ Reactor thread → boundedElastic
                 .doOnSubscribe(sub -> log.info("✅ SPRING SUBSCRIBED to /message stream"))
-                .doOnNext(chunk -> handleChunk(emitter, completeReply, sessionId, memoryItemTempId, presignedUrl, chunk.data()))
+                .doOnNext(chunk -> handleChunk(emitter, completeReply, memoryItemTempId, presignedUrl, chunk.data()))
                 .doOnError(e -> handleError(emitter, e))
                 .doOnComplete(() -> handleComplete(emitter, onCompleteCallback, completeReply.toString(), sessionId, memoryItemTempId))
                 .subscribe();
@@ -139,27 +139,33 @@ public class FlaskServerImpl implements FlaskServer {
                 .toList();
     }
 
-    private void handleChunk(SseEmitter emitter, StringBuilder completeReply, String sessionId, String tempId, String presignedUrl, String data) {
-        log.info("➡ doOnNext: chunk.data={}", data);
-        if (data.contains("[DONE]")) {
-            log.info("✅ Detected [DONE], done 이벤트 전송 시도");
-            try {
-                sendEmitterPayload(emitter, "done", tempId, "대화 종료", presignedUrl);
-            } catch (Exception e) {
-                log.warn("Failed to send DONE event", e);
-            }
-            return;
-        }
-        completeReply.append(data);
+    private void handleChunk(SseEmitter emitter, StringBuilder completeReply, String tempId, String presignedUrl, String data) {
+        // TEST: 강제로 emitter에 "테스트" 메시지만 보내보기
         try {
-            sendEmitterPayload(emitter, "reply", tempId, data, presignedUrl);
-        } catch (IllegalStateException ex) {
-            log.warn("❌ SSEEmitter already completed, skipping send: {}", ex.getMessage());
-        } catch (IOException e) {
-            log.error("❌ SSE 전송 중 IOException 발생: {}", e.getMessage(), e);
+            sendEmitterPayload(emitter, "test-reply", tempId, "🔥 Spring에서 강제 전송 테스트!", presignedUrl);
         } catch (Exception e) {
-            log.error("❌ 기타 전송 예외 발생: {}", e.getMessage(), e);
+            log.error("❌ 강제 전송 실패: {}", e.getMessage(), e);
         }
+//        log.info("➡ doOnNext: chunk.data={}", data);
+//        if (data.contains("[DONE]")) {
+//            log.info("✅ Detected [DONE], done 이벤트 전송 시도");
+//            try {
+//                sendEmitterPayload(emitter, "done", tempId, "대화 종료", presignedUrl);
+//            } catch (Exception e) {
+//                log.warn("Failed to send DONE event", e);
+//            }
+//            return;
+//        }
+//        completeReply.append(data);
+//        try {
+//            sendEmitterPayload(emitter, "reply", tempId, data, presignedUrl);
+//        } catch (IllegalStateException ex) {
+//            log.warn("❌ SSEEmitter already completed, skipping send: {}", ex.getMessage());
+//        } catch (IOException e) {
+//            log.error("❌ SSE 전송 중 IOException 발생: {}", e.getMessage(), e);
+//        } catch (Exception e) {
+//            log.error("❌ 기타 전송 예외 발생: {}", e.getMessage(), e);
+//        }
     }
 
     private void handleError(SseEmitter emitter, Throwable e) {
