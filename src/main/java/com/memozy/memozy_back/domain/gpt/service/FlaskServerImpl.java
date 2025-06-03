@@ -48,7 +48,12 @@ public class FlaskServerImpl implements FlaskServer {
 
                     if (data.contains("[DONE]")) {
                         log.info("✅ Detected [DONE]");
-                        return;  // 마지막 청크, 클라이언트 송출 안 함
+                        try {
+                            sendEmitterPayload(emitter, "done", memoryItemTempId, "대화 종료", presignedImageUrl);
+                        } catch (Exception e) {
+                            log.warn("Failed to send DONE event", e);
+                        }
+                        return;  // 마지막 청크, 더 이상 append는 안 함
                     }
 
                     completeReply.append(data);
@@ -106,7 +111,12 @@ public class FlaskServerImpl implements FlaskServer {
 
                     if (data.contains("[DONE]")) {
                         log.info("✅ Detected [DONE]");
-                        return;  // 마지막 청크, 클라이언트 송출 안 함
+                        try {
+                            sendEmitterPayload(emitter, "done", memoryItemTempId, "대화 종료", presignedUrl);
+                        } catch (Exception e) {
+                            log.warn("Failed to send DONE event", e);
+                        }
+                        return;  // 마지막 청크, 더 이상 append는 안 함
                     }
 
                     completeReply.append(data);
