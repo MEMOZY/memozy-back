@@ -106,7 +106,7 @@ public class GptChatService {
         if (isEndCommand || isThirdTurn) {
             handleStoryGeneration(sessionId, memory, currentItem, messageHistoryByRole, emitter, isCompleted);
         } else {
-            sendEmitterPayload(emitter, "next-reply", memoryItemTempId, "응답을 시작합니다.", presignedUrl);
+            sendEmitterPayload(emitter, "open-reply", memoryItemTempId, "응답을 시작합니다.", presignedUrl);
 
             gptExecutor.execute(() -> {
                 flaskServer.sendMessage(
@@ -140,7 +140,7 @@ public class GptChatService {
             temporaryChatStore.initChat(sessionId, nextItem.getTempId());
 
             String nextPresignedUrl = getPresignedUrl(nextItem.getFileKey());
-            sendEmitterPayload(emitter, "next-question", nextItem.getTempId(), "다음 이미지 질문을 시작합니다.", nextPresignedUrl);
+            sendEmitterPayload(emitter, "open-question", nextItem.getTempId(), "다음 이미지 질문을 시작합니다.", nextPresignedUrl);
 
             gptExecutor.execute(() -> {
                 flaskServer.initiateChatWithImageUrl(
