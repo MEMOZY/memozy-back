@@ -150,7 +150,7 @@ public class GptChatService {
                 );
             });
         } else {
-            sendEmitterPayload(emitter, "done", "", "모든 이미지에 대한 질문이 완료되었습니다.", "");
+            sendEmitterPayload(emitter, "final-done", "", "모든 이미지에 대한 질문이 완료되었습니다.", "");
             safeComplete(emitter, isCompleted);
         }
     }
