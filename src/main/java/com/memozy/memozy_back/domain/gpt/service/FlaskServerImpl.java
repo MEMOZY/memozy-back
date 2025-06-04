@@ -148,12 +148,7 @@ public class FlaskServerImpl implements FlaskServer {
 //        }
         log.info("➡ doOnNext: chunk.data={}", data);
         if (data.contains("[DONE]")) {
-            log.info("✅ Detected [DONE], done 이벤트 전송 시도");
-            try {
-                sendEmitterPayload(emitter, "done", tempId, "응답 종료", presignedUrl);
-            } catch (Exception e) {
-                log.warn("Failed to send DONE event", e);
-            }
+            log.info("✅ Detected [DONE], skipping done send (handled in handleComplete)");
             return;
         }
         completeReply.append(data);
@@ -163,6 +158,7 @@ public class FlaskServerImpl implements FlaskServer {
             log.warn("❌ SSEEmitter already completed, skipping send: {}", ex.getMessage());
         } catch (IOException e) {
             log.error("❌ SSE 전송 중 IOException 발생: {}", e.getMessage(), e);
+            throw new BusinessException(ErrorCode.SSE_CONNECTION_FAILED);
         } catch (Exception e) {
             log.error("❌ 기타 전송 예외 발생: {}", e.getMessage(), e);
         }
@@ -181,6 +177,14 @@ public class FlaskServerImpl implements FlaskServer {
         log.info("✅ SPRING STREAM COMPLETE");
         temporaryChatStore.addAssistantMessage(sessionId, memoryItemTempId, finalMessage);
         log.info("✅ SPRING SENT FINAL reply");
+
+        // ✅ 여기서만 done 보내도록 명시
+        try {
+            sendEmitterPayload(emitter, "done", memoryItemTempId, "응답 종료", "");  // presignedUrl은 선택
+        } catch (Exception e) {
+            log.warn("Failed to send done event in handleComplete", e);
+        }
+
         if (onCompleteCallback != null) {
             onCompleteCallback.run();
         }
@@ -198,7 +202,7 @@ public class FlaskServerImpl implements FlaskServer {
             throw ex;
         } catch (IOException ex) {
             log.error("❌ IOException 발생: type={}, tempId={}, message={}, 예외={}", type, tempId, message, ex.getMessage(), ex);
-            throw ex;
+            throw new BusinessException(ex, ErrorCode.SSE_CONNECTION_FAILED);
         } catch (Exception ex) {
             log.error("❌ 기타 예외 발생: type={}, tempId={}, message={}, 예외={}", type, tempId, message, ex.getMessage(), ex);
             throw ex;
