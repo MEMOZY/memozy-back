@@ -138,21 +138,19 @@ public class S3FileServiceImpl implements FileService {
                     .key(fileKey)
                     .build());
 
-            // 2. HEIC → JPEG 변환
             File heicFile = File.createTempFile("image", ".heic");
             Files.copy(heicInputStream, heicFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
             File jpegFile = File.createTempFile("image", ".jpg");
 
-            Process process = new ProcessBuilder(
-                    "magick", heicFile.getAbsolutePath(), jpegFile.getAbsolutePath()
-            ).start();
-            process.waitFor();
+            // 2. ImageMagick 변환
+            ProcessBuilder pb = new ProcessBuilder("convert", heicFile.getAbsolutePath(), jpegFile.getAbsolutePath());
+            pb.redirectErrorStream(true); // stderr도 stdout으로 합치기
+            Process process = pb.start();
 
+            String output = new String(process.getInputStream().readAllBytes());
             int exitCode = process.waitFor();
 
-// 디버깅 로그 추가
-            String output = new String(process.getInputStream().readAllBytes());
-            log.error("ImageMagick 실행 결과: \n{}", output);
+            log.error("ImageMagick 실행 결과:\n{}", output);
             log.error("exitCode: {}", exitCode);
 
             if (exitCode != 0 || !jpegFile.exists() || jpegFile.length() == 0) {
@@ -161,7 +159,6 @@ public class S3FileServiceImpl implements FileService {
 
             // 3. JPEG 파일 S3에 재업로드
             String newKey = fileKey.replaceAll("(?i)\\.heic$", ".jpg");
-
             s3Client.putObject(
                     PutObjectRequest.builder().bucket(bucket).key(newKey).build(),
                     RequestBody.fromFile(jpegFile)
@@ -171,9 +168,12 @@ public class S3FileServiceImpl implements FileService {
             s3Client.deleteObject(DeleteObjectRequest.builder().bucket(bucket).key(fileKey).build());
 
             return newKey;
+
         } catch (IOException | InterruptedException e) {
+            log.error("HEIC 변환 중 예외 발생", e);
             throw new BusinessException(ErrorCode.IMAGE_CONVERSION_FAILED);
         } catch (Exception e) {
+            log.error("HEIC 변환 중 알 수 없는 예외", e);
             throw new BusinessException(ErrorCode.IMAGE_CONVERSION_FAILED);
         }
     }
