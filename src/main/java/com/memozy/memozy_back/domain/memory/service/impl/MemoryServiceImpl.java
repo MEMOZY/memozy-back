@@ -198,7 +198,9 @@ public class MemoryServiceImpl implements MemoryService {
     private void addMemoryItem(MemoryItemDto item, Memory memory) {
         String fileKey = fileService.extractFileKeyFromImageUrl(item.imageUrl());
         fileService.validateFileKey(fileKey);
-        String movedFileKey = fileService.moveFile(fileKey);
+        String movedFileKey = fileService.moveFile(
+                fileService.convertHeicIfNeeded(fileKey)
+        );
         memory.addMemoryItem(
                 MemoryItem.create(
                         memory,
