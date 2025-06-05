@@ -89,4 +89,7 @@ public class MemoryItem extends BaseTimeEntity {
         this.content = content;
     }
 
+    public void updateFileKey(String movedFileKey) {
+        this.fileKey = movedFileKey;
+    }
 }
