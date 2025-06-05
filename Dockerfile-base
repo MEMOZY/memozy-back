@@ -8,8 +8,9 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # 필수 패키지 설치 + Java 21
 RUN apt-get update && \
-    apt-get install -y wget gnupg2 software-properties-common curl git build-essential pkg-config \
-    libpng-dev libjpeg-dev libtiff-dev libwebp-dev libheif-dev libde265-dev ca-certificates && \
+    apt-get install -y wget curl gnupg2 git build-essential software-properties-common \
+    pkg-config autoconf automake libtool cmake yasm nasm ninja-build \
+    libpng-dev libjpeg-dev libtiff-dev libwebp-dev ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
 # Java 설치 (Temurin 21)
@@ -19,14 +20,25 @@ RUN wget -O- https://packages.adoptium.net/artifactory/api/gpg/key/public | gpg 
     apt-get install -y temurin-21-jdk && \
     rm -rf /var/lib/apt/lists/*
 
-# ImageMagick 7 소스 빌드
+# libde265 빌드
 WORKDIR /tmp
+RUN git clone https://github.com/strukturag/libde265.git && \
+    cd libde265 && ./autogen.sh && ./configure && make -j$(nproc) && make install && ldconfig && \
+    cd .. && rm -rf libde265
+
+# libheif 빌드 (CMake 방식)
+RUN git clone https://github.com/strukturag/libheif.git && \
+    cd libheif && mkdir build && cd build && \
+    cmake .. && \
+    make -j$(nproc) && make install && ldconfig && \
+    cd ../.. && rm -rf libheif
+
+# ImageMagick 7.1.1-29 빌드
 RUN git clone https://github.com/ImageMagick/ImageMagick.git && \
     cd ImageMagick && \
     git checkout 7.1.1-29 && \
     ./configure --with-heic=yes && \
-    make && make install && \
-    ldconfig && \
+    make -j$(nproc) && make install && ldconfig && \
     cd .. && rm -rf ImageMagick
 
 # JAR 복사
