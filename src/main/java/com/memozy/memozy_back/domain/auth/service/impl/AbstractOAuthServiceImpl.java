@@ -36,7 +36,7 @@ public abstract class AbstractOAuthServiceImpl implements OAuthService {
                         // 해당 유저가 현재 플랫폼으로 연동된 적 없다면 연동 정보 추가
                         boolean alreadyLinked = socialUserInfoRepository
                                 .existsByUserAndSocialType(existingUser, platform);
-ㅎ
+
                         if (!alreadyLinked) {
                             socialUserInfoRepository.save(SocialUserInfo.newInstance(existingUser, platform, socialCode));
                         }
