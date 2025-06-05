@@ -154,6 +154,12 @@ public class S3FileServiceImpl implements FileService {
             log.error("exitCode: {}", exitCode);
 
             if (exitCode != 0 || !jpegFile.exists() || jpegFile.length() == 0) {
+                if (!heicFile.delete()) {
+                    log.warn("HEIC 임시 파일 삭제 실패: {}", heicFile.getAbsolutePath());
+                }
+                if (!jpegFile.delete()) {
+                    log.warn("JPEG 임시 파일 삭제 실패: {}", jpegFile.getAbsolutePath());
+                }
                 throw new BusinessException(ErrorCode.IMAGE_CONVERSION_FAILED);
             }
 
@@ -166,6 +172,13 @@ public class S3FileServiceImpl implements FileService {
 
             // 4. 원본 HEIC 삭제
             s3Client.deleteObject(DeleteObjectRequest.builder().bucket(bucket).key(fileKey).build());
+
+            if (!heicFile.delete()) {
+                log.warn("HEIC 임시 파일 삭제 실패: {}", heicFile.getAbsolutePath());
+            }
+            if (!jpegFile.delete()) {
+                log.warn("JPEG 임시 파일 삭제 실패: {}", jpegFile.getAbsolutePath());
+            }
 
             return newKey;
 
