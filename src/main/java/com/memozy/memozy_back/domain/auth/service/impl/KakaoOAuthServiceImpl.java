@@ -17,73 +17,28 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @Slf4j
-@RequiredArgsConstructor
-public class KakaoOAuthServiceImpl implements OAuthService {
+public class KakaoOAuthServiceImpl extends AbstractOAuthServiceImpl {
 
     private final JwtProperty jwtProperty;
-//    private final KakaoAuthServerClient kakaoAuthServerClient;
     private final KakaoServerClient kakaoServerClient;
-//    private final KakaoClientProperty kakaoClientProperty;
-    private final SocialUserInfoRepository socialUserInfoRepository;
-    private final UserRepository userRepository;
+
+    public KakaoOAuthServiceImpl(JwtProperty jwtProperty, KakaoServerClient kakaoServerClient,
+            SocialUserInfoRepository socialUserInfoRepository, UserRepository userRepository) {
+        super(socialUserInfoRepository, userRepository);
+        this.jwtProperty = jwtProperty;
+        this.kakaoServerClient = kakaoServerClient;
+    }
 
     @Override
     public boolean support(SocialPlatform socialPlatform) {
         return socialPlatform == SocialPlatform.KAKAO;
     }
 
-    //public User socialUserLogin(String authorizationCode) {
     @Override
     @Transactional
-    public User socialUserLogin(String kakaoAccessToken, String username) {
-//        OAuthToken oAuthToken = kakaoAuthServerClient.getOAuth2AccessToken(
-//                kakaoClientProperty.getContentType(),
-//                kakaoClientProperty.getGrantType(),
-//                kakaoClientProperty.getClientId(),
-//                kakaoClientProperty.getRedirectPath(),
-//                kakaoAccessToken);
-        KakaoSocialUserProfile socialUserProfile = kakaoServerClient.getUserInformation(
-                jwtProperty.getBearerPrefix() + " " + kakaoAccessToken);
-
-        String socialCode = SocialUserInfo.calculateSocialCode(
-                SocialPlatform.KAKAO,
-                String.valueOf(socialUserProfile.getId())
-        );
-
-        log.info("카카오 사용자 ID: {}", socialUserProfile.getId());
-        log.info("닉네임: {}", socialUserProfile.getNickname());
-        log.info("프로필 이미지: {}", socialUserProfile.getProfileImageUrl());
-
-        return socialUserInfoRepository
-                .findBySocialCode(socialCode)
-                .map(SocialUserInfo::getUser)
-                .orElseGet(() -> {
-                    // 회원가입
-                    User newUser = userRepository.save(
-                            User.create(
-                                    UserRole.MEMBER,
-                                    socialUserProfile.getNickname(),
-                                    null,
-                                    socialUserProfile.getProfileImageUrl()
-                            )
-                    );
-
-                    socialUserInfoRepository.save(
-                            SocialUserInfo.newInstance(
-                                    newUser,
-                                    SocialPlatform.KAKAO,
-                                    socialCode));
-                    return newUser;
-                });
+    public User socialUserLogin(String kakaoAccessToken, String ignored) {
+        var profile = kakaoServerClient.getUserInformation(jwtProperty.getBearerPrefix() + " " + kakaoAccessToken);
+        String socialCode = SocialUserInfo.calculateSocialCode(SocialPlatform.KAKAO, String.valueOf(profile.getId()));
+        return handleSocialLogin(SocialPlatform.KAKAO, socialCode, profile.getEmail(), profile.getNickname(), profile.getProfileImageUrl());
     }
-
-//    @Override
-//    public String getLoginPageUrl(String origin) {
-//        return UriComponentsBuilder
-//                .fromHttpUrl(kakaoClientProperty.getLoginPageUrl())
-//                .queryParam("client_id", kakaoClientProperty.getClientId())
-//                .queryParam("redirect_uri", origin + kakaoClientProperty.getRedirectPath())
-//                .build()
-//                .toUriString();
-//    }
 }

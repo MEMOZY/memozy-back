@@ -27,6 +27,10 @@ public class KakaoSocialUserProfile {
         return properties != null ? properties.nickname : null;
     }
 
+    public String getEmail() {
+        return kakaoAccount != null ? kakaoAccount.email : null;
+    }
+
     public String getProfileImageUrl() {
         if (kakaoAccount != null && kakaoAccount.profile != null && kakaoAccount.profile.profileImageUrl != null) {
             return kakaoAccount.profile.profileImageUrl;
@@ -49,6 +53,7 @@ public class KakaoSocialUserProfile {
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class KakaoAccount {
         private Profile profile;
+        private String email;
 
         @Getter
         @NoArgsConstructor(access = AccessLevel.PRIVATE)

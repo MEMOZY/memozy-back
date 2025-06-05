@@ -7,6 +7,8 @@ import com.memozy.memozy_back.domain.user.domain.SocialUserInfo;
 import com.memozy.memozy_back.domain.user.domain.User;
 import com.memozy.memozy_back.domain.user.repository.SocialUserInfoRepository;
 import com.memozy.memozy_back.domain.user.repository.UserRepository;
+import com.memozy.memozy_back.global.exception.BusinessException;
+import com.memozy.memozy_back.global.exception.ErrorCode;
 import com.memozy.memozy_back.global.feign.oauth.google.GoogleServerClient;
 import com.memozy.memozy_back.global.feign.oauth.google.GoogleSocialUserProfile;
 import com.memozy.memozy_back.global.jwt.JwtProperty;
@@ -17,78 +19,33 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
-public class GoogleOAuthServiceImpl implements OAuthService {
+public class GoogleOAuthServiceImpl extends AbstractOAuthServiceImpl {
 
     private final JwtProperty jwtProperty;
-//    private final GoogleAuthServerClient googleAuthServerClient;
     private final GoogleServerClient googleServerClient;
-//    private final GoogleClientProperty googleClientProperty;
-    private final SocialUserInfoRepository socialUserInfoRepository;
-    private final UserRepository userRepository;
+
+    public GoogleOAuthServiceImpl(JwtProperty jwtProperty,
+            GoogleServerClient googleServerClient,
+            SocialUserInfoRepository socialUserInfoRepository,
+            UserRepository userRepository) {
+        super(socialUserInfoRepository, userRepository);
+        this.jwtProperty = jwtProperty;
+        this.googleServerClient = googleServerClient;
+    }
 
     @Override
     public boolean support(SocialPlatform socialPlatform) {
         return socialPlatform == SocialPlatform.GOOGLE;
     }
 
-    //public User socialUserLogin(String origin, String authorizationCode) {
     @Override
     @Transactional
-    public User socialUserLogin(String googleAccessToken, String username) {
-//        OAuthToken oAuthToken = googleAuthServerClient.getOAuth2AccessToken(
-//                googleClientProperty.getContentType(),
-//                googleClientProperty.getGrantType(),
-//                googleClientProperty.getClientId(),
-//                googleClientProperty.getClientSecret(),
-//                origin + googleClientProperty.getRedirectPath(),
-//                authorizationCode);
-
-        GoogleSocialUserProfile socialUserProfile = googleServerClient.getUserInformation(
+    public User socialUserLogin(String googleAccessToken, String ignored) {
+        GoogleSocialUserProfile profile = googleServerClient.getUserInformation(
                 jwtProperty.getBearerPrefix() + " " + googleAccessToken);
-        log.info("📦 GoogleSocialUserProfile: {}", socialUserProfile);
+        log.info("📦 GoogleSocialUserProfile: {}", profile);
 
-        String socialCode = SocialUserInfo.calculateSocialCode(
-                SocialPlatform.GOOGLE,
-                socialUserProfile.getSub());
-
-        log.info("닉네임: {}", socialUserProfile.getName());
-        log.info("프로필 이미지: {}", socialUserProfile.getPicture());
-        log.info("이메일 주소: {}", socialUserProfile.getEmail());
-
-        return socialUserInfoRepository
-                .findBySocialCode(socialCode)
-                .map(SocialUserInfo::getUser)
-                .orElseGet(() -> {
-                    User newUser = userRepository.save(
-                            User.create(
-                                    UserRole.MEMBER,
-                                    socialUserProfile.getName(),
-                                    socialUserProfile.getEmail(),
-                                    socialUserProfile.getPicture()
-                            )
-                    );
-
-                    socialUserInfoRepository.save(
-                            SocialUserInfo.newInstance(
-                                    newUser,
-                                    SocialPlatform.GOOGLE,
-                                    socialCode));
-                    return newUser;
-                });
+        String socialCode = SocialUserInfo.calculateSocialCode(SocialPlatform.GOOGLE, profile.getSub());
+        return handleSocialLogin(SocialPlatform.GOOGLE, socialCode, profile.getEmail(), profile.getName(), profile.getPicture());
     }
-
-
-
-//    @Override
-//    public String getLoginPageUrl(String origin) {
-//        return new StringBuilder()
-//                .append(googleClientProperty.getLoginPageUrl())
-//                .append("&client_id=")
-//                .append(googleClientProperty.getClientId())
-//                .append("&redirect_uri=")
-//                .append(origin)
-//                .append(googleClientProperty.getRedirectPath())
-//                .toString();
-//    }
 }
