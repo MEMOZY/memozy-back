@@ -7,6 +7,8 @@ import com.memozy.memozy_back.domain.user.domain.SocialUserInfo;
 import com.memozy.memozy_back.domain.user.domain.User;
 import com.memozy.memozy_back.domain.user.repository.SocialUserInfoRepository;
 import com.memozy.memozy_back.domain.user.repository.UserRepository;
+import com.memozy.memozy_back.global.exception.BusinessException;
+import com.memozy.memozy_back.global.exception.ErrorCode;
 import com.memozy.memozy_back.global.feign.oauth.google.GoogleServerClient;
 import com.memozy.memozy_back.global.feign.oauth.google.GoogleSocialUserProfile;
 import com.memozy.memozy_back.global.jwt.JwtProperty;
@@ -32,50 +34,39 @@ public class GoogleOAuthServiceImpl implements OAuthService {
         return socialPlatform == SocialPlatform.GOOGLE;
     }
 
-    //public User socialUserLogin(String origin, String authorizationCode) {
     @Override
     @Transactional
     public User socialUserLogin(String googleAccessToken, String username) {
-//        OAuthToken oAuthToken = googleAuthServerClient.getOAuth2AccessToken(
-//                googleClientProperty.getContentType(),
-//                googleClientProperty.getGrantType(),
-//                googleClientProperty.getClientId(),
-//                googleClientProperty.getClientSecret(),
-//                origin + googleClientProperty.getRedirectPath(),
-//                authorizationCode);
-
         GoogleSocialUserProfile socialUserProfile = googleServerClient.getUserInformation(
                 jwtProperty.getBearerPrefix() + " " + googleAccessToken);
         log.info("📦 GoogleSocialUserProfile: {}", socialUserProfile);
 
-        String socialCode = SocialUserInfo.calculateSocialCode(
-                SocialPlatform.GOOGLE,
-                socialUserProfile.getSub());
-
-        log.info("닉네임: {}", socialUserProfile.getName());
-        log.info("프로필 이미지: {}", socialUserProfile.getPicture());
-        log.info("이메일 주소: {}", socialUserProfile.getEmail());
+        String socialCode = SocialUserInfo.calculateSocialCode(SocialPlatform.GOOGLE, socialUserProfile.getSub());
+        String email = socialUserProfile.getEmail();
 
         return socialUserInfoRepository
                 .findBySocialCode(socialCode)
                 .map(SocialUserInfo::getUser)
-                .orElseGet(() -> {
-                    User newUser = userRepository.save(
-                            User.create(
+                .orElseGet(() -> userRepository.findByEmail(email)
+                        .map(existingUser -> {
+                            boolean exists = socialUserInfoRepository.existsByUserAndSocialType(existingUser, SocialPlatform.GOOGLE);
+                            if (!exists) {
+                                socialUserInfoRepository.save(SocialUserInfo.newInstance(existingUser, SocialPlatform.GOOGLE, socialCode));
+                            }
+                            return existingUser;
+                        })
+                        .orElseGet(() -> {
+                            User newUser = userRepository.save(User.create(
                                     UserRole.MEMBER,
                                     socialUserProfile.getName(),
-                                    socialUserProfile.getEmail(),
+                                    email,
                                     socialUserProfile.getPicture()
-                            )
-                    );
-
-                    socialUserInfoRepository.save(
-                            SocialUserInfo.newInstance(
-                                    newUser,
-                                    SocialPlatform.GOOGLE,
-                                    socialCode));
-                    return newUser;
-                });
+                            ));
+                            socialUserInfoRepository.save(SocialUserInfo.newInstance(
+                                    newUser, SocialPlatform.GOOGLE, socialCode));
+                            return newUser;
+                        })
+                );
     }
 
 

@@ -32,16 +32,9 @@ public class KakaoOAuthServiceImpl implements OAuthService {
         return socialPlatform == SocialPlatform.KAKAO;
     }
 
-    //public User socialUserLogin(String authorizationCode) {
     @Override
     @Transactional
     public User socialUserLogin(String kakaoAccessToken, String username) {
-//        OAuthToken oAuthToken = kakaoAuthServerClient.getOAuth2AccessToken(
-//                kakaoClientProperty.getContentType(),
-//                kakaoClientProperty.getGrantType(),
-//                kakaoClientProperty.getClientId(),
-//                kakaoClientProperty.getRedirectPath(),
-//                kakaoAccessToken);
         KakaoSocialUserProfile socialUserProfile = kakaoServerClient.getUserInformation(
                 jwtProperty.getBearerPrefix() + " " + kakaoAccessToken);
 
@@ -50,40 +43,30 @@ public class KakaoOAuthServiceImpl implements OAuthService {
                 String.valueOf(socialUserProfile.getId())
         );
 
-        log.info("카카오 사용자 ID: {}", socialUserProfile.getId());
-        log.info("닉네임: {}", socialUserProfile.getNickname());
-        log.info("프로필 이미지: {}", socialUserProfile.getProfileImageUrl());
+        String email = socialUserProfile.getEmail();
 
         return socialUserInfoRepository
                 .findBySocialCode(socialCode)
                 .map(SocialUserInfo::getUser)
-                .orElseGet(() -> {
-                    // 회원가입
-                    User newUser = userRepository.save(
-                            User.create(
+                .orElseGet(() -> userRepository.findByEmail(email)
+                        .map(existingUser -> {
+                            boolean exists = socialUserInfoRepository.existsByUserAndSocialType(existingUser, SocialPlatform.GOOGLE);
+                            if (!exists) {
+                                socialUserInfoRepository.save(SocialUserInfo.newInstance(existingUser, SocialPlatform.GOOGLE, socialCode));
+                            }
+                            return existingUser;
+                        })
+                        .orElseGet(() -> {
+                            User newUser = userRepository.save(User.create(
                                     UserRole.MEMBER,
                                     socialUserProfile.getNickname(),
-                                    null,
+                                    email,
                                     socialUserProfile.getProfileImageUrl()
-                            )
-                    );
-
-                    socialUserInfoRepository.save(
-                            SocialUserInfo.newInstance(
-                                    newUser,
-                                    SocialPlatform.KAKAO,
-                                    socialCode));
-                    return newUser;
-                });
+                            ));
+                            socialUserInfoRepository.save(SocialUserInfo.newInstance(
+                                    newUser, SocialPlatform.GOOGLE, socialCode));
+                            return newUser;
+                        })
+                );
     }
-
-//    @Override
-//    public String getLoginPageUrl(String origin) {
-//        return UriComponentsBuilder
-//                .fromHttpUrl(kakaoClientProperty.getLoginPageUrl())
-//                .queryParam("client_id", kakaoClientProperty.getClientId())
-//                .queryParam("redirect_uri", origin + kakaoClientProperty.getRedirectPath())
-//                .build()
-//                .toUriString();
-//    }
 }

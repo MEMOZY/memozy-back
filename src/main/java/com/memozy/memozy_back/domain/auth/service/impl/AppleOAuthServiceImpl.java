@@ -10,6 +10,7 @@ import com.memozy.memozy_back.domain.user.repository.SocialUserInfoRepository;
 import com.memozy.memozy_back.domain.user.repository.UserRepository;
 import com.memozy.memozy_back.global.exception.BusinessException;
 import com.memozy.memozy_back.global.exception.ErrorCode;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -33,41 +34,36 @@ public class AppleOAuthServiceImpl implements OAuthService {
     @Transactional
     public User socialUserLogin(String idToken, String username) {
         ApplePublicKeyProvider.Payload payload = applePublicKeyProvider.parseAndValidate(idToken);
-
-        String socialCode = SocialUserInfo.calculateSocialCode(
-                SocialPlatform.APPLE,
-                payload.sub()
-        );
-
+        String socialCode = SocialUserInfo.calculateSocialCode(SocialPlatform.APPLE, payload.sub());
         String email = payload.email();
 
-        // 이미 등록된 Apple 사용자라면 name, email 없이 OK
+        // 소셜 코드가 등록되어 있다면 해당 유저 반환
         return socialUserInfoRepository.findBySocialCode(socialCode)
                 .map(SocialUserInfo::getUser)
                 .orElseGet(() -> {
-                    // 최초 로그인인데 name, email이 null이면 에러
+                    // 이름, 이메일 없으면 예외
                     if (username == null || username.isBlank()) {
-                        throw new BusinessException(ErrorCode.APPLE_MISSING_NAME);
+                        throw new BusinessException(ErrorCode.AUTH_MISSING_NAME);
+                    }
+                    if (email == null || email.isBlank()) {
+                        throw new BusinessException(ErrorCode.AUTH_MISSING_EMAIL);
                     }
 
-                    User newUser = userRepository.save(
-                            User.create(
-                                    UserRole.MEMBER,
-                                    username,
-                                    email,
-                                    null  // Apple은 기본 프로필 이미지 없음
-                            )
-                    );
-
-                    socialUserInfoRepository.save(
-                            SocialUserInfo.newInstance(
-                                    newUser,
-                                    SocialPlatform.APPLE,
-                                    socialCode
-                            )
-                    );
-
-                    return newUser;
+                    // 이메일로 기존 유저가 있는 경우 소셜 정보만 추가
+                    return userRepository.findByEmail(email)
+                            .map(existingUser -> {
+                                boolean exists = socialUserInfoRepository.existsByUserAndSocialType(existingUser, SocialPlatform.APPLE);
+                                if (!exists) {
+                                    socialUserInfoRepository.save(SocialUserInfo.newInstance(existingUser, SocialPlatform.APPLE, socialCode));
+                                }
+                                return existingUser;
+                            })
+                            .orElseGet(() -> {
+                                // 새 유저 생성 및 소셜 정보 등록
+                                User newUser = userRepository.save(User.create(UserRole.MEMBER, username, email, null));
+                                socialUserInfoRepository.save(SocialUserInfo.newInstance(newUser, SocialPlatform.APPLE, socialCode));
+                                return newUser;
+                            });
                 });
     }
 }
