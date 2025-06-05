@@ -26,28 +26,20 @@ public abstract class AbstractOAuthServiceImpl implements OAuthService {
             String username,
             String profileImageUrl
     ) {
-        return socialUserInfoRepository.findBySocialCode(socialCode)
-                .map(SocialUserInfo::getUser)
+        // 1. 이메일로 유저를 먼저 조회
+        User user = userRepository.findByEmail(email)
                 .orElseGet(() -> {
-                    // 이메일로 기존 유저 찾기
-                    User existingUser = userRepository.findByEmail(email).orElse(null);
-
-                    if (existingUser != null) {
-                        // 해당 유저가 현재 플랫폼으로 연동된 적 없다면 연동 정보 추가
-                        boolean alreadyLinked = socialUserInfoRepository
-                                .existsByUserAndSocialType(existingUser, platform);
-
-                        if (!alreadyLinked) {
-                            socialUserInfoRepository.save(SocialUserInfo.newInstance(existingUser, platform, socialCode));
-                        }
-
-                        return existingUser;
-                    }
-
-                    // 유저가 없다면 새로 생성
-                    User newUser = userRepository.save(User.create(UserRole.MEMBER, username, email, profileImageUrl));
-                    socialUserInfoRepository.save(SocialUserInfo.newInstance(newUser, platform, socialCode));
-                    return newUser;
+                    // 없으면 새 유저 생성
+                    return userRepository.save(User.create(UserRole.MEMBER, username, email, profileImageUrl));
                 });
+
+        // 2. 해당 유저가 이 플랫폼으로 이미 연동됐는지 확인
+        boolean alreadyLinked = socialUserInfoRepository.existsByUserAndSocialType(user, platform);
+        if (!alreadyLinked) {
+            // 연동 안 돼 있으면 연동 추가
+            socialUserInfoRepository.save(SocialUserInfo.newInstance(user, platform, socialCode));
+        }
+
+        return user;
     }
 }
