@@ -44,6 +44,7 @@ public enum ErrorCode {
      * file. code prefix: file-
      */
     FILE_UPLOAD_EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, "file-1", "파일 업로드에 실패했습니다."),
+    IMAGE_CONVERSION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "file-3", "이미지 확장자 변환에 실패했습니다." ),
 
     /**
      * user-policy-agreement. code prefix: user-policy-agreement-
@@ -69,6 +70,7 @@ public enum ErrorCode {
     INVALID_MEMORY_ITEM_ID(HttpStatus.BAD_REQUEST, "chat-1", "잘못된 memoryItemId 요청입니다."),
     SSE_CONNECTION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "chat-2", "SSE 연결 중 오류가 발생했습니다."),
     SSE_ALREADY_COMPLETED(HttpStatus.CONFLICT, "chat-3", "SSE 연결이 이미 종료되었습니다.");
+
 
     private final HttpStatus httpStatus;
     private final String code;
