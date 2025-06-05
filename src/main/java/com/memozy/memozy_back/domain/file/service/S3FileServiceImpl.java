@@ -143,7 +143,7 @@ public class S3FileServiceImpl implements FileService {
             File jpegFile = File.createTempFile("image", ".jpg");
 
             // 2. ImageMagick 변환
-            ProcessBuilder pb = new ProcessBuilder("magick", heicFile.getAbsolutePath(), jpegFile.getAbsolutePath());
+            ProcessBuilder pb = new ProcessBuilder("magick", "-define", "heic:support-auxiliary=false", heicFile.getAbsolutePath(), jpegFile.getAbsolutePath());
             pb.redirectErrorStream(true); // stderr도 stdout으로 합치기
             Process process = pb.start();
 
