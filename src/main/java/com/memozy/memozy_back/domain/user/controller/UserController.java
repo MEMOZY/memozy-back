@@ -51,21 +51,13 @@ public class UserController {
         );
     }
 
-    @GetMapping("/{friendCode}")
+    @GetMapping("friend-code/{friendCode}")
     public ResponseEntity<GetUserInfoResponse> getUserInfoById(
             @Valid @PathVariable String friendCode) {
         return ResponseEntity.ok(
                 userFacade.getUserInfoByFriendCode(friendCode)
         );
     }
-
-//    @GetMapping("/friend-code")
-//    public ResponseEntity<GetFriendCodeResponse> getFriendCode(
-//            @CurrentUserId Long userId) {
-//        return  ResponseEntity.ok(
-//                userFacade.getFriendCode(userId)
-//        );
-//    }
 
     @PatchMapping()
     public ResponseEntity<UpdateUserResponse> updateUser(
