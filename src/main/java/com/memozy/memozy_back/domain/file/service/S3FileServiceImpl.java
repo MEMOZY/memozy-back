@@ -9,6 +9,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.time.Duration;
 import java.util.Base64;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,6 +38,9 @@ public class S3FileServiceImpl implements FileService {
 
     private final static String FILE_PREFIX = "file";
     private final static String TEMPORARY_FILE_PREFIX = "temp";
+
+    private static final List<String> SUPPORTED_IMAGE_EXTENSIONS
+            = List.of("jpg", "jpeg", "png", "gif", "webp");
 
     @Override
     public PreSignedUrlDto generatePreSignedUrl(String fileName, FileDomain fileDomain) {
@@ -103,6 +107,21 @@ public class S3FileServiceImpl implements FileService {
         if (!isUploaded(fileKey)) {
             throw new BusinessException(ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION);
         }
+    }
+
+    public void validateImageFormat(String fileKey) {
+        String extension = getFileExtension(fileKey).toLowerCase();
+        if (!SUPPORTED_IMAGE_EXTENSIONS.contains(extension)) {
+            throw new BusinessException(ErrorCode.INVALID_IMAGE_FORMAT);
+        }
+    }
+
+    private String getFileExtension(String fileKey) {
+        int lastDot = fileKey.lastIndexOf('.');
+        if (lastDot == -1 || lastDot == fileKey.length() - 1) {
+            return "";  // 확장자 없음
+        }
+        return fileKey.substring(lastDot + 1);
     }
 
     public boolean isUploaded(String fileKey) {

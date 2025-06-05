@@ -93,6 +93,7 @@ public class MemoryServiceImpl implements MemoryService {
         List<TempMemoryItemDto> tempItems = request.memoryItems().stream().map(itemDto -> {
             String fileKey = fileService.extractFileKeyFromImageUrl(itemDto.imageUrl());
             fileService.validateFileKey(fileKey);
+            fileService.validateImageFormat(fileKey);
             MemoryItem memoryItem = MemoryItem.createTempMemoryItem(
                     null, // Memory는 임시 객체이므로 null로 시작, 어차피 toDomain에서 다시 할당됨
                     fileKey,
@@ -195,13 +196,13 @@ public class MemoryServiceImpl implements MemoryService {
     }
 
     private void addMemoryItem(MemoryItemDto item, Memory memory) {
-        String fileKey = fileService.moveFile(
-                fileService.extractFileKeyFromImageUrl(item.imageUrl())
-        );
+        String fileKey = fileService.extractFileKeyFromImageUrl(item.imageUrl());
+        fileService.validateFileKey(fileKey);
+        String movedFileKey = fileService.moveFile(fileKey);
         memory.addMemoryItem(
                 MemoryItem.create(
                         memory,
-                        fileKey,
+                        movedFileKey,
                         item.content(),
                         item.sequence())
         );

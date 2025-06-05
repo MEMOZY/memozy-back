@@ -20,4 +20,5 @@ public interface FileService {
     String transferToBase64(String fileKey);
 
     void validateFileKey(String fileKey);
+    void validateImageFormat(String fileKey);
 }
