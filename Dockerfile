@@ -6,13 +6,14 @@ ARG JAR_FILE=./build/libs/memozy-back-0.0.1-SNAPSHOT.jar
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# 기본 패키지 + heif 지원 포함된 ImageMagick 설치
+# Java 21 + ImageMagick + HEIC 지원 설치
 RUN apt-get update && \
-    apt-get install -y \
-    software-properties-common && \
-    add-apt-repository -y ppa:strukturag/libheif && \
+    apt-get install -y wget gnupg2 software-properties-common && \
+    wget -O- https://packages.adoptium.net/artifactory/api/gpg/key/public | gpg --dearmor > /etc/apt/trusted.gpg.d/adoptium.gpg && \
+    add-apt-repository -y 'deb https://packages.adoptium.net/artifactory/deb jammy main' && \
     apt-get update && \
     apt-get install -y \
+    temurin-21-jdk \
     imagemagick \
     libheif1 \
     libheif-dev && \
