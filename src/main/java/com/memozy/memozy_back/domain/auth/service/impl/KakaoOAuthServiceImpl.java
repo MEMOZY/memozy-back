@@ -17,15 +17,17 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @Slf4j
-@RequiredArgsConstructor
-public class KakaoOAuthServiceImpl implements OAuthService {
+public class KakaoOAuthServiceImpl extends AbstractOAuthServiceImpl {
 
     private final JwtProperty jwtProperty;
-//    private final KakaoAuthServerClient kakaoAuthServerClient;
     private final KakaoServerClient kakaoServerClient;
-//    private final KakaoClientProperty kakaoClientProperty;
-    private final SocialUserInfoRepository socialUserInfoRepository;
-    private final UserRepository userRepository;
+
+    public KakaoOAuthServiceImpl(JwtProperty jwtProperty, KakaoServerClient kakaoServerClient,
+            SocialUserInfoRepository socialUserInfoRepository, UserRepository userRepository) {
+        super(socialUserInfoRepository, userRepository);
+        this.jwtProperty = jwtProperty;
+        this.kakaoServerClient = kakaoServerClient;
+    }
 
     @Override
     public boolean support(SocialPlatform socialPlatform) {
@@ -34,39 +36,9 @@ public class KakaoOAuthServiceImpl implements OAuthService {
 
     @Override
     @Transactional
-    public User socialUserLogin(String kakaoAccessToken, String username) {
-        KakaoSocialUserProfile socialUserProfile = kakaoServerClient.getUserInformation(
-                jwtProperty.getBearerPrefix() + " " + kakaoAccessToken);
-
-        String socialCode = SocialUserInfo.calculateSocialCode(
-                SocialPlatform.KAKAO,
-                String.valueOf(socialUserProfile.getId())
-        );
-
-        String email = socialUserProfile.getEmail();
-
-        return socialUserInfoRepository
-                .findBySocialCode(socialCode)
-                .map(SocialUserInfo::getUser)
-                .orElseGet(() -> userRepository.findByEmail(email)
-                        .map(existingUser -> {
-                            boolean exists = socialUserInfoRepository.existsByUserAndSocialType(existingUser, SocialPlatform.GOOGLE);
-                            if (!exists) {
-                                socialUserInfoRepository.save(SocialUserInfo.newInstance(existingUser, SocialPlatform.GOOGLE, socialCode));
-                            }
-                            return existingUser;
-                        })
-                        .orElseGet(() -> {
-                            User newUser = userRepository.save(User.create(
-                                    UserRole.MEMBER,
-                                    socialUserProfile.getNickname(),
-                                    email,
-                                    socialUserProfile.getProfileImageUrl()
-                            ));
-                            socialUserInfoRepository.save(SocialUserInfo.newInstance(
-                                    newUser, SocialPlatform.GOOGLE, socialCode));
-                            return newUser;
-                        })
-                );
+    public User socialUserLogin(String kakaoAccessToken, String ignored) {
+        var profile = kakaoServerClient.getUserInformation(jwtProperty.getBearerPrefix() + " " + kakaoAccessToken);
+        String socialCode = SocialUserInfo.calculateSocialCode(SocialPlatform.KAKAO, String.valueOf(profile.getId()));
+        return handleSocialLogin(SocialPlatform.KAKAO, socialCode, profile.getEmail(), profile.getNickname(), profile.getProfileImageUrl());
     }
 }

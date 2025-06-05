@@ -19,15 +19,19 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
-public class GoogleOAuthServiceImpl implements OAuthService {
+public class GoogleOAuthServiceImpl extends AbstractOAuthServiceImpl {
 
     private final JwtProperty jwtProperty;
-//    private final GoogleAuthServerClient googleAuthServerClient;
     private final GoogleServerClient googleServerClient;
-//    private final GoogleClientProperty googleClientProperty;
-    private final SocialUserInfoRepository socialUserInfoRepository;
-    private final UserRepository userRepository;
+
+    public GoogleOAuthServiceImpl(JwtProperty jwtProperty,
+            GoogleServerClient googleServerClient,
+            SocialUserInfoRepository socialUserInfoRepository,
+            UserRepository userRepository) {
+        super(socialUserInfoRepository, userRepository);
+        this.jwtProperty = jwtProperty;
+        this.googleServerClient = googleServerClient;
+    }
 
     @Override
     public boolean support(SocialPlatform socialPlatform) {
@@ -36,50 +40,12 @@ public class GoogleOAuthServiceImpl implements OAuthService {
 
     @Override
     @Transactional
-    public User socialUserLogin(String googleAccessToken, String username) {
-        GoogleSocialUserProfile socialUserProfile = googleServerClient.getUserInformation(
+    public User socialUserLogin(String googleAccessToken, String ignored) {
+        GoogleSocialUserProfile profile = googleServerClient.getUserInformation(
                 jwtProperty.getBearerPrefix() + " " + googleAccessToken);
-        log.info("📦 GoogleSocialUserProfile: {}", socialUserProfile);
+        log.info("📦 GoogleSocialUserProfile: {}", profile);
 
-        String socialCode = SocialUserInfo.calculateSocialCode(SocialPlatform.GOOGLE, socialUserProfile.getSub());
-        String email = socialUserProfile.getEmail();
-
-        return socialUserInfoRepository
-                .findBySocialCode(socialCode)
-                .map(SocialUserInfo::getUser)
-                .orElseGet(() -> userRepository.findByEmail(email)
-                        .map(existingUser -> {
-                            boolean exists = socialUserInfoRepository.existsByUserAndSocialType(existingUser, SocialPlatform.GOOGLE);
-                            if (!exists) {
-                                socialUserInfoRepository.save(SocialUserInfo.newInstance(existingUser, SocialPlatform.GOOGLE, socialCode));
-                            }
-                            return existingUser;
-                        })
-                        .orElseGet(() -> {
-                            User newUser = userRepository.save(User.create(
-                                    UserRole.MEMBER,
-                                    socialUserProfile.getName(),
-                                    email,
-                                    socialUserProfile.getPicture()
-                            ));
-                            socialUserInfoRepository.save(SocialUserInfo.newInstance(
-                                    newUser, SocialPlatform.GOOGLE, socialCode));
-                            return newUser;
-                        })
-                );
+        String socialCode = SocialUserInfo.calculateSocialCode(SocialPlatform.GOOGLE, profile.getSub());
+        return handleSocialLogin(SocialPlatform.GOOGLE, socialCode, profile.getEmail(), profile.getName(), profile.getPicture());
     }
-
-
-
-//    @Override
-//    public String getLoginPageUrl(String origin) {
-//        return new StringBuilder()
-//                .append(googleClientProperty.getLoginPageUrl())
-//                .append("&client_id=")
-//                .append(googleClientProperty.getClientId())
-//                .append("&redirect_uri=")
-//                .append(origin)
-//                .append(googleClientProperty.getRedirectPath())
-//                .toString();
-//    }
 }
