@@ -60,6 +60,11 @@ public class MemoryServiceImpl implements MemoryService {
                 request.endDate()
         );
 
+        for (MemoryItem item : memory.getMemoryItems()) {
+            String movedFileKey = fileService.moveFile(item.getFileKey());
+            item.updateFileKey(movedFileKey);
+        }
+
         List<User> newSharedUsers = userRepository.findAllById(request.sharedUsersId());
 
         memory.getSharedUsers().clear();
@@ -147,6 +152,7 @@ public class MemoryServiceImpl implements MemoryService {
         if (!memory.getOwner().getId().equals(userId)) {
             throw new BusinessException(ErrorCode.INVALID_ACCESS_EXCEPTION);
         }
+
         // 기존 MemoryItem 삭제 후 새로 추가
         memory.getMemoryItems().clear();
         for (MemoryItemDto itemDto : request.memoryItems()) {
