@@ -43,15 +43,15 @@ public class UserController {
         );
     }
 
-    @GetMapping("/{userId}")
-    public ResponseEntity<GetUserInfoResponse> getUserInfoById(
-            @Valid @PathVariable Long userId) {
-        return ResponseEntity.ok(
-                userFacade.getUserInfoById(userId)
-        );
-    }
+//    @GetMapping("/{userId}")
+//    public ResponseEntity<GetUserInfoResponse> getUserInfoById(
+//            @Valid @PathVariable Long userId) {
+//        return ResponseEntity.ok(
+//                userFacade.getUserInfoById(userId)
+//        );
+//    }
 
-    @GetMapping("friend-code/{friendCode}")
+    @GetMapping("/{friendCode}")
     public ResponseEntity<GetUserInfoResponse> getUserInfoById(
             @Valid @PathVariable String friendCode) {
         return ResponseEntity.ok(
