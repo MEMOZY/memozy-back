@@ -16,6 +16,7 @@ import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -30,6 +31,7 @@ import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignReques
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class S3FileServiceImpl implements FileService {
 
@@ -146,7 +148,14 @@ public class S3FileServiceImpl implements FileService {
             ).start();
             process.waitFor();
 
-            if (!jpegFile.exists() || jpegFile.length() == 0) {
+            int exitCode = process.waitFor();
+
+// 디버깅 로그 추가
+            String output = new String(process.getInputStream().readAllBytes());
+            log.error("ImageMagick 실행 결과: \n{}", output);
+            log.error("exitCode: {}", exitCode);
+
+            if (exitCode != 0 || !jpegFile.exists() || jpegFile.length() == 0) {
                 throw new BusinessException(ErrorCode.IMAGE_CONVERSION_FAILED);
             }
 

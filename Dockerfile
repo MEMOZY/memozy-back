@@ -1,4 +1,5 @@
 FROM eclipse-temurin:21-jdk
+RUN apt-get update && apt-get install -y imagemagick libheif-dev && rm -rf /var/lib/apt/lists/*
 
 ARG PROFILE
 ARG TZ=Asia/Seoul
