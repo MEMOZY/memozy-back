@@ -5,8 +5,12 @@ import com.memozy.memozy_back.domain.file.constant.FileDomain;
 import com.memozy.memozy_back.domain.file.dto.PreSignedUrlDto;
 import com.memozy.memozy_back.global.exception.BusinessException;
 import com.memozy.memozy_back.global.exception.ErrorCode;
+import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 import java.util.Base64;
 import java.util.List;
@@ -14,7 +18,10 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
@@ -109,19 +116,65 @@ public class S3FileServiceImpl implements FileService {
         }
     }
 
-    public void validateImageFormat(String fileKey) {
-        String extension = getFileExtension(fileKey).toLowerCase();
-        if (!SUPPORTED_IMAGE_EXTENSIONS.contains(extension)) {
-            throw new BusinessException(ErrorCode.INVALID_IMAGE_FORMAT);
+    @Override
+    public String convertHeicIfNeeded(String fileKey) {
+        String ext = getFileExtension(fileKey).toLowerCase();
+        if (!ext.equals("heic")) return fileKey;
+        return convertHeicToJpegIfNeeded(fileKey); // 내부에 변환 + 업로드 + 삭제 포함
+    }
+
+
+    private String convertHeicToJpegIfNeeded(String fileKey) {
+        try {
+            if (!fileKey.toLowerCase().endsWith(".heic")) {
+                return fileKey; // 변환 필요 없음
+            }
+
+            // 1. S3에서 HEIC 파일 다운로드
+            InputStream heicInputStream = s3Client.getObject(GetObjectRequest.builder()
+                    .bucket(bucket)
+                    .key(fileKey)
+                    .build());
+
+            // 2. HEIC → JPEG 변환
+            File heicFile = File.createTempFile("image", ".heic");
+            Files.copy(heicInputStream, heicFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            File jpegFile = File.createTempFile("image", ".jpg");
+
+            Process process = new ProcessBuilder(
+                    "magick", heicFile.getAbsolutePath(), jpegFile.getAbsolutePath()
+            ).start();
+            process.waitFor();
+
+            if (!jpegFile.exists() || jpegFile.length() == 0) {
+                throw new BusinessException(ErrorCode.IMAGE_CONVERSION_FAILED);
+            }
+
+            // 3. JPEG 파일 S3에 재업로드
+            String newKey = fileKey.replaceAll("(?i)\\.heic$", ".jpg");
+
+            s3Client.putObject(
+                    PutObjectRequest.builder().bucket(bucket).key(newKey).build(),
+                    RequestBody.fromFile(jpegFile)
+            );
+
+            // 4. 원본 HEIC 삭제
+            s3Client.deleteObject(DeleteObjectRequest.builder().bucket(bucket).key(fileKey).build());
+
+            return newKey;
+        } catch (IOException | InterruptedException e) {
+            throw new BusinessException(ErrorCode.IMAGE_CONVERSION_FAILED);
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCode.IMAGE_CONVERSION_FAILED);
         }
     }
 
-    private String getFileExtension(String fileKey) {
-        int lastDot = fileKey.lastIndexOf('.');
-        if (lastDot == -1 || lastDot == fileKey.length() - 1) {
+    private String getFileExtension(String filename) {
+        int lastDot = filename.lastIndexOf('.');
+        if (lastDot == -1 || lastDot == filename.length() - 1) {
             return "";  // 확장자 없음
         }
-        return fileKey.substring(lastDot + 1);
+        return filename.substring(lastDot + 1);
     }
 
     public boolean isUploaded(String fileKey) {

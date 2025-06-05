@@ -44,7 +44,7 @@ public enum ErrorCode {
      * file. code prefix: file-
      */
     FILE_UPLOAD_EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, "file-1", "파일 업로드에 실패했습니다."),
-    INVALID_IMAGE_FORMAT(HttpStatus.BAD_REQUEST, "file-2", "지원하지 않는 이미지 형식입니다. png, jpeg, gif, webp만 가능합니다."),
+    IMAGE_CONVERSION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "file-3", "이미지 확장자 변환에 실패했습니다." ),
 
     /**
      * user-policy-agreement. code prefix: user-policy-agreement-

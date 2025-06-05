@@ -91,9 +91,9 @@ public class MemoryServiceImpl implements MemoryService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_USER_EXCEPTION));
 
         List<TempMemoryItemDto> tempItems = request.memoryItems().stream().map(itemDto -> {
-            String fileKey = fileService.extractFileKeyFromImageUrl(itemDto.imageUrl());
+            String rawFileKey = fileService.extractFileKeyFromImageUrl(itemDto.imageUrl());
+            String fileKey = fileService.convertHeicIfNeeded(rawFileKey); // HEIC면 JPEG로 변환 후 새 키 리턴
             fileService.validateFileKey(fileKey);
-            fileService.validateImageFormat(fileKey);
             MemoryItem memoryItem = MemoryItem.createTempMemoryItem(
                     null, // Memory는 임시 객체이므로 null로 시작, 어차피 toDomain에서 다시 할당됨
                     fileKey,
