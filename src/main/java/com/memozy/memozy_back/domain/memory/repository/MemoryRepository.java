@@ -1,6 +1,7 @@
 package com.memozy.memozy_back.domain.memory.repository;
 
 import com.memozy.memozy_back.domain.memory.domain.Memory;
+import com.memozy.memozy_back.domain.user.domain.User;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -17,4 +18,5 @@ public interface MemoryRepository extends JpaRepository<Memory, Long> {
     """)
     List<Memory> findAllSharedByUser(Long userId);
 
+    void deleteByOwner(User user);
 }

@@ -1,10 +1,12 @@
 package com.memozy.memozy_back.domain.user.service;
 
 import com.memozy.memozy_back.domain.file.service.FileService;
+import com.memozy.memozy_back.domain.memory.repository.MemoryRepository;
 import com.memozy.memozy_back.domain.user.domain.User;
 import com.memozy.memozy_back.domain.user.domain.UserPolicyAgreement;
 import com.memozy.memozy_back.domain.user.dto.PolicyAgreementDto;
 import com.memozy.memozy_back.domain.user.dto.request.UpdateUserRequest;
+import com.memozy.memozy_back.domain.user.repository.SocialUserInfoRepository;
 import com.memozy.memozy_back.domain.user.repository.UserPolicyAgreementRepository;
 import com.memozy.memozy_back.domain.user.repository.UserRepository;
 import com.memozy.memozy_back.global.exception.BusinessException;
@@ -22,7 +24,9 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final UserPolicyAgreementRepository userPolicyAgreementRepository;
+    private final SocialUserInfoRepository socialUserInfoRepository;
     private final FileService fileService;
+    private final MemoryRepository memoryRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -84,7 +88,9 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_USER_EXCEPTION));
 
-        userRepository.delete(user); // 완전 삭제
+        memoryRepository.deleteByOwner(user);
+        socialUserInfoRepository.deleteByUserId(userId);
+        userRepository.delete(user);
     }
 
     @Override
