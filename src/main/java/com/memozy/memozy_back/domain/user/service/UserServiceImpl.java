@@ -89,7 +89,7 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_USER_EXCEPTION));
 
         memoryRepository.deleteByOwner(user);
-        socialUserInfoRepository.deleteByUserId(userId);
+        socialUserInfoRepository.deleteByUser(user);
         userRepository.delete(user);
     }
 
