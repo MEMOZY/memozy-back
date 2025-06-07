@@ -9,6 +9,7 @@ import com.memozy.memozy_back.domain.user.repository.SocialUserInfoRepository;
 import com.memozy.memozy_back.domain.user.repository.UserRepository;
 import com.memozy.memozy_back.global.exception.BusinessException;
 import com.memozy.memozy_back.global.exception.ErrorCode;
+import java.util.Optional;
 
 public abstract class AbstractOAuthServiceImpl implements OAuthService {
 
@@ -31,24 +32,26 @@ public abstract class AbstractOAuthServiceImpl implements OAuthService {
         if (username == null || username.isBlank()) {
             throw new BusinessException(ErrorCode.AUTH_MISSING_NAME);
         }
-        if (email == null || email.isBlank()) {
-            throw new BusinessException(ErrorCode.AUTH_MISSING_EMAIL);
+
+        // 1. 동일한 소셜 계정(socialCode)이 이미 연결돼 있다면 해당 유저로 로그인
+        Optional<SocialUserInfo> existingInfo = socialUserInfoRepository.findBySocialCode(socialCode);
+        if (existingInfo.isPresent()) {
+            return existingInfo.get().getUser();
         }
 
-        // 1. 이메일로 유저를 먼저 조회
-        User user = userRepository.findByEmail(email)
-                .orElseGet(() -> {
-                    // 없으면 새 유저 생성
-                    return userRepository.save(User.create(UserRole.MEMBER, username, email, profileImageUrl));
-                });
-
-        // 2. 해당 유저가 이 플랫폼으로 이미 연동됐는지 확인
-        boolean alreadyLinked = socialUserInfoRepository.existsByUserAndSocialType(user, platform);
-        if (!alreadyLinked) {
-            // 연동 안 돼 있으면 연동 추가
-            socialUserInfoRepository.save(SocialUserInfo.newInstance(user, platform, socialCode));
+        // 2. socialCode는 처음인데, 같은 이메일을 가진 유저가 있다면 그 유저에 연결
+        User user = null;
+        if (email != null && !email.isBlank()) {
+            user = userRepository.findByEmail(email).orElse(null);
         }
 
+        // 3. 유저 없으면 새로 생성
+        if (user == null) {
+            user = userRepository.save(User.create(UserRole.MEMBER, username, email, profileImageUrl));
+        }
+
+        // 4. 소셜 계정 연동
+        socialUserInfoRepository.save(SocialUserInfo.newInstance(user, platform, socialCode));
         return user;
     }
 }
