@@ -36,16 +36,7 @@ public class AppleOAuthServiceImpl extends AbstractOAuthServiceImpl {
     @Transactional
     public User socialUserLogin(String idToken, String username) {
         ApplePublicKeyProvider.Payload payload = applePublicKeyProvider.parseAndValidate(idToken);
-        String email = payload.email();
         String socialCode = SocialUserInfo.calculateSocialCode(SocialPlatform.APPLE, payload.sub());
-
-        if (username == null || username.isBlank()) {
-            throw new BusinessException(ErrorCode.AUTH_MISSING_NAME);
-        }
-        if (email == null || email.isBlank()) {
-            throw new BusinessException(ErrorCode.AUTH_MISSING_EMAIL);
-        }
-
-        return handleSocialLogin(SocialPlatform.APPLE, socialCode, email, username, null);
+        return handleSocialLogin(SocialPlatform.APPLE, socialCode, payload.email(), username, null);
     }
 }

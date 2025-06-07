@@ -7,6 +7,8 @@ import com.memozy.memozy_back.domain.user.domain.SocialUserInfo;
 import com.memozy.memozy_back.domain.user.domain.User;
 import com.memozy.memozy_back.domain.user.repository.SocialUserInfoRepository;
 import com.memozy.memozy_back.domain.user.repository.UserRepository;
+import com.memozy.memozy_back.global.exception.BusinessException;
+import com.memozy.memozy_back.global.exception.ErrorCode;
 
 public abstract class AbstractOAuthServiceImpl implements OAuthService {
 
@@ -26,6 +28,13 @@ public abstract class AbstractOAuthServiceImpl implements OAuthService {
             String username,
             String profileImageUrl
     ) {
+        if (username == null || username.isBlank()) {
+            throw new BusinessException(ErrorCode.AUTH_MISSING_NAME);
+        }
+        if (email == null || email.isBlank()) {
+            throw new BusinessException(ErrorCode.AUTH_MISSING_EMAIL);
+        }
+
         // 1. 이메일로 유저를 먼저 조회
         User user = userRepository.findByEmail(email)
                 .orElseGet(() -> {
