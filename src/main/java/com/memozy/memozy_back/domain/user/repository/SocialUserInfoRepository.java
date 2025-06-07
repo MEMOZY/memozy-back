@@ -14,7 +14,7 @@ public interface SocialUserInfoRepository extends JpaRepository<SocialUserInfo, 
             + "where s.socialCode = :socialCode")
     Optional<SocialUserInfo> findBySocialCode(String socialCode);
 
-    void deleteByUserId(Long userId);
+    void deleteByUser(User user);
 
     boolean existsByUserAndSocialType(User existingUser, SocialPlatform socialPlatform);
 }
