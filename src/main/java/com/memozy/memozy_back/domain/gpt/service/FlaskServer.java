@@ -10,7 +10,7 @@ public interface FlaskServer {
     void sendMessage(String sessionId, String presignedUrl, String userMessage, Map<String, List<String>> history,
             String memoryItemTempId, SseEmitter emitter, Runnable onCompleteCallback);
 
-    String generateDiaryFromChatAndImageUrl(String sessionId, Map<String, List<String>> history, String presignedUrl);
+    String generateDiaryFromChatAndImageUrl(String sessionId, Map<String, List<String>> history, String presignedUrl, List<String> pastDiaries);
 
     List<Map<String, String>> generateFinalDiaries(String sessionId, List<Map<String, String>> diaryList);
 }

@@ -51,7 +51,7 @@ public class GptController {
         SseEmitter emitter = new SseEmitter(0L);
         emitter.onTimeout(emitter::complete);
         emitter.onError(e -> emitter.completeWithError(e));
-        gptChatService.handleUserAnswer(sessionId, request, emitter);
+        gptChatService.handleUserAnswer(sessionId, request, emitter, userId);
         return emitter;
     }
 
