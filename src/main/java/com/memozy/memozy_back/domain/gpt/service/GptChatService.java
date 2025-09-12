@@ -269,7 +269,7 @@ public class GptChatService {
                 .filter(it -> it.getContent() != null && !it.getContent().isBlank())
                 .sorted(Comparator.comparing(MemoryItem::getSequence, Comparator.nullsLast(Integer::compareTo)))
                 .map(MemoryItem::getContent)
-                .collect(Collectors.joining("\n\n")); // 문단 간 공백
+                .collect(Collectors.joining("\n\n"));
     }
 
 
@@ -281,6 +281,6 @@ public class GptChatService {
         String oneDiary = concatDiaryText(latest.get());
         if (oneDiary.isBlank()) return List.of();
 
-        return List.of(oneDiary); // ✅ 리스트 안에 문자열 1개
+        return List.of(oneDiary);
     }
 }
