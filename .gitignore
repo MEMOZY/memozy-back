@@ -38,7 +38,6 @@ gradle-app.setting
 
 # Local config
 *.yaml
-*.properties
 .env
 .env.*
 application-prod.yml
