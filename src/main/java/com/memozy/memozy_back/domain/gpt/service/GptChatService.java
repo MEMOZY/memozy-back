@@ -8,6 +8,8 @@ import com.memozy.memozy_back.domain.memory.domain.Memory;
 import com.memozy.memozy_back.domain.memory.domain.MemoryItem;
 import com.memozy.memozy_back.domain.memory.dto.TempMemoryDto;
 import com.memozy.memozy_back.domain.memory.dto.TempMemoryItemDto;
+import com.memozy.memozy_back.domain.memory.repository.MemoryRepository;
+import com.memozy.memozy_back.domain.user.domain.User;
 import com.memozy.memozy_back.global.redis.TemporaryMemoryStore;
 import com.memozy.memozy_back.global.exception.BusinessException;
 import com.memozy.memozy_back.global.exception.ErrorCode;
@@ -19,10 +21,13 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.task.TaskExecutor;
+import org.springframework.data.domain.PageRequest;
+
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -37,6 +42,7 @@ public class GptChatService {
     private final FlaskServer flaskServer;
 
     private final TaskExecutor gptExecutor;
+    private final MemoryRepository memoryRepository;
 
     public void generateInitialPrompts(String sessionId, SseEmitter emitter) {
         AtomicBoolean isCompleted = new AtomicBoolean(false);
@@ -67,12 +73,12 @@ public class GptChatService {
         });
     }
 
-    public void handleUserAnswer(String sessionId, UserAnswerRequest request, SseEmitter emitter) {
+    public void handleUserAnswer(String sessionId, UserAnswerRequest request, SseEmitter emitter, Long userId) {
         AtomicBoolean isCompleted = new AtomicBoolean(false);
 
         gptExecutor.execute(() -> {
             try {
-                handleAnswerLogic(sessionId, request, emitter, isCompleted);
+                handleAnswerLogic(sessionId, request, emitter, isCompleted, userId);
             } catch (Exception e) {
                 log.error("User answer 처리 중 오류", e);
                 safeCompleteWithError(emitter, e, isCompleted);
@@ -80,7 +86,9 @@ public class GptChatService {
         });
     }
 
-    private void handleAnswerLogic(String sessionId, UserAnswerRequest request, SseEmitter emitter, AtomicBoolean isCompleted) throws IOException {
+    private void handleAnswerLogic(String sessionId, UserAnswerRequest request, SseEmitter emitter,
+            AtomicBoolean isCompleted, Long userId)
+            throws IOException {
         String memoryItemTempId = request.memoryItemTempId();
         String userMessage = request.userAnswer().trim();
 
@@ -104,7 +112,7 @@ public class GptChatService {
         boolean isThirdTurn = temporaryChatStore.getTurnCount(sessionId, memoryItemTempId) >= 3;
 
         if (isEndCommand || isThirdTurn) {
-            handleStoryGeneration(sessionId, memory, currentItem, messageHistoryByRole, emitter, isCompleted);
+            handleStoryGeneration(sessionId, memory, currentItem, messageHistoryByRole, emitter, isCompleted, userId);
         } else {
             sendEmitterPayload(emitter, "open-reply", memoryItemTempId, "응답을 시작합니다.", presignedUrl);
 
@@ -119,10 +127,12 @@ public class GptChatService {
     }
 
     private void handleStoryGeneration(String sessionId, Memory memory, MemoryItem currentItem,
-            Map<String, List<String>> messageHistoryByRole, SseEmitter emitter, AtomicBoolean isCompleted) throws IOException {
+            Map<String, List<String>> messageHistoryByRole, SseEmitter emitter, AtomicBoolean isCompleted, Long ownerId) throws IOException {
 
         String presignedUrl = getPresignedUrl(currentItem.getFileKey());
-        String story = flaskServer.generateDiaryFromChatAndImageUrl(sessionId, messageHistoryByRole, presignedUrl);
+
+        List<String> pastDiary = buildPastDiary(ownerId);
+        String story = flaskServer.generateDiaryFromChatAndImageUrl(sessionId, messageHistoryByRole, presignedUrl, pastDiary);
         currentItem.updateContent(story);
 
         TempMemoryDto updatedDto = TempMemoryDto.from(memory, memory.getMemoryItems().stream()
@@ -176,8 +186,6 @@ public class GptChatService {
     }
 
 
-
-    // ------------------- Helper Methods -------------------
 
     private Memory loadMemory(String sessionId) {
         Memory memory = temporaryMemoryStore.load(sessionId);
@@ -253,5 +261,26 @@ public class GptChatService {
                 .filter(item -> item.getTempId().equals(tempId))
                 .findFirst()
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION));
+    }
+
+
+    private String concatDiaryText(Memory memory) {
+        return memory.getMemoryItems().stream()
+                .filter(it -> it.getContent() != null && !it.getContent().isBlank())
+                .sorted(Comparator.comparing(MemoryItem::getSequence, Comparator.nullsLast(Integer::compareTo)))
+                .map(MemoryItem::getContent)
+                .collect(Collectors.joining("\n\n"));
+    }
+
+
+    List<String> buildPastDiary(Long ownerId) {
+        var latest = memoryRepository.findLatestWithItemsByOwner(ownerId, PageRequest.of(0,1))
+                .stream().findFirst();
+        if (latest.isEmpty()) return List.of();
+
+        String oneDiary = concatDiaryText(latest.get());
+        if (oneDiary.isBlank()) return List.of();
+
+        return List.of(oneDiary);
     }
 }
