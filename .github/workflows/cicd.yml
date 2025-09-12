@@ -19,6 +19,8 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      working-directory: .
 
     if: github.event_name == 'push'
 
@@ -34,6 +36,16 @@ jobs:
 
       - name: Create application.yml
         run: echo "${{ secrets.APPLICATION_PROD_YML }}" > src/main/resources/application.yml
+
+      - name: Create gradle.properties
+        run: |
+          # create gradle.properties in project root
+          touch ./gradle.properties
+
+          # GitHub Actions 시크릿 변수 -> gradle.properties 파일에 작성
+          echo "${{ secrets.GRADLE_PROD_PROPERTIES }}" > ./gradle.properties
+        working-directory: ${{ env.working-directory }}
+
 
       - name: Generate docker-compose.yml from GitHub Secret
         run: |

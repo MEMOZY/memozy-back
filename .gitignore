@@ -38,12 +38,13 @@ gradle-app.setting
 
 # Local config
 *.yaml
-*.properties
 .env
 .env.*
 application-prod.yml
 docker-compose.yml
 docker-compose.prod.yml
+
+gradle.prod.properties
 
 # ====================
 # IntelliJ / IDE
