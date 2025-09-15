@@ -150,8 +150,7 @@ public class S3FileServiceImpl implements FileService {
             String output = new String(process.getInputStream().readAllBytes());
             int exitCode = process.waitFor();
 
-            log.error("ImageMagick 실행 결과:\n{}", output);
-            log.error("exitCode: {}", exitCode);
+            log.info("ImageMagick 실행 결과:\n{}", output);
 
             if (exitCode != 0 || !jpegFile.exists() || jpegFile.length() == 0) {
                 if (!heicFile.delete()) {
