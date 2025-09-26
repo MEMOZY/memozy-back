@@ -75,7 +75,8 @@ public enum ErrorCode {
     /**
      * memory, code prefix: memory-
      */
-    MISSING_SEARCH_TYPE(HttpStatus.BAD_REQUEST, "memory-1" , "검색 타입이 필요합니다." ),;
+    MISSING_SEARCH_TYPE(HttpStatus.BAD_REQUEST, "memory-1" , "검색 타입이 필요합니다." ),
+    NOT_FOUND_TEMP_MEMORY(HttpStatus.NOT_FOUND, "memory-2", "작업 완료된 기록이 존재하지 않습니다.");
 
 
     private final HttpStatus httpStatus;

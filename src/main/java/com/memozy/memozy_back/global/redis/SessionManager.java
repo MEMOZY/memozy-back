@@ -24,7 +24,7 @@ public class SessionManager {
     public void validateSessionOwner(Long userId, String sessionId) {
         Number storedValue = redisTemplate.opsForValue().get(SESSION_PREFIX + sessionId);
         if (storedValue == null) {
-            throw new BusinessException(ErrorCode.UNAUTHORIZED_EXCEPTION);
+            throw new BusinessException(ErrorCode.NOT_FOUND_TEMP_MEMORY);
         }
         Long ownerId = storedValue.longValue();
 
