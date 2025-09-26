@@ -18,4 +18,6 @@ public interface MemoryService {
     String createTemporaryMemory(Long userId, CreateTempMemoryRequest request);
 
     GetTempMemoryResponse getTemporaryMemoryItems(String sessionId, Long userId);
+
+    GetMemoryListResponse searchMyMemories(Long userId, String keyword);
 }

@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "기록 API", description = "기록 관리")
@@ -63,6 +64,16 @@ public class MemoryController {
     public ResponseEntity<GetMemoryListResponse> getAllMemories(
             @CurrentUserId Long userId) {
         return ResponseEntity.ok(memoryService.getAllByOwnerId(userId));
+    }
+
+    /**
+     * 일기 검색
+     */
+    @GetMapping("/search")
+    public ResponseEntity<GetMemoryListResponse> searchMemories(
+            @CurrentUserId Long userId,
+            @RequestParam("keyword") String keyword) {
+        return ResponseEntity.ok(memoryService.searchMyMemories(userId, keyword));
     }
 
     // 기록 수정

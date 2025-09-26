@@ -122,6 +122,11 @@ public class MemoryServiceImpl implements MemoryService {
     }
 
     @Override
+    public GetMemoryListResponse searchMyMemories(Long userId, String keyword) {
+        return null;
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public GetMemoryListResponse getAllByOwnerId(Long userId) {
         var ownMemories = memoryRepository.findAllByOwnerId(userId);
