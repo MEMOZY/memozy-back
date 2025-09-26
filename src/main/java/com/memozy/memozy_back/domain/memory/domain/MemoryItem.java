@@ -7,8 +7,10 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import java.util.UUID;
 import lombok.AccessLevel;
@@ -24,6 +26,13 @@ import lombok.ToString;
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Table(
+        name = "memory_item",
+        indexes = {
+        // 대표 1개/전체 아이템 조회 모두에 유리한 복합 인덱스
+            @Index(name = "idx_memory_item_mem_seq_id", columnList = "memory_id, sequence, memory_item_id")
+        }
+        )
 @ToString(exclude = {"memory"})
 public class MemoryItem extends BaseTimeEntity {
 

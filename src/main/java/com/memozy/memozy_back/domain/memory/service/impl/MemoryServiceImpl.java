@@ -2,10 +2,12 @@ package com.memozy.memozy_back.domain.memory.service.impl;
 
 import com.memozy.memozy_back.domain.friend.constant.FriendshipStatus;
 import com.memozy.memozy_back.domain.friend.repository.FriendshipRepository;
+import com.memozy.memozy_back.domain.memory.constant.SearchType;
 import com.memozy.memozy_back.domain.memory.domain.Memory;
 import com.memozy.memozy_back.domain.memory.domain.MemoryItem;
 import com.memozy.memozy_back.domain.memory.domain.MemoryShared;
 import com.memozy.memozy_back.domain.memory.dto.MemoryDto;
+import com.memozy.memozy_back.domain.memory.dto.MemoryInfoDto;
 import com.memozy.memozy_back.domain.memory.dto.MemoryItemDto;
 import com.memozy.memozy_back.domain.memory.dto.TempMemoryDto;
 import com.memozy.memozy_back.domain.memory.dto.TempMemoryItemDto;
@@ -15,8 +17,10 @@ import com.memozy.memozy_back.domain.memory.dto.request.UpdateMemoryRequest;
 import com.memozy.memozy_back.domain.memory.dto.response.CreateMemoryResponse;
 import com.memozy.memozy_back.domain.memory.dto.response.GetMemoryListResponse;
 import com.memozy.memozy_back.domain.memory.dto.response.GetTempMemoryResponse;
+import com.memozy.memozy_back.domain.memory.repository.MemoryItemRepository;
 import com.memozy.memozy_back.domain.memory.repository.MemoryRepository;
 import com.memozy.memozy_back.domain.memory.service.MemoryService;
+import com.memozy.memozy_back.global.dto.PagedResponse;
 import com.memozy.memozy_back.global.redis.SessionManager;
 import com.memozy.memozy_back.global.redis.TemporaryChatStore;
 import com.memozy.memozy_back.global.redis.TemporaryMemoryStore;
@@ -26,9 +30,12 @@ import com.memozy.memozy_back.global.exception.BusinessException;
 import com.memozy.memozy_back.global.exception.ErrorCode;
 import com.memozy.memozy_back.domain.file.service.FileService;
 import java.util.List;
-import java.util.UUID;
+import java.util.Map;
 import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,6 +45,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class MemoryServiceImpl implements MemoryService {
 
     private final MemoryRepository memoryRepository;
+    private final MemoryItemRepository memoryItemRepository;
     private final UserRepository userRepository;
     private final FileService fileService;
     private final FriendshipRepository friendshipRepository;
@@ -119,6 +127,63 @@ public class MemoryServiceImpl implements MemoryService {
         sessionManager.validateSessionOwner(owner.getId(), sessionId);
 
         return GetTempMemoryResponse.of(memory.getMemoryItems(), fileService);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PagedResponse<MemoryInfoDto> searchMyMemories(Long userId, SearchType searchType, String keyword, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size); // 정렬은 쿼리에서 처리
+        if (searchType == null) {
+            throw new BusinessException(ErrorCode.MISSING_SEARCH_TYPE);
+        }
+        Page<Memory> paged = memoryRepository.searchByKeyword(userId, searchType, keyword, pageable);
+
+        if (paged.isEmpty()) {
+            return new PagedResponse<>(
+                    List.of(),
+                    paged.getNumber(),
+                    paged.getSize(),
+                    paged.getTotalElements(),
+                    paged.getTotalPages(),
+                    paged.isLast()
+            );
+        }
+
+        // 대표 아이템 한 번에 조회
+        List<Long> memoryIds = paged.getContent().stream().map(Memory::getId).toList();
+        Map<Long, MemoryItem> firstItems = memoryItemRepository.findFirstItemsByMemoryIds(memoryIds);
+
+        List<MemoryInfoDto> items = paged.getContent().stream()
+                .map(m -> {
+                    MemoryItem first = firstItems.get(m.getId());
+                    String content = (first != null) ? first.getContent() : null;
+                    String thumbUrl = null;
+                    if (first != null) {
+                        String fileKey = first.getFileKey();
+                        if (fileKey != null && !fileKey.isBlank()) {
+                            thumbUrl = fileService.generatePresignedUrlToRead(fileKey).preSignedUrl();
+                        }
+                    }
+                    return new MemoryInfoDto(
+                            m.getId(),
+                            m.getOwner().getId(),
+                            m.getTitle(),
+                            content,
+                            m.getStartDate(),
+                            m.getEndDate(),
+                            thumbUrl
+                    );
+                })
+                .toList();
+
+        return new PagedResponse<>(
+                items,
+                paged.getNumber(),
+                paged.getSize(),
+                paged.getTotalElements(),
+                paged.getTotalPages(),
+                paged.isLast()
+        );
     }
 
     @Override

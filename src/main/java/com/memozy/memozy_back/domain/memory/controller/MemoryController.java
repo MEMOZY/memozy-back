@@ -1,5 +1,6 @@
 package com.memozy.memozy_back.domain.memory.controller;
 
+import com.memozy.memozy_back.domain.memory.constant.SearchType;
 import com.memozy.memozy_back.domain.memory.dto.request.CreateTempMemoryRequest;
 import com.memozy.memozy_back.domain.memory.dto.response.CreateMemoryResponse;
 import com.memozy.memozy_back.domain.memory.dto.response.CreateTempMemoryResponse;
@@ -9,10 +10,14 @@ import com.memozy.memozy_back.domain.memory.dto.request.UpdateMemoryRequest;
 import com.memozy.memozy_back.domain.memory.dto.response.GetMemoryListResponse;
 import com.memozy.memozy_back.domain.memory.dto.response.GetTempMemoryResponse;
 import com.memozy.memozy_back.domain.memory.service.MemoryService;
+import com.memozy.memozy_back.domain.memory.dto.MemoryInfoDto;
 import com.memozy.memozy_back.global.annotation.CurrentUserId;
+import com.memozy.memozy_back.global.dto.PagedResponse;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,6 +26,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "기록 API", description = "기록 관리")
@@ -53,7 +59,7 @@ public class MemoryController {
     @GetMapping("/temp/{sessionId}/items")
     public ResponseEntity<GetTempMemoryResponse> getTemporaryMemoryItems(
             @CurrentUserId Long userId,
-            @PathVariable String sessionId ) {
+            @PathVariable String sessionId) {
         return ResponseEntity.ok(memoryService.getTemporaryMemoryItems(sessionId, userId));
     }
 
@@ -63,6 +69,20 @@ public class MemoryController {
     public ResponseEntity<GetMemoryListResponse> getAllMemories(
             @CurrentUserId Long userId) {
         return ResponseEntity.ok(memoryService.getAllByOwnerId(userId));
+    }
+
+    /**
+     * 일기 검색
+     */
+    @GetMapping("/search")
+    public ResponseEntity<PagedResponse<MemoryInfoDto>> searchMemories(
+            @CurrentUserId Long userId,
+            @Parameter(description = "검색 타입", example = "TITLE, CONTENT, ALL")
+            @RequestParam(name = "search-type") SearchType searchType,
+            @RequestParam("keyword") String keyword,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(memoryService.searchMyMemories(userId, searchType, keyword, page, size));
     }
 
     // 기록 수정
