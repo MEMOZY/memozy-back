@@ -10,6 +10,7 @@ import java.util.List;
 import lombok.*;
 
 @Entity
+@Table(name = "memory")
 @Getter
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

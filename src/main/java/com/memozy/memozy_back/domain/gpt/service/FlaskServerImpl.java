@@ -25,7 +25,7 @@ import reactor.core.scheduler.Schedulers;
 @RequiredArgsConstructor
 public class FlaskServerImpl implements FlaskServer {
 
-    private final WebClient webClient = WebClient.create("http://memozy-ai:5000");
+    private final WebClient webClient;
     private final TemporaryChatStore temporaryChatStore;
 
     @Override

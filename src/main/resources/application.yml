@@ -62,3 +62,6 @@ server:
 openai:
   api-key: ${OPENAI_API_KEY}
   model: ${OPENAI_API_MODEL}
+
+ai:
+  base-url: ${AI_BASE_URL:http://localhost:5001}
