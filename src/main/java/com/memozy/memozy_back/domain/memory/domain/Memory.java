@@ -90,23 +90,7 @@ public class Memory extends BaseTimeEntity {
         this.memoryItems.add(item);
     }
 
-    public void clearAndSetAccesses(List<MemoryAccess> newAccesses) {
-        this.getAccesses().clear();
-        this.getAccesses().addAll(newAccesses);
-    }
-
-    public void grantAccess(User target, PermissionLevel level) {
-        // 소유자 보호 규칙
-        if (isOwner(target)) throw new IllegalStateException("소유자 권한은 별도로 변경할 수 없어.");
-
-        // 중복 방지
-        accesses.stream()
-                .filter(a -> a.getUser().equals(target))
-                .findFirst()
-                .ifPresent(a -> { throw new IllegalStateException("이미 공유된 사용자야."); });
-
-        // 추가
-        MemoryAccess access = MemoryAccess.create(this, target, level);
+    public void addAccess(MemoryAccess access) {
         this.accesses.add(access);
     }
 

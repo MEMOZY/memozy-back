@@ -35,9 +35,11 @@ import com.memozy.memozy_back.global.exception.BusinessException;
 import com.memozy.memozy_back.global.exception.ErrorCode;
 import com.memozy.memozy_back.domain.file.service.FileService;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -82,12 +84,14 @@ public class MemoryServiceImpl implements MemoryService {
             item.updateFileKey(movedFileKey);
         }
 
-        List<AccessGrantRequest> grants = request.accesses() == null
-                ? List.of() : request.accesses();
-
-        List<MemoryAccess> newAccesses = getMemoryAccesses(ownerId, grants, memory);
-
-        memory.clearAndSetAccesses(newAccesses);
+        // 접근 권한 부여
+        List<AccessGrantRequest> grants = request.accesses() == null ? List.of() : request.accesses();
+        Map<Long, PermissionLevel> requested = toRequestedMap(grants, memory.getOwner().getId());
+        for (Map.Entry<Long, PermissionLevel> e : requested.entrySet()) {
+            User target = userRepository.getReferenceById(e.getKey());
+            checkFriendShip(target, memory); // 기존 검증
+            memory.addAccess(MemoryAccess.create(memory, target, e.getValue()));
+        }
 
         // redis 비우기
         sessionManager.removeSession(sessionId);
@@ -102,26 +106,37 @@ public class MemoryServiceImpl implements MemoryService {
     @Override
     @Transactional
     public MemoryDto updateMemory(Long userId, Long memoryId, UpdateMemoryRequest request) {
-        Memory memory = memoryRepository.findByIdWithAccessesAndItems(memoryId)
+        Memory memory = memoryRepository.findByIdWithAccesses(memoryId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION));
 
         if (!canEditContent(memory, userId)) {
             throw new BusinessException(ErrorCode.INVALID_ACCESS_EXCEPTION);
         }
 
-        memory.getMemoryItems().clear();
+        memoryItemRepository.deleteByMemoryId(memoryId);
         for (MemoryItemDto itemDto : request.memoryItems()) {
             addMemoryItem(itemDto, memory);
         }
 
-        if (request.accesses() != null && !request.accesses().isEmpty()) {
-            if (!canManageAccesses(memory, userId)) {
-                throw new BusinessException(ErrorCode.INVALID_PERMISSION_LEVEL);
-            }
+        if (request.accesses() != null) {
+            Map<Long, PermissionLevel> requested =
+                    toRequestedMap(request.accesses(), memory.getOwner().getId());
 
-            List<AccessGrantRequest> grants = request.accesses();
-            List<MemoryAccess> newAccesses = getMemoryAccesses(userId, grants, memory);
-            memory.clearAndSetAccesses(newAccesses);
+            // 현재 상태 스냅샷
+            Map<Long, PermissionLevel> current = memory.getAccesses().stream()
+                    .collect(Collectors.toMap(a -> a.getUser().getId(), MemoryAccess::getPermissionLevel));
+
+            boolean isUpdateRquest = isUpdateAccessesRequest(current, requested);
+
+            if (!canManageAccesses(memory, userId)) {
+                if (!isUpdateRquest) {
+                    throw new BusinessException(ErrorCode.INVALID_PERMISSION_LEVEL);
+                }
+            } else {
+                if (!isUpdateRquest) {
+                    syncAccesses(memory, requested);
+                }
+            }
         }
 
         memory.update(
@@ -246,8 +261,10 @@ public class MemoryServiceImpl implements MemoryService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public GetMemoryDetailsResponse getMemoryDetails(Long userId, Long memoryId) {
-        Memory memory = memoryRepository.findByIdWithAccessesAndItems(memoryId)
+        // accesses(+user)만 fetch join
+        Memory memory = memoryRepository.findByIdWithAccesses(memoryId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION));
 
         boolean isOwner = memory.getOwner().getId().equals(userId);
@@ -258,16 +275,18 @@ public class MemoryServiceImpl implements MemoryService {
             throw new BusinessException(ErrorCode.INVALID_ACCESS_EXCEPTION);
         }
 
-        List<MemoryItemDto> memoryItemDtos = memory.getMemoryItems().stream()
+        // items는 한 방 추가 조회
+        List<MemoryItem> items = memoryItemRepository.findAllByMemoryIdOrderBySequence(memoryId);
+
+        List<MemoryItemDto> memoryItemDtos = items.stream()
                 .map(item -> MemoryItemDto.from(
                         item,
                         fileService.generatePresignedUrlToRead(item.getFileKey()).preSignedUrl()
                 ))
-                .sorted((a, b) -> Integer.compare(a.sequence(), b.sequence()))
                 .toList();
 
         List<MemoryAccessDto> accessDtos = memory.getAccesses().stream()
-                .map(MemoryAccessDto::of)
+                .map(MemoryAccessDto::of) // a.user는 이미 fetch됨 → 추가 쿼리 없음
                 .toList();
 
         PermissionLevel permissionLevel = findPermissionLevel(memory, userId);
@@ -291,7 +310,6 @@ public class MemoryServiceImpl implements MemoryService {
                 .map(MemoryAccess::getMemory)
                 .toList();
 
-        // 3) DTO 변환
         Stream<Memory> allMyMemories = Stream.concat(ownMemories.stream(), sharedMemories.stream());
 
         List<MemoryInfoDto> dtoList = allMyMemories
@@ -370,38 +388,6 @@ public class MemoryServiceImpl implements MemoryService {
         return m.getOwner().getId().equals(userId);
     }
 
-    private List<MemoryAccess> getMemoryAccesses(Long ownerId, List<AccessGrantRequest> grants, Memory memory) {
-        // userId 목록 추출해서 한 번에 조회
-        List<Long> userIds = grants.stream().map(AccessGrantRequest::userId).toList();
-        Map<Long, User> userMap = userRepository.findAllById(userIds).stream()
-                .collect(Collectors.toMap(User::getId, u -> u));
-
-        // 중복/오너 포함 체크
-        Set<Long> seen = new HashSet<>();
-        List<MemoryAccess> newAccesses = new ArrayList<>();
-
-        for (AccessGrantRequest g : grants) {
-            Long targetUserId = g.userId();
-
-            if (targetUserId.equals(ownerId)) {
-                throw new BusinessException(ErrorCode.CANNOT_MANAGE_OWNER_ACCESS);
-            }
-
-            if (!seen.add(targetUserId)) {
-                continue;
-            }
-
-            User target = userMap.get(targetUserId);
-            if (target == null) {
-                throw new BusinessException(ErrorCode.NOT_FOUND_USER_EXCEPTION);
-            }
-
-            checkFriendShip(target, memory);
-
-            newAccesses.add(MemoryAccess.create(memory, target, g.permissionLevel()));
-        }
-        return newAccesses;
-    }
 
     private void checkFriendShip(User sharedUser, Memory memory) {
         boolean isFriend = friendshipRepository.existsFriendshipBetweenUsers(
@@ -419,5 +405,57 @@ public class MemoryServiceImpl implements MemoryService {
                 .map(MemoryAccess::getPermissionLevel)
                 .findFirst()
                 .orElse(PermissionLevel.OWNER);
+    }
+
+
+    private Map<Long, PermissionLevel> toRequestedMap(List<AccessGrantRequest> grants, Long ownerId) {
+        Map<Long, PermissionLevel> map = new HashMap<>();
+        for (AccessGrantRequest g : grants) {
+            Long uid = g.userId();
+            if (uid.equals(ownerId)) throw new BusinessException(ErrorCode.CANNOT_MANAGE_OWNER_ACCESS);
+            if (map.putIfAbsent(uid, g.permissionLevel()) != null) {
+                throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+            }
+        }
+        return map;
+    }
+
+    private void syncAccesses(Memory memory, Map<Long, PermissionLevel> requested) {
+        // userId -> MemoryAccess
+        Map<Long, MemoryAccess> current = memory.getAccesses().stream()
+                .collect(Collectors.toMap(a -> a.getUser().getId(), a -> a));
+
+        // 유저가 요청한 접근 권한을 순회하면서 기존 권한 변경/추가 처리
+        for (Map.Entry<Long, PermissionLevel> e : requested.entrySet()) {
+            Long userId = e.getKey();
+            PermissionLevel want = e.getValue();
+            MemoryAccess cur = current.get(userId);
+            if (cur != null) {
+                if (cur.getPermissionLevel() != want) {
+                    memory.changeAccess(cur.getUser(), want);
+                }
+            } else {
+                // 새로운 유저에게 공유하는 경우
+                User user = userRepository.findById(userId)
+                        .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_USER_EXCEPTION));
+                checkFriendShip(user, memory);
+                memory.addAccess(MemoryAccess.create(memory, user, want));
+            }
+        }
+
+        for (MemoryAccess cur : new ArrayList<>(memory.getAccesses())) {
+            Long uid = cur.getUser().getId();
+            if (!requested.containsKey(uid)) {
+                memory.revokeAccess(cur.getUser()); // 도메인 메서드 활용
+            }
+        }
+    }
+
+    private boolean isUpdateAccessesRequest(Map<Long, PermissionLevel> current, Map<Long, PermissionLevel> requested) {
+        if (current.size() != requested.size()) return false;
+        for (Map.Entry<Long, PermissionLevel> e : current.entrySet()) {
+            if (!Objects.equals(requested.get(e.getKey()), e.getValue())) return false;
+        }
+        return true;
     }
 }

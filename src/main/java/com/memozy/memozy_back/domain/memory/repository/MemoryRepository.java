@@ -21,15 +21,6 @@ public interface MemoryRepository extends JpaRepository<Memory, Long>, MemoryRep
         """)
     List<Memory> findAllByOwnerIdWithItems(@Param("userId") Long userId);
 
-    @Query("""
-        select distinct m
-        from Memory m
-        left join fetch m.memoryItems i
-        left join fetch m.accesses a
-        left join fetch a.user u
-        where m.id = :memoryId
-    """)
-    Optional<Memory> findByIdWithAccessesAndItems(@Param("memoryId") Long memoryId);
 
     void deleteByOwner(User user);
 
@@ -40,4 +31,13 @@ public interface MemoryRepository extends JpaRepository<Memory, Long>, MemoryRep
       order by m.createdAt desc
     """)
     List<Memory> findLatestWithItemsByOwner(@Param("ownerId") Long ownerId, Pageable pageable);
+
+    @Query("""
+        select distinct m
+        from Memory m
+        left join fetch m.accesses a
+        left join fetch a.user u
+        where m.id = :memoryId
+    """)
+    Optional<Memory> findByIdWithAccesses(@Param("memoryId") Long memoryId);
 }
