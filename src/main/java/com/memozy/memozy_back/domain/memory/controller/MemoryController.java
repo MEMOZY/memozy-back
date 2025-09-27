@@ -7,6 +7,7 @@ import com.memozy.memozy_back.domain.memory.dto.response.CreateTempMemoryRespons
 import com.memozy.memozy_back.domain.memory.dto.MemoryDto;
 import com.memozy.memozy_back.domain.memory.dto.request.CreateMemoryRequest;
 import com.memozy.memozy_back.domain.memory.dto.request.UpdateMemoryRequest;
+import com.memozy.memozy_back.domain.memory.dto.response.GetMemoryDetailsResponse;
 import com.memozy.memozy_back.domain.memory.dto.response.GetMemoryListResponse;
 import com.memozy.memozy_back.domain.memory.dto.response.GetTempMemoryResponse;
 import com.memozy.memozy_back.domain.memory.service.MemoryService;
@@ -17,7 +18,6 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -68,7 +68,15 @@ public class MemoryController {
     @GetMapping
     public ResponseEntity<GetMemoryListResponse> getAllMemories(
             @CurrentUserId Long userId) {
-        return ResponseEntity.ok(memoryService.getAllByOwnerId(userId));
+        return ResponseEntity.ok(memoryService.getAllByUserId(userId));
+    }
+
+    // 기록 상세 조회
+    @GetMapping("/{memoryId}")
+    public ResponseEntity<GetMemoryDetailsResponse> getMemoryDetails(
+            @CurrentUserId Long userId,
+            @PathVariable Long memoryId) {
+        return ResponseEntity.ok(memoryService.getMemoryDetails(userId, memoryId));
     }
 
     /**
@@ -96,8 +104,10 @@ public class MemoryController {
 
     // 기록 삭제
     @DeleteMapping("/{memoryId}")
-    public ResponseEntity<Void> deleteMemory(@PathVariable Long memoryId) {
-        memoryService.deleteMemory(memoryId);
+    public ResponseEntity<Void> deleteMemory(
+            @CurrentUserId Long userId,
+            @PathVariable Long memoryId) {
+        memoryService.deleteMemory(userId, memoryId);
         return ResponseEntity.noContent().build();
     }
 

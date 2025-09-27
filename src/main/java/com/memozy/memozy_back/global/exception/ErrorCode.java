@@ -76,7 +76,10 @@ public enum ErrorCode {
      * memory, code prefix: memory-
      */
     MISSING_SEARCH_TYPE(HttpStatus.BAD_REQUEST, "memory-1" , "검색 타입이 필요합니다." ),
-    NOT_FOUND_TEMP_MEMORY(HttpStatus.NOT_FOUND, "memory-2", "작업 완료된 기록이 존재하지 않습니다.");
+    NOT_FOUND_TEMP_MEMORY(HttpStatus.NOT_FOUND, "memory-2", "작업 완료된 기록이 존재하지 않습니다."),
+    CANNOT_MANAGE_OWNER_ACCESS(HttpStatus.BAD_REQUEST, "memory-3" , "소유자의 권한은 제어할 수 없습니다."),
+    NOT_FOUND_PERMISSION(HttpStatus.BAD_REQUEST, "memory-5" , "해당 기록에 대한 접근 권한이 없습니다"),
+    INVALID_PERMISSION_LEVEL(HttpStatus.BAD_REQUEST, "memory-6" , "유효하지 않은 권한 레벨입니다." );
 
 
     private final HttpStatus httpStatus;

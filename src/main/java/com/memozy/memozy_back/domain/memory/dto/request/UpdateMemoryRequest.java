@@ -2,6 +2,7 @@ package com.memozy.memozy_back.domain.memory.dto.request;
 
 import com.memozy.memozy_back.domain.memory.constant.MemoryCategory;
 import com.memozy.memozy_back.domain.memory.dto.MemoryItemDto;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
@@ -13,5 +14,7 @@ public record UpdateMemoryRequest(
         @NotNull LocalDate startDate,
         @NotNull LocalDate endDate,
         @NotNull List<MemoryItemDto> memoryItems,
-        List<Long> sharedUsersId
-) {}
+        @Schema(description = "권한 부여에 대한 정보 목록 (비어있을 수 있음)")
+        List<AccessGrantRequest> accesses
+) {
+}

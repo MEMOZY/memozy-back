@@ -1,5 +1,6 @@
 package com.memozy.memozy_back.domain.memory.dto;
 
+import com.memozy.memozy_back.domain.memory.constant.PermissionLevel;
 import java.time.LocalDate;
 
 public record MemoryInfoDto(
@@ -9,6 +10,8 @@ public record MemoryInfoDto(
         String content,
         LocalDate startDate,
         LocalDate endDate,
-        String thumbnailUrl
+        String thumbnailUrl,
+        PermissionLevel permissionLevel,
+        boolean canEdit
 ) {
 }

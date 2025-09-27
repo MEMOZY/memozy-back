@@ -5,6 +5,7 @@ import com.memozy.memozy_back.domain.memory.repository.querydsl.MemoryRepository
 import com.memozy.memozy_back.domain.user.domain.User;
 import io.lettuce.core.dynamic.annotation.Param;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -12,14 +13,14 @@ import org.springframework.stereotype.Repository;
 
 public interface MemoryRepository extends JpaRepository<Memory, Long>, MemoryRepositoryCustom {
 
-    List<Memory> findAllByOwnerId(Long ownerId);
-
     @Query("""
-        SELECT m FROM Memory m
-        JOIN m.sharedUsers s
-        WHERE s.user.id = :userId
-    """)
-    List<Memory> findAllSharedByUser(Long userId);
+        select distinct m
+        from Memory m
+        left join fetch m.memoryItems i
+        where m.owner.id = :userId
+        """)
+    List<Memory> findAllByOwnerIdWithItems(@Param("userId") Long userId);
+
 
     void deleteByOwner(User user);
 
@@ -30,4 +31,13 @@ public interface MemoryRepository extends JpaRepository<Memory, Long>, MemoryRep
       order by m.createdAt desc
     """)
     List<Memory> findLatestWithItemsByOwner(@Param("ownerId") Long ownerId, Pageable pageable);
+
+    @Query("""
+        select distinct m
+        from Memory m
+        left join fetch m.accesses a
+        left join fetch a.user u
+        where m.id = :memoryId
+    """)
+    Optional<Memory> findByIdWithAccesses(@Param("memoryId") Long memoryId);
 }

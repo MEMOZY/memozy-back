@@ -80,22 +80,33 @@ CREATE TABLE IF NOT EXISTS `memory_item`
   COLLATE = utf8mb4_unicode_ci;
 
 -- -----------------------------------------------------
--- MEMORY_SHARED
+-- MEMORY_ACCESS
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `memory_shared`
+CREATE TABLE IF NOT EXISTS `memory_access`
 (
-    `id`         BIGINT PRIMARY KEY AUTO_INCREMENT,
-    `memory_id`  BIGINT    NOT NULL,
-    `user_id`    BIGINT    NOT NULL,
-    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    KEY idx_memory_shared_memory (`memory_id`),
-    KEY idx_memory_shared_user (`user_id`),
-    CONSTRAINT fk_memory_shared_memory FOREIGN KEY (`memory_id`) REFERENCES `memory` (`memory_id`) ON DELETE CASCADE,
-    CONSTRAINT fk_memory_shared_user FOREIGN KEY (`user_id`) REFERENCES `user` (`user_id`) ON DELETE CASCADE
-) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4
-  COLLATE = utf8mb4_unicode_ci;
+    `id`              BIGINT       NOT NULL AUTO_INCREMENT,
+    `memory_id`       BIGINT       NOT NULL,
+    `user_id`         BIGINT       NOT NULL,
+    `permission_level` VARCHAR(20) NOT NULL,  -- VIEW | EDIT
+
+    `created_at`      TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at`      TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (`id`),
+
+    -- 한 유저는 한 메모리당 하나의 권한만
+    UNIQUE KEY `uk_memory_access_memory_user` (`memory_id`, `user_id`),
+
+    KEY `idx_memory_access_memory` (`memory_id`),
+    KEY `idx_memory_access_user`   (`user_id`),
+
+    CONSTRAINT `fk_memory_access_memory`
+    FOREIGN KEY (`memory_id`) REFERENCES `memory`(`memory_id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_memory_access_user`
+    FOREIGN KEY (`user_id`)   REFERENCES `user`(`user_id`)     ON DELETE CASCADE
+) ENGINE=InnoDB
+    DEFAULT CHARSET = utf8mb4
+    COLLATE = utf8mb4_unicode_ci;
 
 -- -----------------------------------------------------
 -- USER_POLICY_AGREEMENT
