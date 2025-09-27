@@ -16,7 +16,7 @@ public interface MemoryService {
     CreateMemoryResponse createMemory(Long userId, CreateMemoryRequest request);
     GetMemoryListResponse getAllByUserId(Long userId);
     MemoryDto updateMemory(Long userId, Long memoryId, UpdateMemoryRequest request);
-    void deleteMemory(Long memoryId);
+    void deleteMemory(Long userId, Long memoryId);
 
     String createTemporaryMemory(Long userId, CreateTempMemoryRequest request);
 

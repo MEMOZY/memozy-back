@@ -5,6 +5,7 @@ import com.memozy.memozy_back.domain.memory.constant.SearchType;
 import com.memozy.memozy_back.domain.memory.domain.Memory;
 import com.memozy.memozy_back.domain.memory.domain.MemoryItem;
 import com.memozy.memozy_back.domain.memory.domain.QMemory;
+import com.memozy.memozy_back.domain.memory.domain.QMemoryAccess;
 import com.memozy.memozy_back.domain.memory.domain.QMemoryItem;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
@@ -19,6 +20,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 @Repository
 @RequiredArgsConstructor
@@ -28,41 +30,36 @@ public class MemoryRepositoryImpl implements MemoryRepositoryCustom {
     private final JPAQueryFactory queryFactory;
 
     @Override
+    @Transactional(readOnly = true)
     public Page<Memory> searchByKeyword(final Long userId, final SearchType searchType, final String keyword, final Pageable pageable) {
         QMemory m = QMemory.memory;
         QMemoryItem mi = QMemoryItem.memoryItem;
+        QMemoryAccess ma = QMemoryAccess.memoryAccess;
 
-        // 가드
+        BooleanExpression accessibleByUser =
+                m.owner.id.eq(userId).or(
+                        JPAExpressions.selectOne()
+                                .from(ma)
+                                .where(
+                                        ma.memory.id.eq(m.id),
+                                        ma.user.id.eq(userId)
+                                )
+                                .exists()
+                );
+
         if (keyword == null || keyword.trim().isEmpty()) {
-            List<Memory> content = queryFactory
-                    .selectFrom(m)
-                    .where(m.owner.id.eq(userId))
-                    .orderBy(m.createdAt.desc(), m.id.desc())
-                    .offset(pageable.getOffset())
-                    .limit(pageable.getPageSize())
-                    .fetch();
-
-            Long total = queryFactory
-                    .select(m.id.count())
-                    .from(m)
-                    .where(m.owner.id.eq(userId))
-                    .fetchOne();
-
-            return new PageImpl<>(content, pageable, total == null ? 0 : total);
+            return new PageImpl<>(List.of(), pageable, 0);
         }
 
         String esc = escapeLike(keyword);
         String pattern = "%" + esc + "%";
 
-        // 제목 LIKE (ESCAPE 필요하면 템플릿으로 유지)
         BooleanExpression titleLike =
                 Expressions.booleanTemplate("{0} LIKE {1} ESCAPE '!'", m.title, pattern);
 
-        // 내용 LIKE (item용)
         BooleanExpression contentLike =
                 Expressions.booleanTemplate("{0} LIKE {1} ESCAPE '!'", mi.content, pattern);
 
-        // ✅ 테이블명 대신 엔티티 기반 EXISTS 서브쿼리
         BooleanExpression itemExists =
                 JPAExpressions
                         .selectOne()
@@ -73,16 +70,14 @@ public class MemoryRepositoryImpl implements MemoryRepositoryCustom {
                         )
                         .exists();
 
-        // 검색 타입 분기
         BooleanExpression keywordPredicate = switch (searchType) {
             case TITLE   -> titleLike;
             case CONTENT -> itemExists;
             case ALL     -> titleLike.or(itemExists);
         };
 
-        BooleanExpression whereClause = m.owner.id.eq(userId).and(keywordPredicate);
+        BooleanExpression whereClause = accessibleByUser.and(keywordPredicate);
 
-        // SELECT
         List<Memory> contents = queryFactory
                 .selectFrom(m)
                 .where(whereClause)
@@ -91,7 +86,6 @@ public class MemoryRepositoryImpl implements MemoryRepositoryCustom {
                 .limit(pageable.getPageSize())
                 .fetch();
 
-        // COUNT (동일 조건)
         Long total = queryFactory
                 .select(m.id.count())
                 .from(m)

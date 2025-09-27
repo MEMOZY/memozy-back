@@ -95,8 +95,10 @@ public class MemoryController {
 
     // 기록 삭제
     @DeleteMapping("/{memoryId}")
-    public ResponseEntity<Void> deleteMemory(@PathVariable Long memoryId) {
-        memoryService.deleteMemory(memoryId);
+    public ResponseEntity<Void> deleteMemory(
+            @CurrentUserId Long userId,
+            @PathVariable Long memoryId) {
+        memoryService.deleteMemory(userId, memoryId);
         return ResponseEntity.noContent().build();
     }
 
