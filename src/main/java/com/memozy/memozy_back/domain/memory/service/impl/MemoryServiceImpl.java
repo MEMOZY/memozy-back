@@ -18,6 +18,7 @@ import com.memozy.memozy_back.domain.memory.dto.request.CreateMemoryRequest;
 import com.memozy.memozy_back.domain.memory.dto.request.CreateTempMemoryRequest;
 import com.memozy.memozy_back.domain.memory.dto.request.UpdateMemoryRequest;
 import com.memozy.memozy_back.domain.memory.dto.response.CreateMemoryResponse;
+import com.memozy.memozy_back.domain.memory.dto.response.GetMemoryDetailsResponse;
 import com.memozy.memozy_back.domain.memory.dto.response.GetMemoryListResponse;
 import com.memozy.memozy_back.domain.memory.dto.response.GetTempMemoryResponse;
 import com.memozy.memozy_back.domain.memory.repository.MemoryAccessRepository;
@@ -244,6 +245,40 @@ public class MemoryServiceImpl implements MemoryService {
         );
     }
 
+    @Override
+    public GetMemoryDetailsResponse getMemoryDetails(Long userId, Long memoryId) {
+        Memory memory = memoryRepository.findByIdWithAccessesAndItems(memoryId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION));
+
+        boolean isOwner = memory.getOwner().getId().equals(userId);
+        boolean isSharedUser = memory.getAccesses().stream()
+                .anyMatch(a -> a.getUser().getId().equals(userId));
+
+        if (!isOwner && !isSharedUser) {
+            throw new BusinessException(ErrorCode.INVALID_ACCESS_EXCEPTION);
+        }
+
+        List<MemoryItemDto> memoryItemDtos = memory.getMemoryItems().stream()
+                .map(item -> MemoryItemDto.from(
+                        item,
+                        fileService.generatePresignedUrlToRead(item.getFileKey()).preSignedUrl()
+                ))
+                .sorted((a, b) -> Integer.compare(a.sequence(), b.sequence()))
+                .toList();
+
+        List<MemoryAccessDto> accessDtos = memory.getAccesses().stream()
+                .map(MemoryAccessDto::of)
+                .toList();
+
+        PermissionLevel permissionLevel = findPermissionLevel(memory, userId);
+        boolean canEdit = canEditContent(userId, memory, permissionLevel);
+
+        return new GetMemoryDetailsResponse(
+                MemoryDto.from(memory, memoryItemDtos, accessDtos),
+                permissionLevel,
+                canEdit
+        );
+    }
 
 
     @Override

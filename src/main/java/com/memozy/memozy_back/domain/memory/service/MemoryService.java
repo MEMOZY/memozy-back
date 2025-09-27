@@ -6,6 +6,7 @@ import com.memozy.memozy_back.domain.memory.dto.request.CreateMemoryRequest;
 import com.memozy.memozy_back.domain.memory.dto.request.CreateTempMemoryRequest;
 import com.memozy.memozy_back.domain.memory.dto.request.UpdateMemoryRequest;
 import com.memozy.memozy_back.domain.memory.dto.response.CreateMemoryResponse;
+import com.memozy.memozy_back.domain.memory.dto.response.GetMemoryDetailsResponse;
 import com.memozy.memozy_back.domain.memory.dto.response.GetMemoryListResponse;
 import com.memozy.memozy_back.domain.memory.dto.response.GetTempMemoryResponse;
 import com.memozy.memozy_back.domain.memory.dto.MemoryInfoDto;
@@ -23,4 +24,6 @@ public interface MemoryService {
     GetTempMemoryResponse getTemporaryMemoryItems(String sessionId, Long userId);
 
     PagedResponse<MemoryInfoDto> searchMyMemories(Long userId, SearchType searchType, String keyword, int page, int size);
+
+    GetMemoryDetailsResponse getMemoryDetails(Long userId, Long memoryId);
 }
