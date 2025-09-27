@@ -2,21 +2,25 @@ package com.memozy.memozy_back.domain.memory.service.impl;
 
 import com.memozy.memozy_back.domain.friend.constant.FriendshipStatus;
 import com.memozy.memozy_back.domain.friend.repository.FriendshipRepository;
+import com.memozy.memozy_back.domain.memory.constant.PermissionLevel;
 import com.memozy.memozy_back.domain.memory.constant.SearchType;
 import com.memozy.memozy_back.domain.memory.domain.Memory;
+import com.memozy.memozy_back.domain.memory.domain.MemoryAccess;
 import com.memozy.memozy_back.domain.memory.domain.MemoryItem;
-import com.memozy.memozy_back.domain.memory.domain.MemoryShared;
+import com.memozy.memozy_back.domain.memory.dto.MemoryAccessDto;
 import com.memozy.memozy_back.domain.memory.dto.MemoryDto;
 import com.memozy.memozy_back.domain.memory.dto.MemoryInfoDto;
 import com.memozy.memozy_back.domain.memory.dto.MemoryItemDto;
 import com.memozy.memozy_back.domain.memory.dto.TempMemoryDto;
 import com.memozy.memozy_back.domain.memory.dto.TempMemoryItemDto;
+import com.memozy.memozy_back.domain.memory.dto.request.AccessGrantRequest;
 import com.memozy.memozy_back.domain.memory.dto.request.CreateMemoryRequest;
 import com.memozy.memozy_back.domain.memory.dto.request.CreateTempMemoryRequest;
 import com.memozy.memozy_back.domain.memory.dto.request.UpdateMemoryRequest;
 import com.memozy.memozy_back.domain.memory.dto.response.CreateMemoryResponse;
 import com.memozy.memozy_back.domain.memory.dto.response.GetMemoryListResponse;
 import com.memozy.memozy_back.domain.memory.dto.response.GetTempMemoryResponse;
+import com.memozy.memozy_back.domain.memory.repository.MemoryAccessRepository;
 import com.memozy.memozy_back.domain.memory.repository.MemoryItemRepository;
 import com.memozy.memozy_back.domain.memory.repository.MemoryRepository;
 import com.memozy.memozy_back.domain.memory.service.MemoryService;
@@ -29,8 +33,12 @@ import com.memozy.memozy_back.domain.user.repository.UserRepository;
 import com.memozy.memozy_back.global.exception.BusinessException;
 import com.memozy.memozy_back.global.exception.ErrorCode;
 import com.memozy.memozy_back.domain.file.service.FileService;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -46,6 +54,7 @@ public class MemoryServiceImpl implements MemoryService {
 
     private final MemoryRepository memoryRepository;
     private final MemoryItemRepository memoryItemRepository;
+    private final MemoryAccessRepository memoryAccessRepository;
     private final UserRepository userRepository;
     private final FileService fileService;
     private final FriendshipRepository friendshipRepository;
@@ -60,7 +69,6 @@ public class MemoryServiceImpl implements MemoryService {
         sessionManager.validateSessionOwner(ownerId, sessionId);
 
         Memory memory = temporaryMemoryStore.load(sessionId);
-
         memory.updateBasicInfo(
                 request.title(),
                 request.category(),
@@ -73,14 +81,13 @@ public class MemoryServiceImpl implements MemoryService {
             item.updateFileKey(movedFileKey);
         }
 
-        List<User> newSharedUsers = userRepository.findAllById(request.sharedUsersId());
+        List<AccessGrantRequest> grants = request.accesses() == null
+                ? List.of() : request.accesses();
 
-        memory.getSharedUsers().clear();
-        for (User sharedUser : newSharedUsers) {
-            // 친구 관계 검증
-            checkFriendShip(sharedUser, memory);
-            addSharedUser(sharedUser, memory);
-        }
+        List<MemoryAccess> newAccesses = getMemoryAccesses(ownerId, grants, memory);
+
+        memory.clearAndSetAccesses(newAccesses);
+
 
         // redis 비우기
         sessionManager.removeSession(sessionId);
@@ -90,6 +97,84 @@ public class MemoryServiceImpl implements MemoryService {
         return CreateMemoryResponse.from(
                 memoryRepository.save(memory).getId()
         );
+    }
+
+    @Override
+    @Transactional
+    public MemoryDto updateMemory(Long userId, Long memoryId, UpdateMemoryRequest request) {
+        Memory memory = memoryRepository.findById(memoryId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION));
+
+        if (!memory.getOwner().getId().equals(userId)) {
+            throw new BusinessException(ErrorCode.INVALID_ACCESS_EXCEPTION);
+        }
+
+        // 기존 MemoryItem 삭제 후 새로 추가
+        memory.getMemoryItems().clear();
+        for (MemoryItemDto itemDto : request.memoryItems()) {
+            addMemoryItem(itemDto, memory);
+        }
+
+        List<AccessGrantRequest> grants = request.accesses() == null
+                ? List.of() : request.accesses();
+
+        List<MemoryAccess> newAccesses = getMemoryAccesses(userId, grants, memory);
+
+        memory.clearAndSetAccesses(newAccesses);
+
+        // 기본 정보 업데이트
+        memory.update(
+                request.title(),
+                request.category(),
+                request.startDate(),
+                request.endDate()
+        );
+
+        var memoryItemDtoList = memory.getMemoryItems().stream()
+                .map(item -> MemoryItemDto.from(
+                        item,
+                        fileService.generatePresignedUrlToRead(item.getFileKey())
+                                .preSignedUrl()
+                )).toList();
+
+        List<MemoryAccessDto> accessDtoList = newAccesses.stream()
+                .map(MemoryAccessDto::of)
+                .toList();
+
+        return MemoryDto.from(memory, memoryItemDtoList, accessDtoList);
+    }
+
+    private List<MemoryAccess> getMemoryAccesses(Long ownerId, List<AccessGrantRequest> grants, Memory memory) {
+        // userId 목록 추출해서 한 번에 조회
+        List<Long> userIds = grants.stream().map(AccessGrantRequest::userId).toList();
+        Map<Long, User> userMap = userRepository.findAllById(userIds).stream()
+                .collect(Collectors.toMap(User::getId, u -> u));
+
+        // 중복/오너 포함 체크
+        Set<Long> seen = new HashSet<>();
+        List<MemoryAccess> newAccesses = new ArrayList<>();
+
+        for (AccessGrantRequest g : grants) {
+            Long targetUserId = g.userId();
+
+            if (targetUserId.equals(ownerId)) {
+                throw new BusinessException(ErrorCode.CANNOT_MANAGE_OWNER_ACCESS);
+            }
+
+            if (!seen.add(targetUserId)) {
+                continue;
+            }
+
+            User target = userMap.get(targetUserId);
+            if (target == null) {
+                throw new BusinessException(ErrorCode.NOT_FOUND_USER_EXCEPTION);
+            }
+
+            checkFriendShip(target, memory);
+
+            newAccesses.add(MemoryAccess.create(memory, target, g.permissionLevel()));
+        }
+        return newAccesses;
     }
 
     /* 임시 기록 생성(기본 정보 없이) */
@@ -157,11 +242,11 @@ public class MemoryServiceImpl implements MemoryService {
                 .map(m -> {
                     MemoryItem first = firstItems.get(m.getId());
                     String content = (first != null) ? first.getContent() : null;
-                    String thumbUrl = null;
+                    String thumbnailUrl = null;
                     if (first != null) {
                         String fileKey = first.getFileKey();
                         if (fileKey != null && !fileKey.isBlank()) {
-                            thumbUrl = fileService.generatePresignedUrlToRead(fileKey).preSignedUrl();
+                            thumbnailUrl = fileService.generatePresignedUrlToRead(fileKey).preSignedUrl();
                         }
                     }
                     return new MemoryInfoDto(
@@ -171,7 +256,7 @@ public class MemoryServiceImpl implements MemoryService {
                             content,
                             m.getStartDate(),
                             m.getEndDate(),
-                            thumbUrl
+                            thumbnailUrl
                     );
                 })
                 .toList();
@@ -188,71 +273,58 @@ public class MemoryServiceImpl implements MemoryService {
 
     @Override
     @Transactional(readOnly = true)
-    public GetMemoryListResponse getAllByOwnerId(Long userId) {
-        var ownMemories = memoryRepository.findAllByOwnerId(userId);
-        var sharedMemories = memoryRepository.findAllSharedByUser(userId);
+    public GetMemoryListResponse getAllByUserId(Long userId) {
 
-        var memoryDtoList = Stream.concat(
-                ownMemories.stream(), sharedMemories.stream())
-                .map(memory -> MemoryDto.from(
-                        memory,
-                        memory.getMemoryItems().stream()
-                                .map(item -> MemoryItemDto.from(
-                                        item,
-                                        fileService.generatePresignedUrlToRead(item.getFileKey())
-                                                .preSignedUrl()
-                                )).toList(),
-                        fileService)
-                )
+        List<Memory> ownMemories = memoryRepository.findAllByOwnerIdWithItems(userId);
+        List<MemoryAccess> accesses = memoryAccessRepository.findAllByUserIdWithMemoryAndItems(userId);
+
+        List<Memory> sharedMemories = accesses.stream()
+                .map(MemoryAccess::getMemory)
                 .toList();
 
-        return GetMemoryListResponse.from(memoryDtoList);
+        // 접근권한 맵(공유받은 메모리에 한정)
+        Map<Long, PermissionLevel> permissions = accesses.stream()
+                .collect(Collectors.toMap(
+                        ma -> ma.getMemory().getId(),
+                        MemoryAccess::getPermissionLevel,
+                        (a, b) -> a
+                ));
+
+        // 3) DTO 변환
+        Stream<Memory> allMyMemories = Stream.concat(ownMemories.stream(), sharedMemories.stream());
+
+        List<MemoryInfoDto> dtoList = allMyMemories
+                .map(memory -> {
+                    String thumbnailUrl = memory.getMemoryItems().stream()
+                            .findFirst()
+                            .map(item -> fileService.generatePresignedUrlToRead(item.getFileKey()).preSignedUrl())
+                            .orElse(null);
+
+                    String content = memory.getMemoryItems().stream()
+                            .findFirst()
+                            .map(MemoryItem::getContent)
+                            .orElse(null);
+
+                    boolean canEdit = memory.getOwner().getId().equals(userId) ||
+                            permissions.getOrDefault(memory.getId(), PermissionLevel.OWNER) == PermissionLevel.EDITOR;
+
+                    return new MemoryInfoDto(
+                            memory.getId(),
+                            memory.getOwner().getId(),
+                            memory.getTitle(),
+                            content,
+                            memory.getStartDate(),
+                            memory.getEndDate(),
+                            thumbnailUrl,
+                            permissions.getOrDefault(memory.getId(), PermissionLevel.OWNER),
+                            canEdit
+                    );
+                })
+                .toList();
+
+        return GetMemoryListResponse.from(dtoList);
     }
 
-    @Override
-    @Transactional
-    public MemoryDto updateMemory(Long userId, Long memoryId, UpdateMemoryRequest request) {
-        Memory memory = memoryRepository.findById(memoryId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION));
-
-        if (!memory.getOwner().getId().equals(userId)) {
-            throw new BusinessException(ErrorCode.INVALID_ACCESS_EXCEPTION);
-        }
-
-        // 기존 MemoryItem 삭제 후 새로 추가
-        memory.getMemoryItems().clear();
-        for (MemoryItemDto itemDto : request.memoryItems()) {
-            addMemoryItem(itemDto, memory);
-        }
-
-        // sharedUser 변경
-        memory.getSharedUsers().clear();
-        List<User> newSharedUsers = userRepository.findAllById(request.sharedUsersId());
-        for (User user : newSharedUsers) {
-            addSharedUser(user, memory);
-        }
-
-        // 기본 정보 업데이트
-        memory.update(
-                request.title(),
-                request.category(),
-                request.startDate(),
-                request.endDate()
-        );
-
-        var memoryItemDtoList = memory.getMemoryItems().stream()
-                .map(item -> MemoryItemDto.from(
-                        item,
-                        fileService.generatePresignedUrlToRead(item.getFileKey())
-                                .preSignedUrl()
-                )).toList();
-
-        return MemoryDto.from(memory, memoryItemDtoList, fileService);
-    }
-
-    private static void addSharedUser(User user, Memory memory) {
-        memory.addSharedUser(MemoryShared.of(memory, user));
-    }
 
     @Override
     @Transactional

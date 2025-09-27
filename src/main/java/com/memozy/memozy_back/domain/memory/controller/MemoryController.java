@@ -17,7 +17,6 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -68,7 +67,7 @@ public class MemoryController {
     @GetMapping
     public ResponseEntity<GetMemoryListResponse> getAllMemories(
             @CurrentUserId Long userId) {
-        return ResponseEntity.ok(memoryService.getAllByOwnerId(userId));
+        return ResponseEntity.ok(memoryService.getAllByUserId(userId));
     }
 
     /**

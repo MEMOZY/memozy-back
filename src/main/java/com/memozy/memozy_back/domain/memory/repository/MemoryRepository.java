@@ -12,14 +12,13 @@ import org.springframework.stereotype.Repository;
 
 public interface MemoryRepository extends JpaRepository<Memory, Long>, MemoryRepositoryCustom {
 
-    List<Memory> findAllByOwnerId(Long ownerId);
-
     @Query("""
-        SELECT m FROM Memory m
-        JOIN m.sharedUsers s
-        WHERE s.user.id = :userId
-    """)
-    List<Memory> findAllSharedByUser(Long userId);
+        select distinct m
+        from Memory m
+        left join fetch m.memoryItems i
+        where m.owner.id = :userId
+        """)
+    List<Memory> findAllByOwnerIdWithItems(@Param("userId") Long userId);
 
     void deleteByOwner(User user);
 

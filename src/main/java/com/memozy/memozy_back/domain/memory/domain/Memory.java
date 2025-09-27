@@ -1,8 +1,11 @@
 package com.memozy.memozy_back.domain.memory.domain;
 
 import com.memozy.memozy_back.domain.memory.constant.MemoryCategory;
+import com.memozy.memozy_back.domain.memory.constant.PermissionLevel;
 import com.memozy.memozy_back.domain.user.domain.User;
 import com.memozy.memozy_back.global.entity.BaseTimeEntity;
+import com.memozy.memozy_back.global.exception.BusinessException;
+import com.memozy.memozy_back.global.exception.ErrorCode;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -40,7 +43,7 @@ public class Memory extends BaseTimeEntity {
     private List<MemoryItem> memoryItems = new ArrayList<>();
 
     @OneToMany(mappedBy = "memory", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<MemoryShared> sharedUsers = new ArrayList<>();
+    private List<MemoryAccess> accesses = new ArrayList<>();
 
     public static Memory create(
             User owner,
@@ -62,7 +65,7 @@ public class Memory extends BaseTimeEntity {
         return Memory.builder()
                 .owner(owner)
                 .memoryItems(new ArrayList<>())
-                .sharedUsers(new ArrayList<>())
+                .accesses(new ArrayList<>())
                 .build();
     }
 
@@ -87,8 +90,48 @@ public class Memory extends BaseTimeEntity {
         this.memoryItems.add(item);
     }
 
-    public void addSharedUser(MemoryShared memoryShared) {
-        sharedUsers.add(memoryShared);
+    public void clearAndSetAccesses(List<MemoryAccess> newAccesses) {
+        this.getAccesses().clear();
+        this.getAccesses().addAll(newAccesses);
     }
+
+    public void grantAccess(User target, PermissionLevel level) {
+        // 소유자 보호 규칙
+        if (isOwner(target)) throw new IllegalStateException("소유자 권한은 별도로 변경할 수 없어.");
+
+        // 중복 방지
+        accesses.stream()
+                .filter(a -> a.getUser().equals(target))
+                .findFirst()
+                .ifPresent(a -> { throw new IllegalStateException("이미 공유된 사용자야."); });
+
+        // 추가
+        MemoryAccess access = MemoryAccess.create(this, target, level);
+        this.accesses.add(access);
+    }
+
+    public void changeAccess(User target, PermissionLevel newLevel) {
+        if (isOwner(target)) throw new BusinessException(ErrorCode.CANNOT_MANAGE_OWNER_ACCESS);
+        MemoryAccess access = findAccessOrThrow(target);
+        access.changeLevel(newLevel);
+    }
+
+    public void revokeAccess(User target) {
+        if (isOwner(target)) throw new BusinessException(ErrorCode.CANNOT_MANAGE_OWNER_ACCESS);
+        MemoryAccess access = findAccessOrThrow(target);
+        this.accesses.remove(access);
+    }
+
+    private boolean isOwner(User user) {
+        return owner != null && owner.equals(user);
+    }
+
+    private MemoryAccess findAccessOrThrow(User user) {
+        return accesses.stream()
+                .filter(a -> a.getUser().equals(user))
+                .findFirst()
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_PERMISSION));
+    }
+
 
 }

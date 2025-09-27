@@ -28,7 +28,7 @@ public class MemoryRepositoryImpl implements MemoryRepositoryCustom {
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public Page<Memory> searchByKeyword(final Long ownerId, final SearchType searchType, final String keyword, final Pageable pageable) {
+    public Page<Memory> searchByKeyword(final Long userId, final SearchType searchType, final String keyword, final Pageable pageable) {
         QMemory m = QMemory.memory;
         QMemoryItem mi = QMemoryItem.memoryItem;
 
@@ -36,7 +36,7 @@ public class MemoryRepositoryImpl implements MemoryRepositoryCustom {
         if (keyword == null || keyword.trim().isEmpty()) {
             List<Memory> content = queryFactory
                     .selectFrom(m)
-                    .where(m.owner.id.eq(ownerId))
+                    .where(m.owner.id.eq(userId))
                     .orderBy(m.createdAt.desc(), m.id.desc())
                     .offset(pageable.getOffset())
                     .limit(pageable.getPageSize())
@@ -45,7 +45,7 @@ public class MemoryRepositoryImpl implements MemoryRepositoryCustom {
             Long total = queryFactory
                     .select(m.id.count())
                     .from(m)
-                    .where(m.owner.id.eq(ownerId))
+                    .where(m.owner.id.eq(userId))
                     .fetchOne();
 
             return new PageImpl<>(content, pageable, total == null ? 0 : total);
@@ -80,7 +80,7 @@ public class MemoryRepositoryImpl implements MemoryRepositoryCustom {
             case ALL     -> titleLike.or(itemExists);
         };
 
-        BooleanExpression whereClause = m.owner.id.eq(ownerId).and(keywordPredicate);
+        BooleanExpression whereClause = m.owner.id.eq(userId).and(keywordPredicate);
 
         // SELECT
         List<Memory> contents = queryFactory

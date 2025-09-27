@@ -4,8 +4,6 @@ package com.memozy.memozy_back.domain.memory.dto;
 import com.memozy.memozy_back.domain.file.service.FileService;
 import com.memozy.memozy_back.domain.memory.domain.Memory;
 import com.memozy.memozy_back.domain.memory.constant.MemoryCategory;
-import com.memozy.memozy_back.domain.memory.domain.MemoryItem;
-import com.memozy.memozy_back.domain.memory.domain.MemoryShared;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
@@ -19,9 +17,9 @@ public record MemoryDto(
         @NotNull LocalDate endDate,
         @NotNull MemoryCategory category,
         @NotNull List<MemoryItemDto> memoryItems,
-        @NotNull List<Long> sharedUserIds
+        @NotNull List<MemoryAccessDto> accessInfos
 ) {
-    public static MemoryDto from(Memory memory, List<MemoryItemDto> memoryItems, FileService fileService) {
+    public static MemoryDto from(Memory memory, List<MemoryItemDto> memoryItems, List<MemoryAccessDto> accessInfos) {
         return new MemoryDto(
                 memory.getId(),
                 memory.getOwner().getId(),
@@ -30,9 +28,7 @@ public record MemoryDto(
                 memory.getEndDate(),
                 memory.getCategory(),
                 memoryItems,
-                memory.getSharedUsers().stream()
-                        .map(MemoryShared::getId)
-                        .toList()
+                accessInfos
         );
     }
 }
