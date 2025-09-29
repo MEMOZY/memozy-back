@@ -27,7 +27,7 @@ import lombok.ToString;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Table(
-        name = "memory_item",
+        name = "memory_items",
         indexes = {
         // 대표 1개/전체 아이템 조회 모두에 유리한 복합 인덱스
             @Index(name = "idx_memory_item_mem_seq_id", columnList = "memory_id, sequence, memory_item_id")

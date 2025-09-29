@@ -1,13 +1,18 @@
-create table device_tokens (
-                               id bigint auto_increment primary key,
-                               user_id bigint not null,
-                               expo_token varchar(255) not null unique,
-                               platform varchar(16) not null,
-                               is_valid boolean not null default true,
-                               created_at timestamp default current_timestamp,
-                               constraint fk_device_tokens_user foreign key (user_id) references users(id)
-);
+CREATE TABLE IF NOT EXISTS `device_tokens` (
+    `id`         BIGINT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    `user_id`    BIGINT NOT NULL,
+    `expo_token` VARCHAR(255) NOT NULL,
+    `platform`   VARCHAR(16)  NOT NULL,
+    `is_valid`   BOOLEAN      NOT NULL DEFAULT TRUE,
+    `created_at` TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
-CREATE INDEX idx_device_tokens_user_id ON device_tokens(user_id);
+    CONSTRAINT `uk_device_tokens_expo_token` UNIQUE (`expo_token`),
 
-CREATE INDEX idx_device_tokens_valid ON device_tokens(is_valid);
+    CONSTRAINT `fk_device_tokens_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE
+) ENGINE=InnoDB
+    DEFAULT CHARSET = utf8mb4
+    COLLATE = utf8mb4_unicode_ci;
+
+CREATE INDEX `idx_device_tokens_user_valid`
+    ON `device_tokens` (`user_id`, `is_valid`);

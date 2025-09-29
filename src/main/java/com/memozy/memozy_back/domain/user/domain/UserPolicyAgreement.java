@@ -22,7 +22,7 @@ import org.hibernate.annotations.DynamicInsert;
 
 @Entity
 @Getter
-@Table(name = "user_policy_agreement", indexes = {
+@Table(name = "user_policy_agreements", indexes = {
         @Index(name = "user_policy_agreement_idx_1", columnList = "user_id, policy_type, version", unique = true),
 })
 @Builder

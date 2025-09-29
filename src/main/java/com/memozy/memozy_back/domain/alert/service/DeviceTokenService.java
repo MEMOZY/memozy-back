@@ -27,6 +27,8 @@ public class DeviceTokenService {
             }
         });
 
+        deviceTokenRepository.deleteByUserIdAndPlatform(userId, request.platform());
+
         DeviceToken deviceToken = DeviceToken.create(
                 user,
                 request.deviceToken(),

@@ -24,8 +24,7 @@ import lombok.NoArgsConstructor;
 @Table(
         name = "device_tokens",
         indexes = {
-                @Index(name = "idx_device_tokens_user_id", columnList = "user_id"),
-                @Index(name = "idx_device_tokens_valid", columnList = "is_valid")
+                @Index(name = "idx_device_tokens_user_valid", columnList = "user_id,is_valid")
         },
         uniqueConstraints = {
                 @UniqueConstraint(name = "uk_device_tokens_expo_token", columnNames = "expo_token")
