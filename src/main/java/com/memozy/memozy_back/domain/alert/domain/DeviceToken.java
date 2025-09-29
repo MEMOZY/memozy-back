@@ -1,7 +1,6 @@
-package com.memozy.memozy_back.domain.alert.entity;
+package com.memozy.memozy_back.domain.alert.domain;
 
 import com.memozy.memozy_back.domain.user.domain.User;
-import com.memozy.memozy_back.global.entity.BaseEntity;
 import com.memozy.memozy_back.global.entity.BaseTimeEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

@@ -3,7 +3,7 @@ package com.memozy.memozy_back.domain.friend.domain;
 import com.memozy.memozy_back.domain.friend.constant.FriendshipStatus;
 import com.memozy.memozy_back.domain.user.domain.User;
 import com.memozy.memozy_back.global.entity.BaseTimeEntity;
-import com.memozy.memozy_back.global.exception.BusinessException;
+import com.memozy.memozy_back.global.exception.GlobalException;
 import com.memozy.memozy_back.global.exception.ErrorCode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -55,7 +55,7 @@ public class Friendship extends BaseTimeEntity {
 
     public void accept() {
         if (this.status != FriendshipStatus.REQUESTED) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+            throw new GlobalException(ErrorCode.INVALID_INPUT_VALUE);
         }
         this.status = FriendshipStatus.ACCEPTED;
     }

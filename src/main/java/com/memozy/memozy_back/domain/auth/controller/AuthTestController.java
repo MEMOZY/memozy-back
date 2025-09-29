@@ -5,7 +5,7 @@ import com.memozy.memozy_back.domain.auth.dto.response.TokenResponse;
 import com.memozy.memozy_back.domain.user.constant.UserRole;
 import com.memozy.memozy_back.domain.user.domain.User;
 import com.memozy.memozy_back.domain.user.repository.UserRepository;
-import com.memozy.memozy_back.global.exception.BusinessException;
+import com.memozy.memozy_back.global.exception.GlobalException;
 import com.memozy.memozy_back.global.exception.ErrorCode;
 import com.memozy.memozy_back.global.jwt.JwtProvider;
 import com.memozy.memozy_back.global.jwt.TokenInfo;
@@ -31,7 +31,7 @@ public class AuthTestController {
             @RequestParam(name = "userId", required = false) Long userId
     ) {
         User user = userId != null
-                ? userRepository.findById(userId).orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_USER_EXCEPTION))
+                ? userRepository.findById(userId).orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND_USER_EXCEPTION))
                 : userRepository.save(User.create(UserRole.MEMBER, "test-user", "dasdf@gmail.com", "https://example.com/image.jpg"));
 
         TokenResponse tokenResponse = TokenResponse.from(

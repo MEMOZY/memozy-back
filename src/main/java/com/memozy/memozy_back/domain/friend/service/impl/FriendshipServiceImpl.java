@@ -7,7 +7,7 @@ import com.memozy.memozy_back.domain.friend.repository.FriendshipRepository;
 import com.memozy.memozy_back.domain.friend.service.FriendshipService;
 import com.memozy.memozy_back.domain.user.domain.User;
 import com.memozy.memozy_back.domain.user.repository.UserRepository;
-import com.memozy.memozy_back.global.exception.BusinessException;
+import com.memozy.memozy_back.global.exception.GlobalException;
 import com.memozy.memozy_back.global.exception.ErrorCode;
 import java.util.List;
 import java.util.stream.Stream;
@@ -29,11 +29,11 @@ public class FriendshipServiceImpl implements FriendshipService {
         User receiver = getUserById(receiverId);
 
         if (senderId.equals(receiverId)) {
-            throw new BusinessException(ErrorCode.SELF_FRIENDSHIP_EXCEPTION);
+            throw new GlobalException(ErrorCode.SELF_FRIENDSHIP_EXCEPTION);
         }
 
         if (friendshipRepository.existsFriendship(senderId, receiverId)) {
-            throw new BusinessException(ErrorCode.DUPLICATE_RESOURCE_EXCEPTION);
+            throw new GlobalException(ErrorCode.DUPLICATE_RESOURCE_EXCEPTION);
         }
 
         Friendship friendship = Friendship.create(sender, receiver);
@@ -44,7 +44,7 @@ public class FriendshipServiceImpl implements FriendshipService {
     @Transactional
     public void acceptFriendRequest(Long senderId, Long receiverId) {
         Friendship friendship = friendshipRepository.findRequest(senderId, receiverId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION));
+                .orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION));
         friendship.accept();
     }
 
@@ -52,7 +52,7 @@ public class FriendshipServiceImpl implements FriendshipService {
     @Transactional
     public void rejectFriendRequest(Long senderId, Long receiverId) {
         Friendship friendship = friendshipRepository.findRequest(senderId, receiverId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION));
+                .orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION));
         friendshipRepository.delete(friendship);
     }
 
@@ -95,6 +95,6 @@ public class FriendshipServiceImpl implements FriendshipService {
 
     private User getUserById(Long id) {
         return userRepository.findById(id)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_USER_EXCEPTION));
+                .orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND_USER_EXCEPTION));
     }
 }

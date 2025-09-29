@@ -1,6 +1,6 @@
 package com.memozy.memozy_back.domain.auth.service.provider;
 
-import com.memozy.memozy_back.global.exception.BusinessException;
+import com.memozy.memozy_back.global.exception.GlobalException;
 import com.memozy.memozy_back.global.exception.ErrorCode;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.jwk.source.JWKSource;
@@ -50,7 +50,7 @@ public class ApplePublicKeyProvider {
             JWTClaimsSet claimsSet = jwtProcessor.process(idToken, null);
 
             if (!ISSUER.equals(claimsSet.getIssuer())) {
-                throw new BusinessException(ErrorCode.APPLE_INVALID_ISSUER);
+                throw new GlobalException(ErrorCode.APPLE_INVALID_ISSUER);
             }
 
             String sub = claimsSet.getSubject();
@@ -58,7 +58,7 @@ public class ApplePublicKeyProvider {
 
             return new Payload(sub, email);
         } catch (Exception e) {
-            throw new BusinessException(ErrorCode.APPLE_INVALID_TOKEN);
+            throw new GlobalException(ErrorCode.APPLE_INVALID_TOKEN);
         }
     }
 

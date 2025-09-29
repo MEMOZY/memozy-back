@@ -2,7 +2,7 @@ package com.memozy.memozy_back.domain.user.service;
 
 import com.memozy.memozy_back.domain.file.service.FileService;
 import com.memozy.memozy_back.domain.user.constant.ProfileImage;
-import com.memozy.memozy_back.global.exception.BusinessException;
+import com.memozy.memozy_back.global.exception.GlobalException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -36,7 +36,7 @@ public class ProfileService {
                 log.warn("S3 file not found: {}", fileKey);
                 return defaultImageUrl;
             }
-        } catch (BusinessException e) {
+        } catch (GlobalException e) {
             log.warn("Invalid image URL provided: {}", profileImageUrl, e);
             return defaultImageUrl;
         } catch (Exception e) {

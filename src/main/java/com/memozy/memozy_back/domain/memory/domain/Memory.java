@@ -4,7 +4,7 @@ import com.memozy.memozy_back.domain.memory.constant.MemoryCategory;
 import com.memozy.memozy_back.domain.memory.constant.PermissionLevel;
 import com.memozy.memozy_back.domain.user.domain.User;
 import com.memozy.memozy_back.global.entity.BaseTimeEntity;
-import com.memozy.memozy_back.global.exception.BusinessException;
+import com.memozy.memozy_back.global.exception.GlobalException;
 import com.memozy.memozy_back.global.exception.ErrorCode;
 import jakarta.persistence.*;
 import java.time.LocalDate;
@@ -95,13 +95,13 @@ public class Memory extends BaseTimeEntity {
     }
 
     public void changeAccess(User target, PermissionLevel newLevel) {
-        if (isOwner(target)) throw new BusinessException(ErrorCode.CANNOT_MANAGE_OWNER_ACCESS);
+        if (isOwner(target)) throw new GlobalException(ErrorCode.CANNOT_MANAGE_OWNER_ACCESS);
         MemoryAccess access = findAccessOrThrow(target);
         access.changeLevel(newLevel);
     }
 
     public void revokeAccess(User target) {
-        if (isOwner(target)) throw new BusinessException(ErrorCode.CANNOT_MANAGE_OWNER_ACCESS);
+        if (isOwner(target)) throw new GlobalException(ErrorCode.CANNOT_MANAGE_OWNER_ACCESS);
         MemoryAccess access = findAccessOrThrow(target);
         this.accesses.remove(access);
     }
@@ -114,7 +114,7 @@ public class Memory extends BaseTimeEntity {
         return accesses.stream()
                 .filter(a -> a.getUser().equals(user))
                 .findFirst()
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_PERMISSION));
+                .orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND_PERMISSION));
     }
 
 

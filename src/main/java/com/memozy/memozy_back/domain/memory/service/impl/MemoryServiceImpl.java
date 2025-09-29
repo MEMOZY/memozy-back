@@ -31,16 +31,14 @@ import com.memozy.memozy_back.global.redis.TemporaryChatStore;
 import com.memozy.memozy_back.global.redis.TemporaryMemoryStore;
 import com.memozy.memozy_back.domain.user.domain.User;
 import com.memozy.memozy_back.domain.user.repository.UserRepository;
-import com.memozy.memozy_back.global.exception.BusinessException;
+import com.memozy.memozy_back.global.exception.GlobalException;
 import com.memozy.memozy_back.global.exception.ErrorCode;
 import com.memozy.memozy_back.domain.file.service.FileService;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
@@ -107,10 +105,10 @@ public class MemoryServiceImpl implements MemoryService {
     @Transactional
     public MemoryDto updateMemory(Long userId, Long memoryId, UpdateMemoryRequest request) {
         Memory memory = memoryRepository.findByIdWithAccesses(memoryId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION));
+                .orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION));
 
         if (!canEditContent(memory, userId)) {
-            throw new BusinessException(ErrorCode.INVALID_ACCESS_EXCEPTION);
+            throw new GlobalException(ErrorCode.INVALID_ACCESS_EXCEPTION);
         }
 
         memoryItemRepository.deleteByMemoryId(memoryId);
@@ -130,7 +128,7 @@ public class MemoryServiceImpl implements MemoryService {
 
             if (!canManageAccesses(memory, userId)) {
                 if (!isUpdateRquest) {
-                    throw new BusinessException(ErrorCode.INVALID_PERMISSION_LEVEL);
+                    throw new GlobalException(ErrorCode.INVALID_PERMISSION_LEVEL);
                 }
             } else {
                 if (!isUpdateRquest) {
@@ -163,7 +161,7 @@ public class MemoryServiceImpl implements MemoryService {
     @Override
     public String createTemporaryMemory(Long userId, CreateTempMemoryRequest request) {
         User owner = userRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_USER_EXCEPTION));
+                .orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND_USER_EXCEPTION));
 
         List<TempMemoryItemDto> tempItems = request.memoryItems().stream().map(itemDto -> {
             String rawFileKey = fileService.extractFileKeyFromImageUrl(itemDto.imageUrl());
@@ -188,7 +186,7 @@ public class MemoryServiceImpl implements MemoryService {
     @Override
     public GetTempMemoryResponse getTemporaryMemoryItems(String sessionId, Long userId) {
         User owner = userRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_USER_EXCEPTION));
+                .orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND_USER_EXCEPTION));
         Memory memory = temporaryMemoryStore.load(sessionId);
 
         sessionManager.validateSessionOwner(owner.getId(), sessionId);
@@ -201,7 +199,7 @@ public class MemoryServiceImpl implements MemoryService {
     public PagedResponse<MemoryInfoDto> searchMyMemories(Long userId, SearchType searchType, String keyword, int page, int size) {
         Pageable pageable = PageRequest.of(page, size); // 정렬은 쿼리에서 처리
         if (searchType == null) {
-            throw new BusinessException(ErrorCode.MISSING_SEARCH_TYPE);
+            throw new GlobalException(ErrorCode.MISSING_SEARCH_TYPE);
         }
         Page<Memory> paged = memoryRepository.searchByKeyword(userId, searchType, keyword, pageable);
 
@@ -265,14 +263,14 @@ public class MemoryServiceImpl implements MemoryService {
     public GetMemoryDetailsResponse getMemoryDetails(Long userId, Long memoryId) {
         // accesses(+user)만 fetch join
         Memory memory = memoryRepository.findByIdWithAccesses(memoryId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION));
+                .orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION));
 
         boolean isOwner = memory.getOwner().getId().equals(userId);
         boolean isSharedUser = memory.getAccesses().stream()
                 .anyMatch(a -> a.getUser().getId().equals(userId));
 
         if (!isOwner && !isSharedUser) {
-            throw new BusinessException(ErrorCode.INVALID_ACCESS_EXCEPTION);
+            throw new GlobalException(ErrorCode.INVALID_ACCESS_EXCEPTION);
         }
 
         // items는 한 방 추가 조회
@@ -349,9 +347,9 @@ public class MemoryServiceImpl implements MemoryService {
     @Transactional
     public void deleteMemory(Long userId, Long memoryId) {
         Memory memory = memoryRepository.findById(memoryId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION));
+                .orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION));
         if (!memory.getOwner().getId().equals(userId)) {
-            throw new BusinessException(ErrorCode.INVALID_ACCESS_EXCEPTION);
+            throw new GlobalException(ErrorCode.INVALID_ACCESS_EXCEPTION);
         }
         memoryRepository.deleteById(memoryId);
     }
@@ -395,7 +393,7 @@ public class MemoryServiceImpl implements MemoryService {
         );
 
         if (!isFriend) {
-            throw new BusinessException(ErrorCode.FORBIDDEN_FRIEND_ACCESS);
+            throw new GlobalException(ErrorCode.FORBIDDEN_FRIEND_ACCESS);
         }
     }
 
@@ -412,9 +410,9 @@ public class MemoryServiceImpl implements MemoryService {
         Map<Long, PermissionLevel> map = new HashMap<>();
         for (AccessGrantRequest g : grants) {
             Long uid = g.userId();
-            if (uid.equals(ownerId)) throw new BusinessException(ErrorCode.CANNOT_MANAGE_OWNER_ACCESS);
+            if (uid.equals(ownerId)) throw new GlobalException(ErrorCode.CANNOT_MANAGE_OWNER_ACCESS);
             if (map.putIfAbsent(uid, g.permissionLevel()) != null) {
-                throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+                throw new GlobalException(ErrorCode.INVALID_INPUT_VALUE);
             }
         }
         return map;
@@ -437,7 +435,7 @@ public class MemoryServiceImpl implements MemoryService {
             } else {
                 // 새로운 유저에게 공유하는 경우
                 User user = userRepository.findById(userId)
-                        .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_USER_EXCEPTION));
+                        .orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND_USER_EXCEPTION));
                 checkFriendShip(user, memory);
                 memory.addAccess(MemoryAccess.create(memory, user, want));
             }

@@ -1,6 +1,6 @@
 package com.memozy.memozy_back.global.http;
 
-import com.memozy.memozy_back.global.exception.BusinessException;
+import com.memozy.memozy_back.global.exception.GlobalException;
 import com.memozy.memozy_back.global.exception.ErrorCode;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -40,7 +40,7 @@ public class HeaderTokenExtractor {
             log.error("{} Header does not begin with \"Bearer\" String : [{}]",
                     headerName,
                     bearerToken);
-            throw new BusinessException(ErrorCode.INVALID_ACCESS_TOKEN_EXCEPTION);
+            throw new GlobalException(ErrorCode.INVALID_ACCESS_TOKEN_EXCEPTION);
         }
     }
 

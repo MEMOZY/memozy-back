@@ -17,10 +17,10 @@ import org.springframework.web.servlet.NoHandlerFoundException;
 
 @Slf4j
 @RestControllerAdvice
-public class BusinessExceptionHandler {
+public class GlobalExceptionHandler {
 
-    @ExceptionHandler(BusinessException.class)
-    public ResponseEntity<ErrorResponse> handleBusinessException(BusinessException e) {
+    @ExceptionHandler(GlobalException.class)
+    public ResponseEntity<ErrorResponse> handleBusinessException(GlobalException e) {
         log.error("BusinessException : {}", e.getErrorCode().getMessage(), e);
         return ErrorResponse.createErrorResponseEntity(e.getErrorCode());
     }

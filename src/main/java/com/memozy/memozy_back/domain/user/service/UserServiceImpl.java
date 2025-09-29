@@ -9,7 +9,7 @@ import com.memozy.memozy_back.domain.user.dto.request.UpdateUserRequest;
 import com.memozy.memozy_back.domain.user.repository.SocialUserInfoRepository;
 import com.memozy.memozy_back.domain.user.repository.UserPolicyAgreementRepository;
 import com.memozy.memozy_back.domain.user.repository.UserRepository;
-import com.memozy.memozy_back.global.exception.BusinessException;
+import com.memozy.memozy_back.global.exception.GlobalException;
 import com.memozy.memozy_back.global.exception.ErrorCode;
 import java.util.List;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,14 +31,14 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional(readOnly = true)
     public User getById(Long userId) {
-        return userRepository.findById(userId).orElseThrow(() -> new BusinessException(
+        return userRepository.findById(userId).orElseThrow(() -> new GlobalException(
                 ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION));
     }
 
     @Override
     @Transactional
     public User updateUserWithInfo(Long userId, UpdateUserRequest updateUserRequest) {
-        var user = userRepository.findById(userId).orElseThrow(() -> new BusinessException(
+        var user = userRepository.findById(userId).orElseThrow(() -> new GlobalException(
                 ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION));
         String profileImageUrl = updateUserRequest.profileImageUrl();
         if (profileImageUrl != null && !profileImageUrl.isBlank()) {
@@ -61,7 +61,7 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public List<UserPolicyAgreement> updatePolicyAgreement(Long userId,
             List<PolicyAgreementDto> policyAgreementDtoList) {
-        var user = userRepository.findById(userId).orElseThrow(() -> new BusinessException(
+        var user = userRepository.findById(userId).orElseThrow(() -> new GlobalException(
                 ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION));
         var existPolicyAgreementList = userPolicyAgreementRepository.findAllByUserId(userId);
 
@@ -86,7 +86,7 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public void withdrawUser(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_USER_EXCEPTION));
+                .orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND_USER_EXCEPTION));
 
         memoryRepository.deleteByOwner(user);
         socialUserInfoRepository.deleteByUser(user);
@@ -96,13 +96,13 @@ public class UserServiceImpl implements UserService {
     @Override
     public String getFriendCode(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_USER_EXCEPTION));
+                .orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND_USER_EXCEPTION));
         return user.getFriendCode();
     }
 
     @Override
     public User getUserByFriendCode(String friendCode) {
         return userRepository.findByFriendCode(friendCode)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_USER_EXCEPTION));
+                .orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND_USER_EXCEPTION));
     }
 }
