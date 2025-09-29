@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@Tag(name = "Device Token API", description = "푸쉬 알람을 위한 디바이스 토큰 관리")
+@Tag(name = "디바이스 토큰 관련 API", description = "푸쉬 알람을 위한 디바이스별 토큰 관리")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/device-tokens")
