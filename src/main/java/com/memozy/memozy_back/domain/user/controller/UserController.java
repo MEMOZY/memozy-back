@@ -10,7 +10,7 @@ import com.memozy.memozy_back.domain.user.dto.response.UpdatePolicyAgreementResp
 import com.memozy.memozy_back.domain.user.dto.response.UpdateUserResponse;
 import com.memozy.memozy_back.domain.user.facade.UserFacade;
 import com.memozy.memozy_back.global.annotation.CurrentUserId;
-import com.memozy.memozy_back.global.exception.BusinessException;
+import com.memozy.memozy_back.global.exception.GlobalException;
 import com.memozy.memozy_back.global.exception.ErrorCode;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -84,7 +84,7 @@ public class UserController {
         if (updatePolicyAgreementRequest.policyAgreementList().stream()
                 .map(PolicyAgreementDto::policyType).distinct().count()
                 != updatePolicyAgreementRequest.policyAgreementList().size()) {
-            throw new BusinessException(ErrorCode.DUPLICATED_POLICY_REQUEST_EXCEPTION);
+            throw new GlobalException(ErrorCode.DUPLICATED_POLICY_REQUEST_EXCEPTION);
         }
 
         return ResponseEntity.ok(

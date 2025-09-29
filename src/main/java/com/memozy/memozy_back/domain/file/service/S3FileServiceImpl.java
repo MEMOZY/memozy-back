@@ -3,7 +3,7 @@ package com.memozy.memozy_back.domain.file.service;
 
 import com.memozy.memozy_back.domain.file.constant.FileDomain;
 import com.memozy.memozy_back.domain.file.dto.PreSignedUrlDto;
-import com.memozy.memozy_back.global.exception.BusinessException;
+import com.memozy.memozy_back.global.exception.GlobalException;
 import com.memozy.memozy_back.global.exception.ErrorCode;
 import java.io.File;
 import java.io.IOException;
@@ -19,7 +19,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
@@ -114,7 +113,7 @@ public class S3FileServiceImpl implements FileService {
     @Override
     public void validateFileKey(String fileKey) {
         if (!isUploaded(fileKey)) {
-            throw new BusinessException(ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION);
+            throw new GlobalException(ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION);
         }
     }
 
@@ -159,7 +158,7 @@ public class S3FileServiceImpl implements FileService {
                 if (!jpegFile.delete()) {
                     log.warn("JPEG 임시 파일 삭제 실패: {}", jpegFile.getAbsolutePath());
                 }
-                throw new BusinessException(ErrorCode.IMAGE_CONVERSION_FAILED);
+                throw new GlobalException(ErrorCode.IMAGE_CONVERSION_FAILED);
             }
 
             // 3. JPEG 파일 S3에 재업로드
@@ -183,10 +182,10 @@ public class S3FileServiceImpl implements FileService {
 
         } catch (IOException | InterruptedException e) {
             log.error("HEIC 변환 중 예외 발생", e);
-            throw new BusinessException(ErrorCode.IMAGE_CONVERSION_FAILED);
+            throw new GlobalException(ErrorCode.IMAGE_CONVERSION_FAILED);
         } catch (Exception e) {
             log.error("HEIC 변환 중 알 수 없는 예외", e);
-            throw new BusinessException(ErrorCode.IMAGE_CONVERSION_FAILED);
+            throw new GlobalException(ErrorCode.IMAGE_CONVERSION_FAILED);
         }
     }
 
@@ -217,7 +216,7 @@ public class S3FileServiceImpl implements FileService {
             }
             return path;
         } catch (Exception e) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+            throw new GlobalException(ErrorCode.INVALID_INPUT_VALUE);
         }
     }
 

@@ -1,6 +1,6 @@
 package com.memozy.memozy_back.global.filter;
 
-import com.memozy.memozy_back.global.exception.BusinessException;
+import com.memozy.memozy_back.global.exception.GlobalException;
 import com.memozy.memozy_back.global.exception.ErrorCode;
 import com.memozy.memozy_back.global.http.HeaderTokenExtractor;
 import com.memozy.memozy_back.global.jwt.JwtResolver;
@@ -11,15 +11,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -78,11 +74,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private void checkAccessTokenValidation(String accessToken) {
         if (!StringUtils.hasText(accessToken)) {
-            throw new BusinessException(ErrorCode.INVALID_ACCESS_TOKEN_EXCEPTION);
+            throw new GlobalException(ErrorCode.INVALID_ACCESS_TOKEN_EXCEPTION);
         }
         if (!jwtResolver.validateAccessToken(accessToken)) {
             log.warn("JWT Token is not validate : [{}]", accessToken);
-            throw new BusinessException(ErrorCode.INVALID_ACCESS_TOKEN_EXCEPTION);
+            throw new GlobalException(ErrorCode.INVALID_ACCESS_TOKEN_EXCEPTION);
         }
     }
 
@@ -94,7 +90,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             Authentication authentication = getAuthenticationFromUserDetails(userDetails);
             SecurityContextHolder.getContext().setAuthentication(authentication);
         } catch (UsernameNotFoundException e) {
-            throw new BusinessException(e, ErrorCode.INVALID_ACCESS_TOKEN_EXCEPTION);
+            throw new GlobalException(e, ErrorCode.INVALID_ACCESS_TOKEN_EXCEPTION);
         }
     }
 

@@ -1,6 +1,6 @@
 package com.memozy.memozy_back.global.jwt;
 
-import com.memozy.memozy_back.global.exception.BusinessException;
+import com.memozy.memozy_back.global.exception.GlobalException;
 import com.memozy.memozy_back.global.exception.ErrorCode;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -16,7 +16,6 @@ import java.security.Key;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
-import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -72,9 +71,9 @@ public class JwtProvider {
             Claims claims = getRefreshTokenBody(refreshToken);
             return Long.parseLong(claims.get("userId").toString());
         } catch (ExpiredJwtException e) {
-            throw new BusinessException(e, ErrorCode.EXPIRED_REFRESH_TOKEN_EXCEPTION);
+            throw new GlobalException(e, ErrorCode.EXPIRED_REFRESH_TOKEN_EXCEPTION);
         } catch (Exception e) {
-            throw new BusinessException(e, ErrorCode.INVALID_REFRESH_TOKEN_EXCEPTION);
+            throw new GlobalException(e, ErrorCode.INVALID_REFRESH_TOKEN_EXCEPTION);
         }
     }
 
@@ -85,11 +84,11 @@ public class JwtProvider {
                     .before(new Date());
         } catch (SecurityException | MalformedJwtException | SignatureException |
                  IllegalArgumentException e) {
-            throw new BusinessException(e, ErrorCode.INVALID_REFRESH_TOKEN_EXCEPTION);
+            throw new GlobalException(e, ErrorCode.INVALID_REFRESH_TOKEN_EXCEPTION);
         } catch (UnsupportedJwtException e) {
-            throw new BusinessException(e, ErrorCode.UNSUPPORTED_JWT_TOKEN_EXCEPTION);
+            throw new GlobalException(e, ErrorCode.UNSUPPORTED_JWT_TOKEN_EXCEPTION);
         } catch (ExpiredJwtException e) {
-            throw new BusinessException(e, ErrorCode.EXPIRED_REFRESH_TOKEN_EXCEPTION);
+            throw new GlobalException(e, ErrorCode.EXPIRED_REFRESH_TOKEN_EXCEPTION);
         }
     }
 

@@ -6,7 +6,7 @@ SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
 -- -----------------------------------------------------
 -- USERS
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `user`
+CREATE TABLE IF NOT EXISTS `users`
 (
     `user_id`           BIGINT PRIMARY KEY AUTO_INCREMENT,
     `user_role`         VARCHAR(10)  NOT NULL DEFAULT 'MEMBER',
@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS `user`
 -- -----------------------------------------------------
 -- FRIENDSHIP
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `friendship`
+CREATE TABLE IF NOT EXISTS `friendships`
 (
     `id`          BIGINT PRIMARY KEY AUTO_INCREMENT,
     `sender_id`   BIGINT      NOT NULL,
@@ -36,8 +36,8 @@ CREATE TABLE IF NOT EXISTS `friendship`
     `updated_at`  TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     KEY idx_friendship_sender (`sender_id`),
     KEY idx_friendship_receiver (`receiver_id`),
-    CONSTRAINT fk_friendship_sender FOREIGN KEY (`sender_id`) REFERENCES `user` (`user_id`) ON DELETE CASCADE,
-    CONSTRAINT fk_friendship_receiver FOREIGN KEY (`receiver_id`) REFERENCES `user` (`user_id`) ON DELETE CASCADE
+    CONSTRAINT fk_friendship_sender FOREIGN KEY (`sender_id`) REFERENCES users (`user_id`) ON DELETE CASCADE,
+    CONSTRAINT fk_friendship_receiver FOREIGN KEY (`receiver_id`) REFERENCES users (`user_id`) ON DELETE CASCADE
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci;
@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS `friendship`
 -- -----------------------------------------------------
 -- MEMORY
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `memory`
+CREATE TABLE IF NOT EXISTS `memories`
 (
     `memory_id`  BIGINT PRIMARY KEY AUTO_INCREMENT,
     `title`      VARCHAR(100) NOT NULL,
@@ -56,7 +56,7 @@ CREATE TABLE IF NOT EXISTS `memory`
     `created_at` TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     KEY idx_memory_owner (`owner_id`),
-    CONSTRAINT fk_memory_owner FOREIGN KEY (`owner_id`) REFERENCES `user` (`user_id`) ON DELETE CASCADE
+    CONSTRAINT fk_memory_owner FOREIGN KEY (`owner_id`) REFERENCES users (`user_id`) ON DELETE CASCADE
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci;
@@ -64,7 +64,7 @@ CREATE TABLE IF NOT EXISTS `memory`
 -- -----------------------------------------------------
 -- MEMORY_ITEM
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `memory_item`
+CREATE TABLE IF NOT EXISTS `memory_items`
 (
     `memory_item_id` BIGINT PRIMARY KEY AUTO_INCREMENT,
     `memory_id`      BIGINT    NOT NULL,
@@ -74,7 +74,7 @@ CREATE TABLE IF NOT EXISTS `memory_item`
     `created_at`     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at`     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     KEY idx_memory_item_memory (`memory_id`),
-    CONSTRAINT fk_memory_item_memory FOREIGN KEY (`memory_id`) REFERENCES `memory` (`memory_id`) ON DELETE CASCADE
+    CONSTRAINT fk_memory_item_memory FOREIGN KEY (`memory_id`) REFERENCES memories (`memory_id`) ON DELETE CASCADE
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci;
@@ -82,7 +82,7 @@ CREATE TABLE IF NOT EXISTS `memory_item`
 -- -----------------------------------------------------
 -- MEMORY_ACCESS
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `memory_access`
+CREATE TABLE IF NOT EXISTS `memory_accesses`
 (
     `id`              BIGINT       NOT NULL AUTO_INCREMENT,
     `memory_id`       BIGINT       NOT NULL,
@@ -101,9 +101,9 @@ CREATE TABLE IF NOT EXISTS `memory_access`
     KEY `idx_memory_access_user`   (`user_id`),
 
     CONSTRAINT `fk_memory_access_memory`
-    FOREIGN KEY (`memory_id`) REFERENCES `memory`(`memory_id`) ON DELETE CASCADE,
+    FOREIGN KEY (`memory_id`) REFERENCES memories (`memory_id`) ON DELETE CASCADE,
     CONSTRAINT `fk_memory_access_user`
-    FOREIGN KEY (`user_id`)   REFERENCES `user`(`user_id`)     ON DELETE CASCADE
+    FOREIGN KEY (`user_id`)   REFERENCES users (`user_id`)     ON DELETE CASCADE
 ) ENGINE=InnoDB
     DEFAULT CHARSET = utf8mb4
     COLLATE = utf8mb4_unicode_ci;
@@ -111,7 +111,7 @@ CREATE TABLE IF NOT EXISTS `memory_access`
 -- -----------------------------------------------------
 -- USER_POLICY_AGREEMENT
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `user_policy_agreement`
+CREATE TABLE IF NOT EXISTS `user_policy_agreements`
 (
     `user_policy_agreement_id` BIGINT PRIMARY KEY AUTO_INCREMENT,
     `user_id`                  BIGINT       NOT NULL,
@@ -122,7 +122,7 @@ CREATE TABLE IF NOT EXISTS `user_policy_agreement`
     `updated_at`               TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT uq_user_policy UNIQUE (`user_id`, `policy_type`, `version`),
     KEY idx_upa_user (`user_id`),
-    CONSTRAINT fk_upa_user FOREIGN KEY (`user_id`) REFERENCES `user` (`user_id`) ON DELETE CASCADE
+    CONSTRAINT fk_upa_user FOREIGN KEY (`user_id`) REFERENCES users (`user_id`) ON DELETE CASCADE
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci;
@@ -130,7 +130,7 @@ CREATE TABLE IF NOT EXISTS `user_policy_agreement`
 -- -----------------------------------------------------
 -- SOCIAL_USER_INFO
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `social_user_info`
+CREATE TABLE IF NOT EXISTS `social_user_infos`
 (
     `social_user_info_id` BIGINT PRIMARY KEY AUTO_INCREMENT,
     `user_id`             BIGINT       NOT NULL,
@@ -140,7 +140,7 @@ CREATE TABLE IF NOT EXISTS `social_user_info`
     `updated_at`          TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT uq_social_code UNIQUE (`social_code`),
     KEY idx_sui_user (`user_id`),
-    CONSTRAINT fk_sui_user FOREIGN KEY (`user_id`) REFERENCES `user` (`user_id`) ON DELETE CASCADE
+    CONSTRAINT fk_sui_user FOREIGN KEY (`user_id`) REFERENCES users (`user_id`) ON DELETE CASCADE
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci;

@@ -1,14 +1,13 @@
 package com.memozy.memozy_back.domain.gpt.service;
 
 import com.memozy.memozy_back.domain.gpt.dto.EmitterPayloadDto;
-import com.memozy.memozy_back.global.exception.BusinessException;
+import com.memozy.memozy_back.global.exception.GlobalException;
 import com.memozy.memozy_back.global.exception.ErrorCode;
 import com.memozy.memozy_back.global.redis.TemporaryChatStore;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -101,7 +100,7 @@ public class FlaskServerImpl implements FlaskServer {
 
         return Optional.ofNullable(response)
                 .map(r -> (String) r.get("diary"))
-                .orElseThrow(() -> new BusinessException(ErrorCode.NO_RESPONSE_FLASK_SERVER));
+                .orElseThrow(() -> new GlobalException(ErrorCode.NO_RESPONSE_FLASK_SERVER));
     }
 
     @Override
@@ -124,7 +123,7 @@ public class FlaskServerImpl implements FlaskServer {
 
         Object diaryObj = response != null ? response.get("diary") : null;
         if (!(diaryObj instanceof List<?> diaryRawList)) {
-            throw new BusinessException(ErrorCode.NO_RESPONSE_FLASK_SERVER);
+            throw new GlobalException(ErrorCode.NO_RESPONSE_FLASK_SERVER);
         }
 
         return diaryRawList.stream()
@@ -160,7 +159,7 @@ public class FlaskServerImpl implements FlaskServer {
             log.warn("❌ SSEEmitter already completed, skipping send: {}", ex.getMessage());
         } catch (IOException e) {
             log.error("❌ SSE 전송 중 IOException 발생: {}", e.getMessage(), e);
-            throw new BusinessException(ErrorCode.SSE_CONNECTION_FAILED);
+            throw new GlobalException(ErrorCode.SSE_CONNECTION_FAILED);
         } catch (Exception e) {
             log.error("❌ 기타 전송 예외 발생: {}", e.getMessage(), e);
         }
@@ -204,7 +203,7 @@ public class FlaskServerImpl implements FlaskServer {
             throw ex;
         } catch (IOException ex) {
             log.error("❌ IOException 발생: type={}, tempId={}, message={}, 예외={}", type, tempId, message, ex.getMessage(), ex);
-            throw new BusinessException(ex, ErrorCode.SSE_CONNECTION_FAILED);
+            throw new GlobalException(ex, ErrorCode.SSE_CONNECTION_FAILED);
         } catch (Exception ex) {
             log.error("❌ 기타 예외 발생: type={}, tempId={}, message={}, 예외={}", type, tempId, message, ex.getMessage(), ex);
             throw ex;

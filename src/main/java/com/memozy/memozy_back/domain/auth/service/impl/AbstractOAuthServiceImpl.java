@@ -7,7 +7,7 @@ import com.memozy.memozy_back.domain.user.domain.SocialUserInfo;
 import com.memozy.memozy_back.domain.user.domain.User;
 import com.memozy.memozy_back.domain.user.repository.SocialUserInfoRepository;
 import com.memozy.memozy_back.domain.user.repository.UserRepository;
-import com.memozy.memozy_back.global.exception.BusinessException;
+import com.memozy.memozy_back.global.exception.GlobalException;
 import com.memozy.memozy_back.global.exception.ErrorCode;
 import java.util.Optional;
 
@@ -30,7 +30,7 @@ public abstract class AbstractOAuthServiceImpl implements OAuthService {
             String profileImageUrl
     ) {
         if (username == null || username.isBlank()) {
-            throw new BusinessException(ErrorCode.AUTH_MISSING_NAME);
+            throw new GlobalException(ErrorCode.AUTH_MISSING_NAME);
         }
 
         // 1. 동일한 소셜 계정(socialCode)이 이미 연결돼 있다면 해당 유저로 로그인

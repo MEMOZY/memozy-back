@@ -1,6 +1,6 @@
 package com.memozy.memozy_back.global.redis;
 
-import com.memozy.memozy_back.global.exception.BusinessException;
+import com.memozy.memozy_back.global.exception.GlobalException;
 import com.memozy.memozy_back.global.exception.ErrorCode;
 import java.time.Duration;
 import java.util.UUID;
@@ -24,12 +24,12 @@ public class SessionManager {
     public void validateSessionOwner(Long userId, String sessionId) {
         Number storedValue = redisTemplate.opsForValue().get(SESSION_PREFIX + sessionId);
         if (storedValue == null) {
-            throw new BusinessException(ErrorCode.NOT_FOUND_TEMP_MEMORY);
+            throw new GlobalException(ErrorCode.NOT_FOUND_TEMP_MEMORY);
         }
         Long ownerId = storedValue.longValue();
 
         if (!ownerId.equals(userId)) {
-            throw new BusinessException(ErrorCode.UNAUTHORIZED_EXCEPTION);
+            throw new GlobalException(ErrorCode.UNAUTHORIZED_EXCEPTION);
         }
     }
 

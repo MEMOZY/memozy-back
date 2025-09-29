@@ -1,7 +1,7 @@
 package com.memozy.memozy_back.global.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.memozy.memozy_back.global.exception.BusinessException;
+import com.memozy.memozy_back.global.exception.GlobalException;
 import com.memozy.memozy_back.global.exception.ErrorCode;
 import com.memozy.memozy_back.global.exception.ErrorResponse;
 import jakarta.servlet.FilterChain;
@@ -29,7 +29,7 @@ public class JwtExceptionFilter extends OncePerRequestFilter {
             FilterChain filterChain) throws ServletException, IOException {
         try {
             filterChain.doFilter(request, response);
-        } catch (BusinessException e) {
+        } catch (GlobalException e) {
             log.error("error : {}", e.getMessage(), e);
             e.printStackTrace();
             responseError(

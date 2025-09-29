@@ -5,7 +5,7 @@ import com.memozy.memozy_back.domain.memory.domain.Memory;
 import com.memozy.memozy_back.domain.memory.dto.TempMemoryDto;
 import com.memozy.memozy_back.domain.user.domain.User;
 import com.memozy.memozy_back.domain.user.repository.UserRepository;
-import com.memozy.memozy_back.global.exception.BusinessException;
+import com.memozy.memozy_back.global.exception.GlobalException;
 import com.memozy.memozy_back.global.exception.ErrorCode;
 import java.time.Duration;
 import lombok.RequiredArgsConstructor;
@@ -33,10 +33,10 @@ public class TemporaryMemoryStoreImpl implements TemporaryMemoryStore {
     @Override
     public Memory load(String sessionId) {
         TempMemoryDto dto = memoryRedisTemplate.opsForValue().get(PREFIX + sessionId);
-        if (dto == null) throw new BusinessException(ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION);
+        if (dto == null) throw new GlobalException(ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION);
 
         User owner = userRepository.findById(dto.ownerId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_USER_EXCEPTION));
+                .orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND_USER_EXCEPTION));
 
         return dto.toDomain(owner, fileService);
     }

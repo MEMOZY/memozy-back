@@ -9,22 +9,18 @@ import com.memozy.memozy_back.domain.memory.domain.MemoryItem;
 import com.memozy.memozy_back.domain.memory.dto.TempMemoryDto;
 import com.memozy.memozy_back.domain.memory.dto.TempMemoryItemDto;
 import com.memozy.memozy_back.domain.memory.repository.MemoryRepository;
-import com.memozy.memozy_back.domain.user.domain.User;
 import com.memozy.memozy_back.global.redis.TemporaryMemoryStore;
-import com.memozy.memozy_back.global.exception.BusinessException;
+import com.memozy.memozy_back.global.exception.GlobalException;
 import com.memozy.memozy_back.global.exception.ErrorCode;
 import com.memozy.memozy_back.global.redis.TemporaryChatStore;
 import java.io.IOException;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.data.domain.PageRequest;
 
@@ -189,7 +185,7 @@ public class GptChatService {
 
     private Memory loadMemory(String sessionId) {
         Memory memory = temporaryMemoryStore.load(sessionId);
-        if (memory == null) throw new BusinessException(ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION);
+        if (memory == null) throw new GlobalException(ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION);
         return memory;
     }
 
@@ -197,14 +193,14 @@ public class GptChatService {
         return memory.getMemoryItems().stream()
                 .sorted(Comparator.comparingInt(MemoryItem::getSequence))
                 .findFirst()
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION));
+                .orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION));
     }
 
     private MemoryItem getMemoryItemById(Memory memory, String tempId) {
         return memory.getMemoryItems().stream()
                 .filter(item -> item.getTempId().equals(tempId))
                 .findFirst()
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION));
+                .orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION));
     }
 
     private String getPresignedUrl(String fileKey) {
@@ -260,7 +256,7 @@ public class GptChatService {
         return tempMemory.getMemoryItems().stream()
                 .filter(item -> item.getTempId().equals(tempId))
                 .findFirst()
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION));
+                .orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION));
     }
 
 

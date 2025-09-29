@@ -4,7 +4,7 @@ import static com.memozy.memozy_back.domain.user.domain.Password.PASSWORD_REGXP;
 import static io.micrometer.common.util.StringUtils.isBlank;
 import static io.micrometer.common.util.StringUtils.isNotBlank;
 
-import com.memozy.memozy_back.global.exception.BusinessException;
+import com.memozy.memozy_back.global.exception.GlobalException;
 import com.memozy.memozy_back.global.exception.ErrorCode;
 import java.util.Collection;
 import java.util.HashSet;
@@ -29,7 +29,7 @@ public final class ValidationUtils {
 
     public static void validateLoginId(Long loginId) {
         if (Objects.isNull(loginId)) {
-            throw new BusinessException(ErrorCode.UNAUTHORIZED_EXCEPTION);
+            throw new GlobalException(ErrorCode.UNAUTHORIZED_EXCEPTION);
         }
     }
 

@@ -3,15 +3,15 @@ package com.memozy.memozy_back.global.exception;
 import lombok.Getter;
 
 @Getter
-public class BusinessException extends RuntimeException {
+public class GlobalException extends RuntimeException {
 
     private final ErrorCode errorCode;
 
-    public BusinessException(ErrorCode errorCode) {
+    public GlobalException(ErrorCode errorCode) {
         this.errorCode = errorCode;
     }
 
-    public BusinessException(Throwable cause, ErrorCode errorCode) {
+    public GlobalException(Throwable cause, ErrorCode errorCode) {
         super(errorCode.getMessage(), cause);
         this.errorCode = errorCode;
     }
