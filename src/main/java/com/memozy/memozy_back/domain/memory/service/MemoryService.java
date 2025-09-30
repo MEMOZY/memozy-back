@@ -15,7 +15,9 @@ import com.memozy.memozy_back.global.dto.PagedResponse;
 
 public interface MemoryService {
     CreateMemoryResponse createMemory(Long userId, CreateMemoryRequest request);
-    GetMemoryListResponse getAllByUserId(Long userId);
+
+    PagedResponse<MemoryInfoDto> getAllByUserId(Long userId, int page, int size);
+
     MemoryDto updateMemory(Long userId, Long memoryId, UpdateMemoryRequest request);
     void deleteMemory(Long userId, Long memoryId);
 
