@@ -7,6 +7,7 @@ import java.util.Map;
 public record MemorySharedEvent(
         Long memoryId,
         Long actorUserId,
+        String actorUserNickName,
         List<Long> recipientIds
 ) {
 }

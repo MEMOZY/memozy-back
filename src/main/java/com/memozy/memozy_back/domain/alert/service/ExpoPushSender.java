@@ -35,8 +35,8 @@ public class ExpoPushSender {
                 deviceTokenRepository.findValidExpoTokensByUserIds(memorySharedEvent.recipientIds());
         if (tokens.isEmpty()) return;
 
-        String title = PushAlertMsg.SHARED_MEMORY_TITLE.getMsg();
-        String body = PushAlertMsg.SHARED_MEMORY_BODY.getMsg();
+        String title = PushAlertMsg.SHARED_MEMORY_TITLE.msg();
+        String body = PushAlertMsg.SHARED_MEMORY_BODY.format(memorySharedEvent.actorUserNickName());
         Map<String, Object> data = Map.of(
                 "type", "MEMORY_SHARED",
                 "memoryId", memorySharedEvent.memoryId(),
