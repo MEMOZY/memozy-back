@@ -10,6 +10,14 @@ public enum PushAlertMsg {
     SHARED_MEMORY_TITLE("새로운 메모지가 공유되었어요!"),
     SHARED_MEMORY_BODY("%s님이 메모지를 공유했어요. 확인해보세요!");
 
-    private final String msg;
+    private final String msgTemplate;
+
+    public String msg() {
+        return msgTemplate;
+    }
+
+    public String format(Object... args) {
+        return String.format(msgTemplate, args);
+    }
 
 }

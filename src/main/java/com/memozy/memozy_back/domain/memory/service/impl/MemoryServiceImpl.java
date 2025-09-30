@@ -336,10 +336,9 @@ public class MemoryServiceImpl implements MemoryService {
         List<Long> ids = idPage.getContent();
         if (ids.isEmpty()) return new PagedResponse<>(List.of(), page, size, 0, 0, true);
 
-        // 본체 + 첫 아이템 일괄 조회
         List<MemoryInfoDto> dtos = convertToMemoryInfoDtoInOrder(userId, ids);
         return new PagedResponse<>(dtos, page, size,
-                (int) idPage.getTotalElements(), idPage.getTotalPages(), idPage.hasNext());
+                (int) idPage.getTotalElements(), idPage.getTotalPages(), idPage.isLast());
     }
 
     @Override
@@ -351,7 +350,6 @@ public class MemoryServiceImpl implements MemoryService {
 
         List<MemoryInfoDto> memoryInfoDtos = convertToMemoryInfoDtoInOrder(userId, ids);
 
-        // 스키마 재사용을 위해 page/size/total 형식 맞춰 반환
         return new PagedResponse<>(
                 memoryInfoDtos,
                 0,
@@ -506,7 +504,13 @@ public class MemoryServiceImpl implements MemoryService {
         if (recipientIds == null || recipientIds.isEmpty()) {
             return;
         }
-        MemorySharedEvent event = new MemorySharedEvent(memoryId, actorUserId, recipientIds);
+        User actor = userRepository.findById(actorUserId)
+                .orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND_USER_EXCEPTION));
+        String nickname = actor.getNickname();
+        if (nickname.isBlank()) {
+            nickname = "익명의 사용자";
+        }
+        MemorySharedEvent event = new MemorySharedEvent(memoryId, actorUserId, nickname, recipientIds);
         applicationEventPublisher.publishEvent(event);
     }
 }
