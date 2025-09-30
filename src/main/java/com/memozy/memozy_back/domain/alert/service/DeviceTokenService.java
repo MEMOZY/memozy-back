@@ -9,14 +9,17 @@ import com.memozy.memozy_back.global.exception.GlobalException;
 import com.memozy.memozy_back.global.util.EntityLoader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class DeviceTokenService {
 
     private final DeviceTokenRepository deviceTokenRepository;
     private final EntityLoader entityLoader;
 
+    @Transactional
     public void registerDeviceToken(final Long userId, CreateDeviceTokenRequest request) {
         User user = entityLoader.getUser(userId);
 
