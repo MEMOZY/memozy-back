@@ -18,6 +18,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.query.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -66,9 +67,11 @@ public class MemoryController {
 
     // 내 기록 및 친구가 공유한 기록 전체 조회
     @GetMapping
-    public ResponseEntity<GetMemoryListResponse> getAllMemories(
-            @CurrentUserId Long userId) {
-        return ResponseEntity.ok(memoryService.getAllByUserId(userId));
+    public ResponseEntity<PagedResponse<MemoryInfoDto>> getAllMemories(
+            @CurrentUserId Long userId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(memoryService.getAllByUserId(userId, page, size));
     }
 
     // 기록 상세 조회

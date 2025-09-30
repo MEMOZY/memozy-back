@@ -36,6 +36,7 @@ import com.memozy.memozy_back.global.exception.GlobalException;
 import com.memozy.memozy_back.global.exception.ErrorCode;
 import com.memozy.memozy_back.domain.file.service.FileService;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -329,46 +330,55 @@ public class MemoryServiceImpl implements MemoryService {
 
     @Override
     @Transactional(readOnly = true)
-    public GetMemoryListResponse getAllByUserId(Long userId) {
-        List<Memory> ownMemories = memoryRepository.findAllByOwnerIdWithItems(userId);
-        List<MemoryAccess> accesses = memoryAccessRepository.findAllByUserIdWithMemoryAndItems(userId);
+    public PagedResponse<MemoryInfoDto> getAllByUserId(Long userId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
 
-        List<Memory> sharedMemories = accesses.stream()
-                .map(MemoryAccess::getMemory)
-                .toList();
+        // 1) 접근 가능한 Memory ID를 정렬+페이징 (QueryDSL)
+        Page<Long> idPage = memoryRepository.findAccessibleMemoryIds(userId, pageable);
+        List<Long> ids = idPage.getContent();
+        if (ids.isEmpty()) {
+            return new PagedResponse<>(List.of(), page, size, 0, 0, true);
+        }
 
-        Stream<Memory> allMyMemories = Stream.concat(ownMemories.stream(), sharedMemories.stream());
+        List<Memory> memories = memoryRepository.findAllById(ids);
 
-        List<MemoryInfoDto> dtoList = allMyMemories
-                .map(memory -> {
-                    String thumbnailUrl = memory.getMemoryItems().stream()
-                            .findFirst()
-                            .map(item -> fileService.generatePresignedUrlToRead(item.getFileKey()).preSignedUrl())
-                            .orElse(null);
+        Map<Long, Integer> orderIndex = new HashMap<>();
+        for (int i = 0; i < ids.size(); i++) orderIndex.put(ids.get(i), i);
+        memories.sort(Comparator.comparingInt(m -> orderIndex.getOrDefault(m.getId(), Integer.MAX_VALUE)));
 
-                    String content = memory.getMemoryItems().stream()
-                            .findFirst()
-                            .map(MemoryItem::getContent)
-                            .orElse(null);
+        Map<Long, MemoryItem> firstItemMap = memoryItemRepository.findFirstItemsByMemoryIds(ids);
 
-                    PermissionLevel permissionLevel = findPermissionLevel(memory, userId);
-                    boolean canEdit = canEditContent(userId, memory, permissionLevel);
+        List<MemoryInfoDto> content = memories.stream().map(m -> {
+            MemoryItem first = firstItemMap.get(m.getId());
 
-                    return new MemoryInfoDto(
-                            memory.getId(),
-                            memory.getOwner().getId(),
-                            memory.getTitle(),
-                            content,
-                            memory.getStartDate(),
-                            memory.getEndDate(),
-                            thumbnailUrl,
-                            permissionLevel,
-                            canEdit
-                    );
-                })
-                .toList();
+            String thumb = (first == null) ? null :
+                    fileService.generatePresignedUrlToRead(first.getFileKey()).preSignedUrl();
+            String firstContent = (first == null) ? null : first.getContent();
 
-        return GetMemoryListResponse.from(dtoList);
+            PermissionLevel level = findPermissionLevel(m, userId);
+            boolean canEdit = canEditContent(userId, m, level);
+
+            return new MemoryInfoDto(
+                    m.getId(),
+                    m.getOwner().getId(),
+                    m.getTitle(),
+                    firstContent,
+                    m.getStartDate(),
+                    m.getEndDate(),
+                    thumb,
+                    level,
+                    canEdit
+            );
+        }).toList();
+
+        return new PagedResponse<>(
+                content,
+                page,
+                size,
+                (int) idPage.getTotalElements(),
+                idPage.getTotalPages(),
+                idPage.hasNext()
+        );
     }
 
 
