@@ -5,11 +5,11 @@ import com.memozy.memozy_back.domain.memory.domain.MemoryAccess;
 
 public record MemoryAccessDto(
         Long userId,
-        String username,
+        String nickname,
         PermissionLevel permissionLevel
 ) {
     public static MemoryAccessDto of(MemoryAccess memoryAccess) {
 
-        return new MemoryAccessDto(memoryAccess.getUser().getId(), memoryAccess.getUser().getUsername(), memoryAccess.getPermissionLevel());
+        return new MemoryAccessDto(memoryAccess.getUser().getId(), memoryAccess.getUser().getNickname(), memoryAccess.getPermissionLevel());
     }
 }

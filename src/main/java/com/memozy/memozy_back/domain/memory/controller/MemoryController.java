@@ -1,6 +1,8 @@
 package com.memozy.memozy_back.domain.memory.controller;
 
+import com.memozy.memozy_back.domain.memory.constant.MemoryCategory;
 import com.memozy.memozy_back.domain.memory.constant.SearchType;
+import com.memozy.memozy_back.domain.memory.dto.CalendarFilter;
 import com.memozy.memozy_back.domain.memory.dto.request.CreateTempMemoryRequest;
 import com.memozy.memozy_back.domain.memory.dto.response.CreateMemoryResponse;
 import com.memozy.memozy_back.domain.memory.dto.response.CreateTempMemoryResponse;
@@ -8,7 +10,6 @@ import com.memozy.memozy_back.domain.memory.dto.MemoryDto;
 import com.memozy.memozy_back.domain.memory.dto.request.CreateMemoryRequest;
 import com.memozy.memozy_back.domain.memory.dto.request.UpdateMemoryRequest;
 import com.memozy.memozy_back.domain.memory.dto.response.GetMemoryDetailsResponse;
-import com.memozy.memozy_back.domain.memory.dto.response.GetMemoryListResponse;
 import com.memozy.memozy_back.domain.memory.dto.response.GetTempMemoryResponse;
 import com.memozy.memozy_back.domain.memory.service.MemoryService;
 import com.memozy.memozy_back.domain.memory.dto.MemoryInfoDto;
@@ -17,8 +18,9 @@ import com.memozy.memozy_back.global.dto.PagedResponse;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.time.LocalDate;
+import java.time.YearMonth;
 import lombok.RequiredArgsConstructor;
-import org.hibernate.query.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,7 +35,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "기록 API", description = "기록 관리")
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/memory")
+@RequestMapping("/memories")
 public class MemoryController {
 
     private final MemoryService memoryService;
@@ -65,14 +67,43 @@ public class MemoryController {
     }
 
 
-    // 내 기록 및 친구가 공유한 기록 전체 조회
+    // 내 기록 및 친구가 공유한 기록 조회
     @GetMapping
-    public ResponseEntity<PagedResponse<MemoryInfoDto>> getAllMemories(
+    public ResponseEntity<PagedResponse<MemoryInfoDto>> getMemories(
             @CurrentUserId Long userId,
+            @Parameter(description = "조회할 연월", example = "2025-09")
+            @RequestParam(required = false) String yearMonth,
+
+            @Parameter(description = "카테고리", example = "TRAVEL (Null이면 전체 조회)")
+            @RequestParam(required = false) MemoryCategory category,
+
+            @Parameter(description = "페이지 번호(필터링 시 페이지 번호에 상관없이 전체 조회)", example = "0")
             @RequestParam(defaultValue = "0") int page,
+
+            @Parameter(description = "페이지 크기(필터링 시 페이지 크기에 상관없이 전체 조회)", example = "10")
             @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok(memoryService.getAllByUserId(userId, page, size));
+
+        LocalDate from = null, to = null;
+        if (yearMonth != null && !yearMonth.isBlank()) {
+            YearMonth ym = YearMonth.parse(yearMonth);
+            from = ym.atDay(1);
+            to   = ym.atEndOfMonth();
+        }
+
+        CalendarFilter filter = CalendarFilter.builder()
+                .from(from)
+                .to(to)
+                .memoryCategory(category)
+                .build();
+
+        boolean isFilter = from != null || category != null;
+
+        if (isFilter) {
+            return ResponseEntity.ok(memoryService.getMemoryListByFilter(userId, filter));
+        }
+        return ResponseEntity.ok(memoryService.getMemoryListPaged(userId, page, size, filter)); // filter는 모두 null일 수 있음
     }
+
 
     // 기록 상세 조회
     @GetMapping("/{memoryId}")
