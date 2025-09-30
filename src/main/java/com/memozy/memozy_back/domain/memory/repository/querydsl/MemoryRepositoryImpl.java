@@ -1,11 +1,13 @@
 package com.memozy.memozy_back.domain.memory.repository.querydsl;
 
 
+import com.drew.lang.annotations.Nullable;
 import com.memozy.memozy_back.domain.memory.constant.SearchType;
 import com.memozy.memozy_back.domain.memory.domain.Memory;
 import com.memozy.memozy_back.domain.memory.domain.QMemory;
 import com.memozy.memozy_back.domain.memory.domain.QMemoryAccess;
 import com.memozy.memozy_back.domain.memory.domain.QMemoryItem;
+import com.memozy.memozy_back.domain.memory.dto.CalendarFilter;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.JPAExpressions;
@@ -100,8 +102,7 @@ public class MemoryRepositoryImpl implements MemoryRepositoryCustom {
 
         BooleanExpression accessible =
                 m.owner.id.eq(userId)
-                        .or(JPAExpressions
-                                .selectOne()
+                        .or(JPAExpressions.selectOne()
                                 .from(ma)
                                 .where(ma.user.id.eq(userId)
                                         .and(ma.memory.id.eq(m.id)))
@@ -111,11 +112,9 @@ public class MemoryRepositoryImpl implements MemoryRepositoryCustom {
                 .select(m.id)
                 .from(m)
                 .where(accessible)
-                .orderBy(
-                        m.endDate.desc().nullsLast(),
+                .orderBy(m.endDate.desc().nullsLast(),
                         m.startDate.desc().nullsLast(),
-                        m.id.desc()
-                )
+                        m.id.desc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
@@ -131,26 +130,37 @@ public class MemoryRepositoryImpl implements MemoryRepositoryCustom {
         return new PageImpl<>(ids, pageable, total);
     }
 
+    // 캘린더 화면에서 조회
     @Override
-    public List<Memory> findMemoriesWithItemsByIds(List<Long> ids) {
-        if (ids.isEmpty()) return List.of();
-
+    public List<Long> findAccessibleMemoryIdsAll(Long userId, CalendarFilter f) {
         QMemory m = QMemory.memory;
-        QMemoryItem mi = QMemoryItem.memoryItem;
+        QMemoryAccess ma = QMemoryAccess.memoryAccess;
+
+        BooleanExpression accessible =
+                m.owner.id.eq(userId)
+                        .or(JPAExpressions.selectOne()
+                                .from(ma)
+                                .where(ma.user.id.eq(userId)
+                                        .and(ma.memory.id.eq(m.id)))
+                                .exists());
+
+        BooleanExpression month = (f.from() != null && f.to() != null)
+                ? m.endDate.goe(f.from()).and(m.startDate.loe(f.to()))
+                : null;
+
+        BooleanExpression category = (f.memoryCategory() != null)
+                ? m.category.eq(f.memoryCategory())
+                : null;
 
         return queryFactory
-                .selectFrom(m).distinct()
-                .leftJoin(m.memoryItems, mi).fetchJoin()
-                .where(m.id.in(ids))
-                .orderBy(
-                        m.endDate.desc().nullsLast(),
+                .select(m.id)
+                .from(m)
+                .where(accessible, month, category)
+                .orderBy(m.endDate.desc().nullsLast(),
                         m.startDate.desc().nullsLast(),
-                        m.id.desc(),
-                        mi.id.asc()
-                )
+                        m.id.desc())
                 .fetch();
     }
-
 
     private String escapeLike(String s) {
         if (s == null) return "";

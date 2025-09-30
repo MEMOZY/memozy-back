@@ -7,6 +7,7 @@ import com.memozy.memozy_back.domain.memory.constant.SearchType;
 import com.memozy.memozy_back.domain.memory.domain.Memory;
 import com.memozy.memozy_back.domain.memory.domain.MemoryAccess;
 import com.memozy.memozy_back.domain.memory.domain.MemoryItem;
+import com.memozy.memozy_back.domain.memory.dto.CalendarFilter;
 import com.memozy.memozy_back.domain.memory.dto.MemoryAccessDto;
 import com.memozy.memozy_back.domain.memory.dto.MemoryDto;
 import com.memozy.memozy_back.domain.memory.dto.MemoryInfoDto;
@@ -20,7 +21,6 @@ import com.memozy.memozy_back.domain.memory.dto.request.CreateTempMemoryRequest;
 import com.memozy.memozy_back.domain.memory.dto.request.UpdateMemoryRequest;
 import com.memozy.memozy_back.domain.memory.dto.response.CreateMemoryResponse;
 import com.memozy.memozy_back.domain.memory.dto.response.GetMemoryDetailsResponse;
-import com.memozy.memozy_back.domain.memory.dto.response.GetMemoryListResponse;
 import com.memozy.memozy_back.domain.memory.dto.response.GetTempMemoryResponse;
 import com.memozy.memozy_back.domain.memory.repository.MemoryAccessRepository;
 import com.memozy.memozy_back.domain.memory.repository.MemoryItemRepository;
@@ -42,7 +42,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
@@ -330,55 +329,61 @@ public class MemoryServiceImpl implements MemoryService {
 
     @Override
     @Transactional(readOnly = true)
-    public PagedResponse<MemoryInfoDto> getAllByUserId(Long userId, int page, int size) {
+    public PagedResponse<MemoryInfoDto> getMemoryListPaged(Long userId, int page, int size, CalendarFilter filter) {
         Pageable pageable = PageRequest.of(page, size);
 
-        // 1) 접근 가능한 Memory ID를 정렬+페이징 (QueryDSL)
         Page<Long> idPage = memoryRepository.findAccessibleMemoryIds(userId, pageable);
         List<Long> ids = idPage.getContent();
-        if (ids.isEmpty()) {
-            return new PagedResponse<>(List.of(), page, size, 0, 0, true);
-        }
+        if (ids.isEmpty()) return new PagedResponse<>(List.of(), page, size, 0, 0, true);
 
-        List<Memory> memories = memoryRepository.findAllById(ids);
+        // 본체 + 첫 아이템 일괄 조회
+        List<MemoryInfoDto> dtos = convertToMemoryInfoDtoInOrder(userId, ids);
+        return new PagedResponse<>(dtos, page, size,
+                (int) idPage.getTotalElements(), idPage.getTotalPages(), idPage.hasNext());
+    }
 
-        Map<Long, Integer> orderIndex = new HashMap<>();
-        for (int i = 0; i < ids.size(); i++) orderIndex.put(ids.get(i), i);
-        memories.sort(Comparator.comparingInt(m -> orderIndex.getOrDefault(m.getId(), Integer.MAX_VALUE)));
+    @Override
+    @Transactional(readOnly = true)
+    public PagedResponse<MemoryInfoDto> getMemoryListByFilter(Long userId, CalendarFilter filter) {
+        List<Long> ids = memoryRepository.findAccessibleMemoryIdsAll(userId, filter);
+
+        if (ids.isEmpty()) return new PagedResponse<>(List.of(), 0, 0, 0, 1, false);
+
+        List<MemoryInfoDto> memoryInfoDtos = convertToMemoryInfoDtoInOrder(userId, ids);
+
+        // 스키마 재사용을 위해 page/size/total 형식 맞춰 반환
+        return new PagedResponse<>(
+                memoryInfoDtos,
+                0,
+                memoryInfoDtos.size(),
+                memoryInfoDtos.size(),
+                1,
+                false);
+    }
+
+    private List<MemoryInfoDto> convertToMemoryInfoDtoInOrder(Long userId, List<Long> ids) {
+        var memories = memoryRepository.findAllById(ids);
+
+        Map<Long, Integer> order = new HashMap<>();
+        for (int i = 0; i < ids.size(); i++) order.put(ids.get(i), i);
+        memories.sort(Comparator.comparingInt(m -> order.getOrDefault(m.getId(), Integer.MAX_VALUE)));
 
         Map<Long, MemoryItem> firstItemMap = memoryItemRepository.findFirstItemsByMemoryIds(ids);
 
-        List<MemoryInfoDto> content = memories.stream().map(m -> {
+        return memories.stream().map(m -> {
             MemoryItem first = firstItemMap.get(m.getId());
-
-            String thumb = (first == null) ? null :
-                    fileService.generatePresignedUrlToRead(first.getFileKey()).preSignedUrl();
+            String thumb = (first == null) ? null : fileService.generatePresignedUrlToRead(first.getFileKey()).preSignedUrl();
             String firstContent = (first == null) ? null : first.getContent();
 
             PermissionLevel level = findPermissionLevel(m, userId);
             boolean canEdit = canEditContent(userId, m, level);
 
             return new MemoryInfoDto(
-                    m.getId(),
-                    m.getOwner().getId(),
-                    m.getTitle(),
-                    firstContent,
-                    m.getStartDate(),
-                    m.getEndDate(),
-                    thumb,
-                    level,
-                    canEdit
+                    m.getId(), m.getOwner().getId(), m.getTitle(),
+                    firstContent, m.getStartDate(), m.getEndDate(),
+                    thumb, level, canEdit
             );
         }).toList();
-
-        return new PagedResponse<>(
-                content,
-                page,
-                size,
-                (int) idPage.getTotalElements(),
-                idPage.getTotalPages(),
-                idPage.hasNext()
-        );
     }
 
 
