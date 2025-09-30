@@ -346,7 +346,7 @@ public class MemoryServiceImpl implements MemoryService {
     public PagedResponse<MemoryInfoDto> getMemoryListByFilter(Long userId, CalendarFilter filter) {
         List<Long> ids = memoryRepository.findAccessibleMemoryIdsAll(userId, filter);
 
-        if (ids.isEmpty()) return new PagedResponse<>(List.of(), 0, 0, 0, 1, false);
+        if (ids.isEmpty()) return new PagedResponse<>(List.of(), 0, 0, 0, 1, true);
 
         List<MemoryInfoDto> memoryInfoDtos = convertToMemoryInfoDtoInOrder(userId, ids);
 
@@ -356,7 +356,7 @@ public class MemoryServiceImpl implements MemoryService {
                 memoryInfoDtos.size(),
                 memoryInfoDtos.size(),
                 1,
-                false);
+                true);
     }
 
     private List<MemoryInfoDto> convertToMemoryInfoDtoInOrder(Long userId, List<Long> ids) {
