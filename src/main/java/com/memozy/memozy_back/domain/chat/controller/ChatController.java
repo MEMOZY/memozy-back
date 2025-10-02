@@ -1,8 +1,8 @@
-package com.memozy.memozy_back.domain.gpt.controller;
+package com.memozy.memozy_back.domain.chat.controller;
 
-import com.memozy.memozy_back.domain.gpt.dto.request.UserAnswerRequest;
-import com.memozy.memozy_back.domain.gpt.dto.response.GetTempMemoryItems;
-import com.memozy.memozy_back.domain.gpt.service.GptChatService;
+import com.memozy.memozy_back.domain.chat.dto.request.UserAnswerRequest;
+import com.memozy.memozy_back.domain.chat.dto.response.GetTempMemoryItems;
+import com.memozy.memozy_back.domain.chat.service.ChatService;
 import com.memozy.memozy_back.global.annotation.CurrentUserId;
 import com.memozy.memozy_back.global.redis.SessionManager;
 import io.swagger.v3.oas.annotations.Operation;
@@ -19,13 +19,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-@Tag(name = "GPT API", description = "일기 생성 과정")
+@Tag(name = "Chat API", description = "일기 생성 과정")
 @RestController
 @RequestMapping("/gpt/chats")
 @RequiredArgsConstructor
-public class GptController {
+public class ChatController {
 
-    private final GptChatService gptChatService;
+    private final ChatService chatService;
     private final SessionManager sessionManager;
 
     @Operation(summary = "대화 시작 (이미지 기반 초기 질문 생성)", description = "sessionId를 받아 초기 프롬프트 질문을 스트리밍으로 반환")
@@ -37,7 +37,7 @@ public class GptController {
         SseEmitter emitter = new SseEmitter(0L);  // 2분 타임아웃
         emitter.onTimeout(emitter::complete);
         emitter.onError(e -> emitter.completeWithError(e));
-        gptChatService.generateInitialPrompts(sessionId, emitter);
+        chatService.generateInitialPrompts(sessionId, emitter);
         return emitter;
     }
 
@@ -51,7 +51,7 @@ public class GptController {
         SseEmitter emitter = new SseEmitter(0L);
         emitter.onTimeout(emitter::complete);
         emitter.onError(e -> emitter.completeWithError(e));
-        gptChatService.handleUserAnswer(sessionId, request, emitter, userId);
+        chatService.handleUserAnswer(sessionId, request, emitter, userId);
         return emitter;
     }
 
@@ -63,7 +63,7 @@ public class GptController {
         sessionManager.validateSessionOwner(userId, sessionId);
         return ResponseEntity.ok(
                 GetTempMemoryItems.from(
-                        gptChatService.generateFinalDiaries(sessionId)
+                        chatService.generateFinalDiaries(sessionId)
                 )
         );
     }

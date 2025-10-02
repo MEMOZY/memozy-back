@@ -44,8 +44,8 @@ public class S3FileServiceImpl implements FileService {
     @Value("${aws.region}")
     private String region;
 
-    private final static String FILE_PREFIX = "file";
-    private final static String TEMPORARY_FILE_PREFIX = "temp";
+    private final static String PERMANENT_DIR_PREFIX = "file";
+    private final static String TEMPORARY_DIR_PREFIX = "temp";
 
     private static final List<String> SUPPORTED_IMAGE_EXTENSIONS
             = List.of("jpg", "jpeg", "png", "gif", "webp");
@@ -122,6 +122,29 @@ public class S3FileServiceImpl implements FileService {
         String ext = getFileExtension(fileKey).toLowerCase();
         if (!ext.equals("heic")) return fileKey;
         return convertHeicToJpegIfNeeded(fileKey); // 내부에 변환 + 업로드 + 삭제 포함
+    }
+
+    @Override
+    public String saveImageToS3(String externalImageUrl) {
+        if (externalImageUrl.isBlank()) {
+            throw new GlobalException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+
+        String ext = extractExtFromUrlOrDefault(externalImageUrl, ".jpg");
+        String fileKey = createFileKey("profile" + ext, "user/profile", false);
+
+        byte[] bytes = downloadExternalImage(externalImageUrl);
+
+        s3Client.putObject(
+                PutObjectRequest.builder()
+                        .bucket(bucket)
+                        .key(fileKey)
+                        .contentType(guessContentTypeFromExt(ext))
+                        .build(),
+                RequestBody.fromBytes(bytes)
+        );
+
+        return fileKey;
     }
 
 
@@ -245,10 +268,43 @@ public class S3FileServiceImpl implements FileService {
     }
 
     private static String createFileKey(String fileName, String directory, boolean isTemporary) {
-        return (isTemporary ? TEMPORARY_FILE_PREFIX : FILE_PREFIX) + "/"
+        return (isTemporary ? TEMPORARY_DIR_PREFIX : PERMANENT_DIR_PREFIX) + "/"
                 + directory + "/"
                 + UUID.randomUUID()
                 + fileName;
+    }
+
+    private String extractExtFromUrlOrDefault(String url, String defaultExt) {
+        try {
+            String lower = url.toLowerCase();
+            if (lower.contains(".png")) return ".png";
+            if (lower.contains(".webp")) return ".webp";
+            if (lower.contains(".gif")) return ".gif";
+            if (lower.contains(".jpeg")) return ".jpeg";
+            if (lower.contains(".jpg")) return ".jpg";
+            return defaultExt;
+        } catch (Exception e) {
+            return defaultExt;
+        }
+    }
+
+    private String guessContentTypeFromExt(String ext) {
+        return switch (ext) {
+            case ".png" -> "image/png";
+            case ".webp" -> "image/webp";
+            case ".gif" -> "image/gif";
+            case ".jpeg", ".jpg" -> "image/jpeg";
+            default -> "application/octet-stream";
+        };
+    }
+
+    private byte[] downloadExternalImage(String url) {
+        try (InputStream in = URI.create(url).toURL().openStream()) {
+            return in.readAllBytes();
+        } catch (Exception e) {
+            log.error("외부 이미지 다운로드 실패: {}", url, e);
+            return new byte[0];
+        }
     }
 
 }

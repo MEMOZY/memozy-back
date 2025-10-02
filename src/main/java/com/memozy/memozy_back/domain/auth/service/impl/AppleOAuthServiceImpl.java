@@ -1,6 +1,7 @@
 package com.memozy.memozy_back.domain.auth.service.impl;
 
 import com.memozy.memozy_back.domain.auth.service.provider.ApplePublicKeyProvider;
+import com.memozy.memozy_back.domain.file.service.FileService;
 import com.memozy.memozy_back.domain.user.constant.SocialPlatform;
 import com.memozy.memozy_back.domain.user.domain.SocialUserInfo;
 import com.memozy.memozy_back.domain.user.domain.User;
@@ -16,8 +17,9 @@ public class AppleOAuthServiceImpl extends AbstractOAuthServiceImpl {
 
     private final ApplePublicKeyProvider applePublicKeyProvider; // Apple 공개키 관리용
 
-    public AppleOAuthServiceImpl(SocialUserInfoRepository socialUserInfoRepository, UserRepository userRepository) {
-        super(socialUserInfoRepository, userRepository);
+    public AppleOAuthServiceImpl(SocialUserInfoRepository socialUserInfoRepository, UserRepository userRepository,
+            FileService fileService) {
+        super(socialUserInfoRepository, userRepository, fileService);
         this.applePublicKeyProvider = new ApplePublicKeyProvider();
     }
 

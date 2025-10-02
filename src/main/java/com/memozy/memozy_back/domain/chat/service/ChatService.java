@@ -1,9 +1,9 @@
-package com.memozy.memozy_back.domain.gpt.service;
+package com.memozy.memozy_back.domain.chat.service;
 
 import com.memozy.memozy_back.domain.file.service.FileService;
-import com.memozy.memozy_back.domain.gpt.constant.PromptText;
-import com.memozy.memozy_back.domain.gpt.dto.EmitterPayloadDto;
-import com.memozy.memozy_back.domain.gpt.dto.request.UserAnswerRequest;
+import com.memozy.memozy_back.domain.chat.constant.PromptText;
+import com.memozy.memozy_back.domain.chat.dto.EmitterPayloadDto;
+import com.memozy.memozy_back.domain.chat.dto.request.UserAnswerRequest;
 import com.memozy.memozy_back.domain.memory.domain.Memory;
 import com.memozy.memozy_back.domain.memory.domain.MemoryItem;
 import com.memozy.memozy_back.domain.memory.dto.TempMemoryDto;
@@ -30,7 +30,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class GptChatService {
+public class ChatService {
 
     private final TemporaryMemoryStore temporaryMemoryStore;
     private final FileService fileService;

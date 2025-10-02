@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class ProfileService {
+public class UserProfileService {
 
     private final FileService fileService;
 
@@ -22,13 +22,11 @@ public class ProfileService {
             return defaultImageUrl;
         }
 
-        if (isExternalUrl(profileImageUrl)) {
-            // 외부 소셜 URL은 그대로 사용
-            return profileImageUrl;
-        }
-
         try {
-            String fileKey = fileService.extractFileKeyFromImageUrl(profileImageUrl);
+            String fileKey = profileImageUrl;  // 파일키 값이 올 수도 있음
+            if (profileImageUrl.startsWith("http")) {
+                fileKey = fileService.extractFileKeyFromImageUrl(profileImageUrl);
+            }
 
             if (fileService.isUploaded(fileKey)) {
                 return fileService.generatePresignedUrlToRead(fileKey).preSignedUrl();
@@ -45,8 +43,4 @@ public class ProfileService {
         }
     }
 
-    private boolean isExternalUrl(String url) {
-        return url.startsWith("http://k.kakaocdn.net/") ||
-                url.startsWith("https://lh3.googleusercontent.com/");
-    }
 }

@@ -1,5 +1,6 @@
 package com.memozy.memozy_back.domain.auth.service.impl;
 
+import com.memozy.memozy_back.domain.file.service.FileService;
 import com.memozy.memozy_back.domain.user.constant.SocialPlatform;
 import com.memozy.memozy_back.domain.user.domain.SocialUserInfo;
 import com.memozy.memozy_back.domain.user.domain.User;
@@ -22,8 +23,9 @@ public class GoogleOAuthServiceImpl extends AbstractOAuthServiceImpl {
     public GoogleOAuthServiceImpl(JwtProperty jwtProperty,
             GoogleServerClient googleServerClient,
             SocialUserInfoRepository socialUserInfoRepository,
-            UserRepository userRepository) {
-        super(socialUserInfoRepository, userRepository);
+            UserRepository userRepository,
+            FileService fileService) {
+        super(socialUserInfoRepository, userRepository, fileService);
         this.jwtProperty = jwtProperty;
         this.googleServerClient = googleServerClient;
     }

@@ -1,7 +1,5 @@
 package com.memozy.memozy_back.global.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.memozy.memozy_back.domain.gpt.dto.ChatMessage;
 import com.memozy.memozy_back.domain.memory.dto.TempMemoryDto;
 import java.util.List;
 import java.util.Map;

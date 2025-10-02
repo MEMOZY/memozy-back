@@ -1,6 +1,6 @@
-package com.memozy.memozy_back.domain.gpt.service;
+package com.memozy.memozy_back.domain.chat.service;
 
-import com.memozy.memozy_back.domain.gpt.dto.EmitterPayloadDto;
+import com.memozy.memozy_back.domain.chat.dto.EmitterPayloadDto;
 import com.memozy.memozy_back.global.exception.GlobalException;
 import com.memozy.memozy_back.global.exception.ErrorCode;
 import com.memozy.memozy_back.global.redis.TemporaryChatStore;

@@ -1,4 +1,4 @@
-package com.memozy.memozy_back.domain.gpt.dto;
+package com.memozy.memozy_back.domain.chat.dto;
 
 public record ChatMessage(String role, String content) {
     public static ChatMessage user(String content) {
