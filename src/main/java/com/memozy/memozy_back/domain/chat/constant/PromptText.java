@@ -1,4 +1,4 @@
-package com.memozy.memozy_back.domain.gpt.constant;
+package com.memozy.memozy_back.domain.chat.constant;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

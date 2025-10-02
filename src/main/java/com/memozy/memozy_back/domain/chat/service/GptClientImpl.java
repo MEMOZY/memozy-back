@@ -1,9 +1,9 @@
-package com.memozy.memozy_back.domain.gpt.service;
+package com.memozy.memozy_back.domain.chat.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.memozy.memozy_back.domain.gpt.constant.PromptText;
-import com.memozy.memozy_back.domain.gpt.dto.response.OpenAiChatResponse;
+import com.memozy.memozy_back.domain.chat.constant.PromptText;
+import com.memozy.memozy_back.domain.chat.dto.response.OpenAiChatResponse;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -11,12 +11,12 @@ import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+@Deprecated
 @Component
 @Slf4j
 @RequiredArgsConstructor

@@ -1,6 +1,7 @@
 package com.memozy.memozy_back.domain.auth.service.impl;
 
 import com.memozy.memozy_back.domain.auth.service.OAuthService;
+import com.memozy.memozy_back.domain.file.service.FileService;
 import com.memozy.memozy_back.domain.user.constant.SocialPlatform;
 import com.memozy.memozy_back.domain.user.domain.SocialUserInfo;
 import com.memozy.memozy_back.domain.user.domain.User;
@@ -23,8 +24,8 @@ public class KakaoOAuthServiceImpl extends AbstractOAuthServiceImpl {
     private final KakaoServerClient kakaoServerClient;
 
     public KakaoOAuthServiceImpl(JwtProperty jwtProperty, KakaoServerClient kakaoServerClient,
-            SocialUserInfoRepository socialUserInfoRepository, UserRepository userRepository) {
-        super(socialUserInfoRepository, userRepository);
+            SocialUserInfoRepository socialUserInfoRepository, UserRepository userRepository, FileService fileService) {
+        super(socialUserInfoRepository, userRepository, fileService);
         this.jwtProperty = jwtProperty;
         this.kakaoServerClient = kakaoServerClient;
     }

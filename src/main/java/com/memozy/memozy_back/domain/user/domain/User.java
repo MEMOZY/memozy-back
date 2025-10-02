@@ -80,6 +80,7 @@ public class User extends BaseTimeEntity {
     }
 
     public static String getFinalProfileImageUrl(String profileImageUrl) {
+
         return (profileImageUrl == null || profileImageUrl.isBlank())
                 ? ProfileImage.DEFAULT.getUrl()
                 : profileImageUrl;

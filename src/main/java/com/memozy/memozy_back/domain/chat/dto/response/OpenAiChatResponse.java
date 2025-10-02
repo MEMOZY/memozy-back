@@ -1,4 +1,4 @@
-package com.memozy.memozy_back.domain.gpt.dto.response;
+package com.memozy.memozy_back.domain.chat.dto.response;
 
 import java.util.List;
 

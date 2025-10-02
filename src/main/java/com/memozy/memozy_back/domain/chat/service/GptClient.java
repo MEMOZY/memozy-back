@@ -1,9 +1,10 @@
-package com.memozy.memozy_back.domain.gpt.service;
+package com.memozy.memozy_back.domain.chat.service;
 
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
+@Deprecated
 public interface GptClient {
 
     String initiateChatWithImage(String base64Image);

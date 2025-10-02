@@ -22,4 +22,6 @@ public interface FileService {
     void validateFileKey(String fileKey);
 
     String convertHeicIfNeeded(String rawFileKey);
+
+    String saveImageToS3(String externalImageUrl);
 }

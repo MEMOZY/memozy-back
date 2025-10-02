@@ -1,6 +1,7 @@
 package com.memozy.memozy_back.domain.auth.service.impl;
 
 import com.memozy.memozy_back.domain.auth.service.OAuthService;
+import com.memozy.memozy_back.domain.file.service.FileService;
 import com.memozy.memozy_back.domain.user.constant.SocialPlatform;
 import com.memozy.memozy_back.domain.user.constant.UserRole;
 import com.memozy.memozy_back.domain.user.domain.SocialUserInfo;
@@ -15,12 +16,15 @@ public abstract class AbstractOAuthServiceImpl implements OAuthService {
 
     protected final SocialUserInfoRepository socialUserInfoRepository;
     protected final UserRepository userRepository;
+    protected final FileService fileService;
 
     protected AbstractOAuthServiceImpl(SocialUserInfoRepository socialUserInfoRepository,
-            UserRepository userRepository) {
+            UserRepository userRepository, FileService fileService) {
         this.socialUserInfoRepository = socialUserInfoRepository;
         this.userRepository = userRepository;
+        this.fileService = fileService;
     }
+
 
     protected User handleSocialLogin(
             SocialPlatform platform,
@@ -47,6 +51,9 @@ public abstract class AbstractOAuthServiceImpl implements OAuthService {
 
         // 3. 유저 없으면 새로 생성
         if (user == null) {
+            if (!profileImageUrl.isBlank()) {
+                profileImageUrl = fileService.saveImageToS3(profileImageUrl);
+            }
             user = userRepository.save(User.create(UserRole.MEMBER, username, email, profileImageUrl));
         }
 

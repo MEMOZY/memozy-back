@@ -1,6 +1,5 @@
 package com.memozy.memozy_back.global.redis;
 
-import com.memozy.memozy_back.domain.gpt.dto.ChatMessage;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
