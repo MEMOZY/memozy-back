@@ -82,12 +82,6 @@
         <td><a href="https://github.com/singsingsing3">이태호</a></td>
         <td><a href="">??</a></td>
     </tr>
-    <tr align="center">
-        <td><B>Backend(팀장)</B></td>
-        <td><B>Frontend</B></td>
-        <td><B>AI</B></td>
-        <td><B>??</B></td>
-    </tr>
 </table>
 
 </br>
