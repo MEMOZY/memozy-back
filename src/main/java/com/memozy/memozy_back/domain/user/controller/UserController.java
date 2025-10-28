@@ -69,13 +69,13 @@ public class UserController {
     }
 
 
-
     @GetMapping("/policy-agreement")
     public ResponseEntity<GetPolicyAgreementResponse> getPolicyAgreement(
             @CurrentUserId Long userId) {
         return ResponseEntity.ok(
                 GetPolicyAgreementResponse.of(userFacade.getPolicyAgreementList(userId)));
     }
+
 
     @PutMapping("/policy-agreement")
     public ResponseEntity<UpdatePolicyAgreementResponse> updatePolicyAgreement(

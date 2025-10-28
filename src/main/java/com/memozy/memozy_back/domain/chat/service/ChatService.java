@@ -270,13 +270,12 @@ public class ChatService {
 
 
     List<String> buildPastDiary(Long ownerId) {
-        var latest = memoryRepository.findLatestWithItemsByOwner(ownerId, PageRequest.of(0,1))
-                .stream().findFirst();
-        if (latest.isEmpty()) return List.of();
+        var latest = memoryRepository.findLatestWithItemsByOwner(ownerId, PageRequest.of(0, 3));
 
-        String oneDiary = concatDiaryText(latest.get());
-        if (oneDiary.isBlank()) return List.of();
-
-        return List.of(oneDiary);
+        return latest.stream()
+                .map(this::concatDiaryText)
+                .filter(s -> s != null && !s.isBlank())
+                .limit(3)
+                .toList();
     }
 }
