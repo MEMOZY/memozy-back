@@ -67,12 +67,20 @@ public class UserFacadeImpl implements UserFacade {
 
     @Override
     public GetUserInfoResponse getUserInfoByFriendCode(String friendCode) {
-        return GetUserInfoResponse.from(userService.getUserByFriendCode(friendCode));
+        User user = userService.getUserByFriendCode(friendCode);
+        return GetUserInfoResponse.from(
+                user,
+                userProfileService.generatePresignedUrlToRead(user.getProfileImageUrl())
+        );
     }
 
     @Override
     public GetUserInfoResponse getUserInfoById(Long userId) {
-        return GetUserInfoResponse.from(userService.getById(userId));
+        User user = userService.getById(userId);
+        return GetUserInfoResponse.from(
+                user,
+                userProfileService.generatePresignedUrlToRead(user.getProfileImageUrl())
+        );
 
     }
 
