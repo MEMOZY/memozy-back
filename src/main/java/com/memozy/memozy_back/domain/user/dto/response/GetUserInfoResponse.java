@@ -7,10 +7,10 @@ public record GetUserInfoResponse(
         String profileImageUrl
 ) {
 
-    public static GetUserInfoResponse from(User user) {
+    public static GetUserInfoResponse from(User user, String presignedUrl) {
         return new GetUserInfoResponse(
                 user.getId(),
-                user.getProfileImageUrl()
+                presignedUrl
         );
     }
 }
