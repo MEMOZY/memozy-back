@@ -55,7 +55,7 @@
 
 ### 2️⃣ 기록 공유
 
-- 기록 속에서 자신과 함께 했던 사람들과 기록을 공유할 수 있고, 공유된 사용자에게 "푸쉬알람"이 전송됩니다.
+- 기록 속에서 자신과 함께 했던 사람들과 기록을 공유할 수 있고, 공유된 사용자에게 "푸쉬 알람"이 전송됩니다.
 
 ### 3️⃣ 기록 편집 권한 부여
 
@@ -91,6 +91,8 @@
 
 ### 🍏 개발 환경
 
+#### [Back-End](https://github.com/MEMOZY/memozy-back)
+
 <img src="https://img.shields.io/badge/Java21-007396?style=flat-square&logo=Java&logoColor=white&style=flat"/></a>
 <img src="https://img.shields.io/badge/Gradle-02303A?style=flat-square&logo=Gradle&logoColor=white"/></a>
 <img src="https://img.shields.io/badge/Spring Boot 3.2.0-6DB33F?style=flat-square&logo=Spring&logoColor=white&style=flat"/></a>
@@ -98,17 +100,22 @@
 <img src="https://img.shields.io/badge/Spring Security-6DB33F?style=flat-square&logo=spring-security&logoColor=white&style=flat"/></a>
 <img src="https://img.shields.io/badge/Junit-25A162?style=flat-&logo=JUnit5&logoColor=white&style=flat"/></a>
 <img src="https://img.shields.io/badge/MySQL 9-4479A1?style=flat-square&logo=MySQL&logoColor=white&style=flat"/></a>
-<img src="https://img.shields.io/badge/Lombok-68BC71?style=flat-square&logo=Lombok&logoColor=white"/></a>
 <img src="https://img.shields.io/badge/Flyway-CC0200?style=flat-square&logo=Flyway&logoColor=white"/></a>
 <img src="https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=Docker&logoColor=white"/></a>
 <img src="https://img.shields.io/badge/Github Actions-2088FF?style=flat-square&logo=GithubActions&logoColor=white&style=flat"/></a>
 <img src="https://img.shields.io/badge/Redis-DC382D?style=flat&logo=Redis&logoColor=white"></a>
 <img src="https://img.shields.io/badge/nginx-%23009639.svg?style=flat&logo=nginx&logoColor=white"></a>
-<img src="https://img.shields.io/badge/Flask-000000?style=flat&logo=Flask&logoColor=white">
+
+#### [Front-End](https://github.com/MEMOZY/MEMOZY-APP)
+
+<img src="https://img.shields.io/badge/React Native-61DAFB?style=flat-square&logo=React&logoColor=black"/></a>
+<img src="https://img.shields.io/badge/Typescript-3178C6?style=flat-square&logo=Typescript&logoColor=white"/></a>
+<img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=flat-square&logo=javascript&logoColor=black"/>
 
 
+<br>
 
-# 생성된 일기 퀄리티 개선
+# 일기 생성 퀄리티 개선
 
 ### [1. GPT Fine-Tuning](#1-gpt-fine-tuning-1)
 
