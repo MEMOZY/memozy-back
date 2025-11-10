@@ -72,15 +72,11 @@
         <td>
             <img src="https://avatars.githubusercontent.com/u/120327265?v=4">
         </td>
-        <td>
-            <img src="">
-        </td>
     </tr>
     <tr align="center">
         <td><a href="https://github.com/uykm">신민규</a></td>
         <td><a href="https://github.com/seokkkkkk">정윤석</a></td>
         <td><a href="https://github.com/singsingsing3">이태호</a></td>
-        <td><a href="">??</a></td>
     </tr>
 </table>
 
@@ -90,7 +86,6 @@
 
 ### 🍏 개발 환경
 
-<img src="https://img.shields.io/badge/IntelliJ IDEA-ff6289?style=flat-square&logo=IntelliJ IDEA&logoColor=black&style=flat"/></a>
 <img src="https://img.shields.io/badge/Java21-007396?style=flat-square&logo=Java&logoColor=white&style=flat"/></a>
 <img src="https://img.shields.io/badge/Gradle-02303A?style=flat-square&logo=Gradle&logoColor=white"/></a>
 <img src="https://img.shields.io/badge/Spring Boot 3.2.0-6DB33F?style=flat-square&logo=Spring&logoColor=white&style=flat"/></a>
