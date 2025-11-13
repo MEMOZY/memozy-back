@@ -6,6 +6,7 @@ import com.memozy.memozy_back.domain.memory.dto.CalendarFilter;
 import com.memozy.memozy_back.domain.memory.dto.request.CreateEditLockResponse;
 import com.memozy.memozy_back.domain.memory.dto.request.CreateTempMemoryRequest;
 import com.memozy.memozy_back.domain.memory.dto.request.DeleteEditLockRequest;
+import com.memozy.memozy_back.domain.memory.dto.request.UpdateEditLockRequest;
 import com.memozy.memozy_back.domain.memory.dto.response.CreateMemoryResponse;
 import com.memozy.memozy_back.domain.memory.dto.response.CreateTempMemoryResponse;
 import com.memozy.memozy_back.domain.memory.dto.MemoryDto;
@@ -18,6 +19,7 @@ import com.memozy.memozy_back.domain.memory.service.MemoryService;
 import com.memozy.memozy_back.domain.memory.dto.MemoryInfoDto;
 import com.memozy.memozy_back.global.annotation.CurrentUserId;
 import com.memozy.memozy_back.global.dto.PagedResponse;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -149,7 +151,9 @@ public class MemoryController {
         return ResponseEntity.noContent().build();
     }
 
+
     // 기록 수정 전 편집 락 획득
+    @Operation(summary = "기록 편집 락 획득", description = "기록 수정 전 편집 락을 획득합니다.")
     @PostMapping("/{memoryId}/lock")
     public ResponseEntity<CreateEditLockResponse> acquireLock(
             @PathVariable Long memoryId,
@@ -157,7 +161,20 @@ public class MemoryController {
         return ResponseEntity.ok(memoryEditLockService.acquire(memoryId, userId));
     }
 
+    // 편집 락 연장(하트비트)
+    @Operation(summary = "기록 편집 락 연장", description = "기록 수정 중 편집 락을 3분 연장합니다.")
+    @PostMapping("/{memoryId}/lock/heartbeat")
+    public ResponseEntity<Void> heartbeat(
+            @CurrentUserId Long userId,
+            @PathVariable Long memoryId,
+            @RequestBody UpdateEditLockRequest request) {
+        memoryEditLockService.heartbeat(memoryId, userId, request.token());
+        return ResponseEntity.noContent().build();
+    }
+
     // 기록 수정 후 편집 락 해제
+    @Operation(summary = "기록 편집 락 해제",
+            description = "기록 수정 후 편집 락을 해제합니다. 편집 완료시 락 해제가 이뤄지긴 하지만, 안전하게 ")
     @DeleteMapping("/{memoryId}/lock")
     public ResponseEntity<Void> releaseLock(
             @PathVariable Long memoryId,

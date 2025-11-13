@@ -1,7 +1,6 @@
 package com.memozy.memozy_back.domain.memory.service;
 
 import com.memozy.memozy_back.domain.memory.dto.request.CreateEditLockResponse;
-import com.memozy.memozy_back.domain.memory.dto.request.DeleteEditLockRequest;
 import com.memozy.memozy_back.global.exception.ErrorCode;
 import com.memozy.memozy_back.global.exception.GlobalException;
 import java.nio.charset.StandardCharsets;
