@@ -127,6 +127,7 @@ public class ChatService {
 
         String presignedUrl = getPresignedUrl(currentItem.getFileKey());
 
+        // TODO: 이 부분 비동기 처리
         List<String> pastDiary = buildPastDiary(ownerId);
         String story = flaskServer.generateDiaryFromChatAndImageUrl(sessionId, messageHistoryByRole, presignedUrl, pastDiary);
         currentItem.updateContent(story);

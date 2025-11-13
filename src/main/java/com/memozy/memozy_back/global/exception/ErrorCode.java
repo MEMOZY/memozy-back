@@ -42,6 +42,11 @@ public enum ErrorCode {
     FORBIDDEN_EXCEPTION(HttpStatus.FORBIDDEN, "resource-1", "리소스에 접근 권한이 없습니다."),
 
     /**
+     * s3. code prefix: s3-
+     */
+    NOT_FOUND_S3_RESOURCE_EXCEPTION(HttpStatus.NOT_FOUND, "s3-1", "S3 에서 해당 리소스를 찾을 수 없습니다."),
+
+    /**
      * file. code prefix: file-
      */
     FILE_UPLOAD_EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, "file-1", "파일 업로드에 실패했습니다."),
@@ -80,6 +85,14 @@ public enum ErrorCode {
     CANNOT_MANAGE_OWNER_ACCESS(HttpStatus.BAD_REQUEST, "memory-3" , "소유자의 권한은 제어할 수 없습니다."),
     NOT_FOUND_PERMISSION(HttpStatus.BAD_REQUEST, "memory-5" , "해당 기록에 대한 접근 권한이 없습니다"),
     INVALID_PERMISSION_LEVEL(HttpStatus.BAD_REQUEST, "memory-6" , "유효하지 않은 권한 레벨입니다." ),
+
+    /**
+     * lock, code prefix: lock
+     */
+    INVALID_LOCK_TOKEN_EXCEPTION(HttpStatus.FORBIDDEN, "lock-1" , "유효하지 않은 락 토큰입니다." ),
+    LOCK_ALREADY_HELD(HttpStatus.CONFLICT, "lock-2", "이미 다른 사용자가 락을 소유중입니다." ),
+    LOCK_NOT_FOUND(HttpStatus.NOT_FOUND, "lock-3", "해당 락을 찾을 수 없습니다." ),
+    LOCK_RELEASE_FAILED(HttpStatus.FORBIDDEN, "lock-4", "해당 락을 해제할 권한이 없습니다." ),
 
     /**
      * push-alert, code prefix: push-alert-

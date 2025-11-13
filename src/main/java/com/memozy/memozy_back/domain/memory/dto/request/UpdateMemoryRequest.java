@@ -15,6 +15,7 @@ public record UpdateMemoryRequest(
         @NotNull LocalDate endDate,
         @NotNull List<MemoryItemDto> memoryItems,
         @Schema(description = "권한 부여에 대한 정보 목록 (비어있을 수 있음)")
-        List<AccessGrantRequest> accesses
+        List<AccessGrantRequest> accesses,
+        @NotNull String editLockToken
 ) {
 }
