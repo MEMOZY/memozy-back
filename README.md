@@ -181,7 +181,7 @@
 
 <br>
 
-# 2. GPT Server
+# 2. Flask Server for GPT
 
 > **Repository**: https://github.com/MEMOZY/memozy-ai-sever
 
