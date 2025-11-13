@@ -17,8 +17,11 @@ public interface MemoryService {
     CreateMemoryResponse createMemory(Long userId, CreateMemoryRequest request);
 
     PagedResponse<MemoryInfoDto> getMemoryListPaged(Long userId, int page, int size, CalendarFilter filter);
+
     PagedResponse<MemoryInfoDto> getMemoryListByFilter(Long userId, CalendarFilter filter);
+
     MemoryDto updateMemory(Long userId, Long memoryId, UpdateMemoryRequest request);
+
     void deleteMemory(Long userId, Long memoryId);
 
     String createTemporaryMemory(Long userId, CreateTempMemoryRequest request);

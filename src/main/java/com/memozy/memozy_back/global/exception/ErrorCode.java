@@ -82,6 +82,14 @@ public enum ErrorCode {
     INVALID_PERMISSION_LEVEL(HttpStatus.BAD_REQUEST, "memory-6" , "유효하지 않은 권한 레벨입니다." ),
 
     /**
+     * lock, code prefix: lock
+     */
+    INVALID_LOCK_TOKEN_EXCEPTION(HttpStatus.FORBIDDEN, "lock-1" , "유효하지 않은 락 토큰입니다." ),
+    LOCK_ALREADY_HELD(HttpStatus.CONFLICT, "lock-2", "이미 다른 사용자가 락을 소유중입니다." ),
+    LOCK_NOT_FOUND(HttpStatus.NOT_FOUND, "lock-3", "해당 락을 찾을 수 없습니다." ),
+    LOCK_RELEASE_FAILED(HttpStatus.FORBIDDEN, "lock-4", "해당 락을 해제할 권한이 없습니다." ),
+
+    /**
      * push-alert, code prefix: push-alert-
      */
     DEVICE_TOKEN_OWNED_BY_ANOTHER_USER(HttpStatus.CONFLICT, "push-alert-1", "해당 디바이스 토큰은 다른 사용자가 소유하고 있습니다.");

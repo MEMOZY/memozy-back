@@ -10,6 +10,7 @@ import com.memozy.memozy_back.domain.memory.domain.MemoryItem;
 import com.memozy.memozy_back.domain.memory.dto.CalendarFilter;
 import com.memozy.memozy_back.domain.memory.dto.MemoryAccessDto;
 import com.memozy.memozy_back.domain.memory.dto.MemoryDto;
+import com.memozy.memozy_back.domain.memory.dto.MemoryEditedEvent;
 import com.memozy.memozy_back.domain.memory.dto.MemoryInfoDto;
 import com.memozy.memozy_back.domain.memory.dto.MemoryItemDto;
 import com.memozy.memozy_back.domain.memory.dto.MemorySharedEvent;
@@ -25,6 +26,7 @@ import com.memozy.memozy_back.domain.memory.dto.response.GetTempMemoryResponse;
 import com.memozy.memozy_back.domain.memory.repository.MemoryAccessRepository;
 import com.memozy.memozy_back.domain.memory.repository.MemoryItemRepository;
 import com.memozy.memozy_back.domain.memory.repository.MemoryRepository;
+import com.memozy.memozy_back.domain.memory.service.MemoryEditLockService;
 import com.memozy.memozy_back.domain.memory.service.MemoryService;
 import com.memozy.memozy_back.global.dto.PagedResponse;
 import com.memozy.memozy_back.global.redis.SessionManager;
@@ -57,7 +59,6 @@ public class MemoryServiceImpl implements MemoryService {
 
     private final MemoryRepository memoryRepository;
     private final MemoryItemRepository memoryItemRepository;
-    private final MemoryAccessRepository memoryAccessRepository;
     private final UserRepository userRepository;
     private final FriendshipRepository friendshipRepository;
 
@@ -68,6 +69,8 @@ public class MemoryServiceImpl implements MemoryService {
     private final TemporaryChatStore temporaryChatStore;
 
     private final ApplicationEventPublisher applicationEventPublisher;
+    private final MemoryEditLockService memoryEditLockService;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * 기록 생성
@@ -130,6 +133,9 @@ public class MemoryServiceImpl implements MemoryService {
             throw new GlobalException(ErrorCode.INVALID_ACCESS_EXCEPTION);
         }
 
+        // 예기치 못한 동시 수정 방지
+        memoryEditLockService.verifyOwner(memoryId, userId, request.editLockToken());
+
         memoryItemRepository.deleteByMemoryId(memoryId);
         for (MemoryItemDto itemDto : request.memoryItems()) {
             addMemoryItem(itemDto, memory);
@@ -182,6 +188,9 @@ public class MemoryServiceImpl implements MemoryService {
         var accessDtoList = memory.getAccesses().stream()
                 .map(MemoryAccessDto::of)
                 .toList();
+
+        // 커밋 후에 락 해제 이벤트 호출
+        eventPublisher.publishEvent(new MemoryEditedEvent(memoryId, userId, request.editLockToken()));
 
         return MemoryDto.from(memory, memoryItemDtoList, accessDtoList);
     }
