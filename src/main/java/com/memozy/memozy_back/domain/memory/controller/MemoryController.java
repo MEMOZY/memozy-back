@@ -14,6 +14,7 @@ import com.memozy.memozy_back.domain.memory.dto.request.CreateMemoryRequest;
 import com.memozy.memozy_back.domain.memory.dto.request.UpdateMemoryRequest;
 import com.memozy.memozy_back.domain.memory.dto.response.GetMemoryDetailsResponse;
 import com.memozy.memozy_back.domain.memory.dto.response.GetTempMemoryResponse;
+import com.memozy.memozy_back.domain.memory.dto.response.UpdateEditLockTTLResponse;
 import com.memozy.memozy_back.domain.memory.service.MemoryEditLockService;
 import com.memozy.memozy_back.domain.memory.service.MemoryService;
 import com.memozy.memozy_back.domain.memory.dto.MemoryInfoDto;
@@ -164,17 +165,16 @@ public class MemoryController {
     // 편집 락 연장(하트비트)
     @Operation(summary = "기록 편집 락 연장", description = "기록 수정 중 편집 락을 3분 연장합니다.")
     @PostMapping("/{memoryId}/lock/heartbeat")
-    public ResponseEntity<Void> heartbeat(
+    public ResponseEntity<UpdateEditLockTTLResponse> heartbeat(
             @CurrentUserId Long userId,
             @PathVariable Long memoryId,
             @RequestBody UpdateEditLockRequest request) {
-        memoryEditLockService.heartbeat(memoryId, userId, request.token());
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(memoryEditLockService.heartbeat(memoryId, userId, request.token()));
     }
 
     // 기록 수정 후 편집 락 해제
     @Operation(summary = "기록 편집 락 해제",
-            description = "기록 수정 후 편집 락을 해제합니다. 편집 완료시 락 해제가 이뤄지긴 하지만, 안전하게 ")
+            description = "기록 수정/취소/비정상 종료 후 편집 락을 해제합니다. (+ 수정 완료되면 자동적으로 해제")
     @DeleteMapping("/{memoryId}/lock")
     public ResponseEntity<Void> releaseLock(
             @PathVariable Long memoryId,

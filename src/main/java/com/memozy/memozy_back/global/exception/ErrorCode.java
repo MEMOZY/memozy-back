@@ -42,6 +42,11 @@ public enum ErrorCode {
     FORBIDDEN_EXCEPTION(HttpStatus.FORBIDDEN, "resource-1", "리소스에 접근 권한이 없습니다."),
 
     /**
+     * s3. code prefix: s3-
+     */
+    NOT_FOUND_S3_RESOURCE_EXCEPTION(HttpStatus.NOT_FOUND, "s3-1", "S3 에서 해당 리소스를 찾을 수 없습니다."),
+
+    /**
      * file. code prefix: file-
      */
     FILE_UPLOAD_EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, "file-1", "파일 업로드에 실패했습니다."),

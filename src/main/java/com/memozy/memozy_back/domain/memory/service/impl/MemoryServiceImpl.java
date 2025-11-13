@@ -10,7 +10,8 @@ import com.memozy.memozy_back.domain.memory.domain.MemoryItem;
 import com.memozy.memozy_back.domain.memory.dto.CalendarFilter;
 import com.memozy.memozy_back.domain.memory.dto.MemoryAccessDto;
 import com.memozy.memozy_back.domain.memory.dto.MemoryDto;
-import com.memozy.memozy_back.domain.memory.dto.MemoryEditedEvent;
+import com.memozy.memozy_back.domain.memory.dto.event.MemoryCreatedEvent;
+import com.memozy.memozy_back.domain.memory.dto.event.MemoryEditedEvent;
 import com.memozy.memozy_back.domain.memory.dto.MemoryInfoDto;
 import com.memozy.memozy_back.domain.memory.dto.MemoryItemDto;
 import com.memozy.memozy_back.domain.memory.dto.MemorySharedEvent;
@@ -23,7 +24,6 @@ import com.memozy.memozy_back.domain.memory.dto.request.UpdateMemoryRequest;
 import com.memozy.memozy_back.domain.memory.dto.response.CreateMemoryResponse;
 import com.memozy.memozy_back.domain.memory.dto.response.GetMemoryDetailsResponse;
 import com.memozy.memozy_back.domain.memory.dto.response.GetTempMemoryResponse;
-import com.memozy.memozy_back.domain.memory.repository.MemoryAccessRepository;
 import com.memozy.memozy_back.domain.memory.repository.MemoryItemRepository;
 import com.memozy.memozy_back.domain.memory.repository.MemoryRepository;
 import com.memozy.memozy_back.domain.memory.service.MemoryEditLockService;
@@ -112,10 +112,8 @@ public class MemoryServiceImpl implements MemoryService {
         // 푸쉬 알람 이벤트 호출
         publishSharedEvent(savedId, ownerId, recipients);
 
-        // redis 비우기
-        sessionManager.removeSession(sessionId);
-        temporaryMemoryStore.remove(sessionId);
-        temporaryChatStore.removeSession(sessionId);
+        // redis 비우는 이벤트 호출
+        eventPublisher.publishEvent(new MemoryCreatedEvent(savedId, ownerId, sessionId));
 
         return CreateMemoryResponse.from(savedId);
     }

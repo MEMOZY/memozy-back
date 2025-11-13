@@ -1,6 +1,7 @@
 package com.memozy.memozy_back.domain.memory.service;
 
 import com.memozy.memozy_back.domain.memory.dto.request.CreateEditLockResponse;
+import com.memozy.memozy_back.domain.memory.dto.response.UpdateEditLockTTLResponse;
 import com.memozy.memozy_back.global.exception.ErrorCode;
 import com.memozy.memozy_back.global.exception.GlobalException;
 import java.nio.charset.StandardCharsets;
@@ -66,19 +67,26 @@ public class MemoryEditLockService {
     /**
      * 하트비트(연장): 소유자/토큰 일치 시에만 TTL 연장 (원자적)
      */
-    public void heartbeat(Long memoryId, Long userId, String token) {
+    public UpdateEditLockTTLResponse heartbeat(Long memoryId, Long userId, String token) {
         String HEARTBEAT_SCRIPT = """
-            local uid = redis.call('HGET', KEYS[1], 'userId')
-            local tok = redis.call('HGET', KEYS[1], 'token')
-            if (not uid) or (not tok) then
-              return 0
-            end
-            if (uid == ARGV[1]) and (tok == ARGV[2]) then
-              return redis.call('PEXPIRE', KEYS[1], ARGV[3])
-            else
-              return -1
-            end
-            """;
+        local uid = redis.call('HGET', KEYS[1], 'userId')
+        local tok = redis.call('HGET', KEYS[1], 'token')
+        if (not uid) or (not tok) then
+          return 0
+        end
+        if (uid ~= ARGV[1]) or (tok ~= ARGV[2]) then
+          return -1
+        end
+
+        local ttl = redis.call('PTTL', KEYS[1])
+        if (ttl < 0) then
+          ttl = 0
+        end
+
+        local newTtl = ttl + tonumber(ARGV[3])
+        redis.call('PEXPIRE', KEYS[1], newTtl)
+        return newTtl
+        """;
 
         Long result = evalLong(HEARTBEAT_SCRIPT,
                 new byte[][] { k(memoryId) },
@@ -94,6 +102,8 @@ public class MemoryEditLockService {
         if (result == -1L) {
             throw new GlobalException(ErrorCode.INVALID_LOCK_TOKEN_EXCEPTION);
         }
+
+        return new UpdateEditLockTTLResponse(result); // 연장된 TTL 반환
     }
 
     /**

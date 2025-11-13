@@ -113,7 +113,7 @@ public class S3FileServiceImpl implements FileService {
     @Override
     public void validateFileKey(String fileKey) {
         if (!isUploaded(fileKey)) {
-            throw new GlobalException(ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION);
+            throw new GlobalException(ErrorCode.NOT_FOUND_S3_RESOURCE_EXCEPTION);
         }
     }
 
