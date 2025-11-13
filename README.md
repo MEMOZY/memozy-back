@@ -112,6 +112,17 @@
 <img src="https://img.shields.io/badge/Typescript-3178C6?style=flat-square&logo=Typescript&logoColor=white"/></a>
 <img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=flat-square&logo=javascript&logoColor=black"/>
 
+<br/>
+
+### 🍏 협업 툴
+<img src="https://img.shields.io/badge/Notion-FFFFFF?style=flat-square&logo=Notion&logoColor=black"/></a>
+<img src="https://img.shields.io/badge/Github-000000?style=flat-square&logo=Github&logoColor=white&style=flat"/></a>
+<img src="https://img.shields.io/badge/Swagger-85EA2D?style=flat-square&logo=Swagger&logoColor=white&style=flat"/></a>
+
+<br/>
+
+### 🍏 코드 컨벤션
+- **Google Java Style Guide**를 기반으로 코드를 작성했습니다.
 
 <br>
 
@@ -363,17 +374,3 @@ GPT 기능 탐색을 기반으로 프롬포트들을 탐색했으며, 다음과 
 - 사용자 맞춤형 일기를 제공하기 위해, 사용자 개개인에 특화된 **고유 일기 생성 프롬포트**를 제공하기 위한 시도를 진행하였습니다.
 - 다만, 이 기능은 본 프로젝트에 최종 적용되지는 못했습니다.
   > **Repository:** https://github.com/MEMOZY/Memozy_AI_RL
-
-
-
-<br/>
-
-### 🍏 협업 툴
-<img src="https://img.shields.io/badge/Notion-FFFFFF?style=flat-square&logo=Notion&logoColor=black"/></a>
-<img src="https://img.shields.io/badge/Github-000000?style=flat-square&logo=Github&logoColor=white&style=flat"/></a>
-<img src="https://img.shields.io/badge/Swagger-85EA2D?style=flat-square&logo=Swagger&logoColor=white&style=flat"/></a>
-
-<br/>
-
-### 🍏 코드 컨벤션
-- **Google Java Style Guide**를 기반으로 코드를 작성했습니다.
