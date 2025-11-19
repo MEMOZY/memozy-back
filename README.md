@@ -3,7 +3,7 @@
   
 > ❓ 저희 “MEMOZY”는 기록해두고 싶은 순간(Memory)들이 있지만,
 > 기록(Memo)이 귀찮은(Lazy) 사람들이 ”Easy”하게 기록할 수 있도록 도와줍니다! <br>
-> [다운로드 링크(iOS)](https://github.com/MEMOZY/memozy-back)
+> [다운로드 링크(iOS)](https://apps.apple.com/kr/app/memozy/id6744085415)
 </aside>
 
 <br>
