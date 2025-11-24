@@ -21,7 +21,6 @@ public class ApplePublicKeyProvider {
 
     private static final String ISSUER = "https://appleid.apple.com";
     private static final String JWK_SET_URL = "https://appleid.apple.com/auth/keys";
-
     private final JWKSource<SecurityContext> keySource;
 
     public ApplePublicKeyProvider() {
