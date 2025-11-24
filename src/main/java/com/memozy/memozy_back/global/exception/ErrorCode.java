@@ -85,6 +85,7 @@ public enum ErrorCode {
     CANNOT_MANAGE_OWNER_ACCESS(HttpStatus.BAD_REQUEST, "memory-3" , "소유자의 권한은 제어할 수 없습니다."),
     NOT_FOUND_PERMISSION(HttpStatus.BAD_REQUEST, "memory-5" , "해당 기록에 대한 접근 권한이 없습니다"),
     INVALID_PERMISSION_LEVEL(HttpStatus.BAD_REQUEST, "memory-6" , "유효하지 않은 권한 레벨입니다." ),
+    NOT_FOUND_MEMORY(HttpStatus.NOT_FOUND, "memory-7" , "해당 기록을 찾을 수 없습니다." ),
 
     /**
      * lock, code prefix: lock
@@ -97,7 +98,7 @@ public enum ErrorCode {
     /**
      * push-alert, code prefix: push-alert-
      */
-    DEVICE_TOKEN_OWNED_BY_ANOTHER_USER(HttpStatus.CONFLICT, "push-alert-1", "해당 디바이스 토큰은 다른 사용자가 소유하고 있습니다.");
+    DEVICE_TOKEN_OWNED_BY_ANOTHER_USER(HttpStatus.CONFLICT, "push-alert-1", "해당 디바이스 토큰은 다른 사용자가 소유하고 있습니다."), ;
 
 
     private final HttpStatus httpStatus;

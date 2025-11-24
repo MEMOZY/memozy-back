@@ -1,5 +1,5 @@
 package com.memozy.memozy_back.domain.memory.constant;
 
 public enum PermissionLevel {
-    VIEWER, EDITOR, OWNER
+    VIEWER, EDITOR, OWNER, NONE
 }

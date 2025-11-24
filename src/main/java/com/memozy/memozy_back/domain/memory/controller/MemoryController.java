@@ -3,7 +3,7 @@ package com.memozy.memozy_back.domain.memory.controller;
 import com.memozy.memozy_back.domain.memory.constant.MemoryCategory;
 import com.memozy.memozy_back.domain.memory.constant.SearchType;
 import com.memozy.memozy_back.domain.memory.dto.CalendarFilter;
-import com.memozy.memozy_back.domain.memory.dto.request.CreateEditLockResponse;
+import com.memozy.memozy_back.domain.memory.dto.response.CreateEditLockResponse;
 import com.memozy.memozy_back.domain.memory.dto.request.CreateTempMemoryRequest;
 import com.memozy.memozy_back.domain.memory.dto.request.DeleteEditLockRequest;
 import com.memozy.memozy_back.domain.memory.dto.request.UpdateEditLockRequest;
