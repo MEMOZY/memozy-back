@@ -33,7 +33,6 @@ public class MemoryEditLockService {
     // Hash 필드명
     private static final byte[] F_USER  = "userId".getBytes(StandardCharsets.UTF_8);
     private static final byte[] F_TOKEN = "token".getBytes(StandardCharsets.UTF_8);
-    private final MemoryService memoryService;
     private final MemoryRepository memoryRepository;
 
     private String key(Long memoryId) { return KEY_FMT.formatted(memoryId); }
