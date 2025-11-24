@@ -148,6 +148,4 @@ public class Memory extends BaseTimeEntity {
                 .findFirst()
                 .orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND_PERMISSION));
     }
-
-
 }

@@ -294,16 +294,11 @@ public class MemoryServiceImpl implements MemoryService {
     @Override
     @Transactional(readOnly = true)
     public GetMemoryDetailsResponse getMemoryDetails(Long userId, Long memoryId) {
-
         // accesses(+user)만 fetch join
         Memory memory = memoryRepository.findByIdWithAccesses(memoryId)
                 .orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION));
 
-        boolean isOwner = memory.getOwner().getId().equals(userId);
-        boolean isSharedUser = memory.getAccesses().stream()
-                .anyMatch(a -> a.getUser().getId().equals(userId));
-
-        if (!isOwner && !isSharedUser) {
+        if (!memory.canView(memoryId)) {
             throw new GlobalException(ErrorCode.INVALID_ACCESS_EXCEPTION);
         }
 
