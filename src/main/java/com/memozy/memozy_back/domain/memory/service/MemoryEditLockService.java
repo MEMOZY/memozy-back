@@ -42,7 +42,8 @@ public class MemoryEditLockService {
      * 락 획득 (편집 진입): 키가 없을 때만 HMSET + PEXPIRE (원자적)
      */
     public CreateEditLockResponse acquire(Long memoryId, Long userId) {
-        Memory memory = memoryRepository.findById(memoryId).orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND_MEMORY));
+        Memory memory = memoryRepository.findByIdWithAccesses(memoryId)
+                .orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND_MEMORY));
         if (!memory.canEdit(userId)) {
             throw new GlobalException(ErrorCode.INVALID_PERMISSION_LEVEL);
         }

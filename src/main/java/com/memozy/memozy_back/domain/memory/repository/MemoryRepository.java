@@ -16,11 +16,11 @@ public interface MemoryRepository extends JpaRepository<Memory, Long>, MemoryRep
     @Query("""
         select distinct m
         from Memory m
-        left join fetch m.memoryItems i
-        where m.owner.id = :userId
+        left join fetch m.accesses a
+        left join fetch a.user
+        where m.id in :ids
         """)
-    List<Memory> findAllByOwnerIdWithItems(@Param("userId") Long userId);
-
+    List<Memory> findAllWithAccessesByIdIn(@Param("ids") List<Long> ids);
 
     void deleteByOwner(User user);
 

@@ -126,7 +126,7 @@ public class MemoryServiceImpl implements MemoryService {
                 .orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION));
 
         if (!memory.canEdit(userId)) {
-            throw new GlobalException(ErrorCode.INVALID_ACCESS_EXCEPTION);
+            throw new GlobalException(ErrorCode.NOT_FOUND_PERMISSION);
         }
 
         // 예기치 못한 동시 수정 방지
@@ -299,7 +299,7 @@ public class MemoryServiceImpl implements MemoryService {
                 .orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION));
 
         if (!memory.canView(memoryId)) {
-            throw new GlobalException(ErrorCode.INVALID_ACCESS_EXCEPTION);
+            throw new GlobalException(ErrorCode.NOT_FOUND_PERMISSION);
         }
 
         // items는 한 방 추가 조회
@@ -336,7 +336,7 @@ public class MemoryServiceImpl implements MemoryService {
         List<Long> ids = idPage.getContent();
         if (ids.isEmpty()) return new PagedResponse<>(List.of(), page, size, 0, 0, true);
 
-        List<MemoryInfoDto> dtos = convertToMemoryInfoDtoInOrder(userId, ids);
+        List<MemoryInfoDto> dtos = getMemoryInfoDtoListInOrder(userId, ids);
         return new PagedResponse<>(dtos, page, size,
                 (int) idPage.getTotalElements(), idPage.getTotalPages(), idPage.isLast());
     }
@@ -348,7 +348,7 @@ public class MemoryServiceImpl implements MemoryService {
 
         if (ids.isEmpty()) return new PagedResponse<>(List.of(), 0, 0, 0, 1, true);
 
-        List<MemoryInfoDto> memoryInfoDtos = convertToMemoryInfoDtoInOrder(userId, ids);
+        List<MemoryInfoDto> memoryInfoDtos = getMemoryInfoDtoListInOrder(userId, ids);
 
         return new PagedResponse<>(
                 memoryInfoDtos,
@@ -359,29 +359,49 @@ public class MemoryServiceImpl implements MemoryService {
                 true);
     }
 
-    private List<MemoryInfoDto> convertToMemoryInfoDtoInOrder(Long userId, List<Long> ids) {
-        var memories = memoryRepository.findAllById(ids);
+    private List<MemoryInfoDto> getMemoryInfoDtoListInOrder(Long userId, List<Long> ids) {
+        // 1) id들에 해당하는 Memory + accesses 한 번에 조회
+        List<Memory> memories = memoryRepository.findAllWithAccessesByIdIn(ids);
 
-        Map<Long, Integer> order = new HashMap<>();
-        for (int i = 0; i < ids.size(); i++) order.put(ids.get(i), i);
-        memories.sort(Comparator.comparingInt(m -> order.getOrDefault(m.getId(), Integer.MAX_VALUE)));
+        // 2) id -> Memory 맵으로 변환
+        Map<Long, Memory> memoryMap = memories.stream()
+                .collect(Collectors.toMap(Memory::getId, m -> m));
 
+        // 3) 대표 아이템 맵 조회
         Map<Long, MemoryItem> firstItemMap = memoryItemRepository.findFirstItemsByMemoryIds(ids);
 
-        return memories.stream().map(m -> {
-            MemoryItem first = firstItemMap.get(m.getId());
-            String thumb = (first == null) ? null : fileService.generatePresignedUrlToRead(first.getFileKey()).preSignedUrl();
-            String firstContent = (first == null) ? null : first.getContent();
+        // 4) ids 순서를 그대로 유지하면서 DTO 생성
+        return ids.stream()
+                .map(id -> {
+                    Memory m = memoryMap.get(id);
+                    if (m == null) {
+                        // 이론상 없으면 안 되지만, 방어적으로 null 체크
+                        return null;
+                    }
 
-            PermissionLevel level = m.permissionOf(userId);
-            boolean canEdit = m.canEdit(userId);
+                    MemoryItem first = firstItemMap.get(id);
+                    String thumb = (first == null)
+                            ? null
+                            : fileService.generatePresignedUrlToRead(first.getFileKey()).preSignedUrl();
+                    String firstContent = (first == null) ? null : first.getContent();
 
-            return new MemoryInfoDto(
-                    m.getId(), m.getOwner().getId(), m.getTitle(),
-                    firstContent, m.getStartDate(), m.getEndDate(),
-                    thumb, level, canEdit
-            );
-        }).toList();
+                    PermissionLevel level = m.permissionOf(userId);
+                    boolean canEdit = level.canEdit();
+
+                    return new MemoryInfoDto(
+                            m.getId(),
+                            m.getOwner().getId(),
+                            m.getTitle(),
+                            firstContent,
+                            m.getStartDate(),
+                            m.getEndDate(),
+                            thumb,
+                            level,
+                            canEdit
+                    );
+                })
+                .filter(Objects::nonNull)
+                .toList();
     }
 
 
@@ -391,7 +411,7 @@ public class MemoryServiceImpl implements MemoryService {
         Memory memory = memoryRepository.findById(memoryId)
                 .orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION));
         if (!memory.isOwner(userId)) {
-            throw new GlobalException(ErrorCode.INVALID_ACCESS_EXCEPTION);
+            throw new GlobalException(ErrorCode.INVALID_PERMISSION_LEVEL);
         }
         memoryRepository.deleteById(memoryId);
     }
@@ -420,8 +440,6 @@ public class MemoryServiceImpl implements MemoryService {
             throw new GlobalException(ErrorCode.FORBIDDEN_FRIEND_ACCESS);
         }
     }
-
-
 
     private Map<Long, PermissionLevel> toRequestedMap(List<AccessGrantRequest> grants, Long ownerId) {
         Map<Long, PermissionLevel> map = new HashMap<>();

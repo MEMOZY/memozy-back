@@ -111,9 +111,7 @@ public class Memory extends BaseTimeEntity {
     }
 
     public PermissionLevel permissionOf(Long userId) {
-        if (isOwner(userId)) {
-            return PermissionLevel.OWNER;
-        }
+        if (isOwner(userId)) return PermissionLevel.OWNER;
 
         return accesses.stream()
                 .filter(a -> a.isForUser(userId))
@@ -123,19 +121,11 @@ public class Memory extends BaseTimeEntity {
     }
 
     public boolean canEdit(Long userId) {
-        if (isOwner(userId)) return true;
-
-        return accesses.stream()
-                .filter(a -> a.isForUser(userId))
-                .anyMatch(MemoryAccess::canEdit);
+        return permissionOf(userId).canEdit();
     }
 
     public boolean canView(Long userId) {
-        if (isOwner(userId)) return true;
-
-        return accesses.stream()
-                .filter(a -> a.isForUser(userId))
-                .anyMatch(MemoryAccess::canView);
+        return permissionOf(userId).canView();
     }
 
     public boolean canManageAccesses(Long userId) {
