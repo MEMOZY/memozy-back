@@ -94,28 +94,48 @@ public class Memory extends BaseTimeEntity {
         this.accesses.add(access);
     }
 
-    public void changeAccess(User target, PermissionLevel newLevel) {
-        if (isOwner(target)) throw new GlobalException(ErrorCode.CANNOT_MANAGE_OWNER_ACCESS);
-        MemoryAccess access = findAccessOrThrow(target);
+    public void changeAccess(Long targetId, PermissionLevel newLevel) {
+        if (isOwner(targetId)) throw new GlobalException(ErrorCode.CANNOT_MANAGE_OWNER_ACCESS);
+        MemoryAccess access = findAccessOrThrow(targetId);
         access.changeLevel(newLevel);
     }
 
-    public void revokeAccess(User target) {
-        if (isOwner(target)) throw new GlobalException(ErrorCode.CANNOT_MANAGE_OWNER_ACCESS);
-        MemoryAccess access = findAccessOrThrow(target);
+    public void revokeAccess(Long targetId) {
+        if (isOwner(targetId)) throw new GlobalException(ErrorCode.CANNOT_MANAGE_OWNER_ACCESS);
+        MemoryAccess access = findAccessOrThrow(targetId);
         this.accesses.remove(access);
     }
 
-    private boolean isOwner(User user) {
-        return owner != null && owner.equals(user);
+    public boolean isOwner(Long userId) {
+        return owner != null && owner.getId().equals(userId);
     }
 
-    private MemoryAccess findAccessOrThrow(User user) {
+    public PermissionLevel permissionOf(Long userId) {
+        if (isOwner(userId)) return PermissionLevel.OWNER;
+
         return accesses.stream()
-                .filter(a -> a.getUser().equals(user))
+                .filter(a -> a.isForUser(userId))
+                .map(MemoryAccess::getPermissionLevel)
+                .findFirst()
+                .orElse(PermissionLevel.NONE);
+    }
+
+    public boolean canEdit(Long userId) {
+        return permissionOf(userId).canEdit();
+    }
+
+    public boolean canView(Long userId) {
+        return permissionOf(userId).canView();
+    }
+
+    public boolean canManageAccesses(Long userId) {
+        return isOwner(userId);
+    }
+
+    private MemoryAccess findAccessOrThrow(Long userId) {
+        return accesses.stream()
+                .filter(a -> a.getUser().getId().equals(userId))
                 .findFirst()
                 .orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND_PERMISSION));
     }
-
-
 }

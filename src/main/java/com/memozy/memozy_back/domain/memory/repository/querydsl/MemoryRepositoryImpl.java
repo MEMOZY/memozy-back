@@ -1,7 +1,6 @@
 package com.memozy.memozy_back.domain.memory.repository.querydsl;
 
 
-import com.drew.lang.annotations.Nullable;
 import com.memozy.memozy_back.domain.memory.constant.SearchType;
 import com.memozy.memozy_back.domain.memory.domain.Memory;
 import com.memozy.memozy_back.domain.memory.domain.QMemory;
@@ -12,7 +11,10 @@ import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,15 +36,17 @@ public class MemoryRepositoryImpl implements MemoryRepositoryCustom {
     public Page<Memory> searchByKeyword(final Long userId, final SearchType searchType, final String keyword, final Pageable pageable) {
         QMemory m = QMemory.memory;
         QMemoryItem mi = QMemoryItem.memoryItem;
-        QMemoryAccess ma = QMemoryAccess.memoryAccess;
+        QMemoryAccess maSub = QMemoryAccess.memoryAccess;      // 서브쿼리용
+        QMemoryAccess maFetch = new QMemoryAccess("maFetch");  // fetch join용
+
 
         BooleanExpression accessibleByUser =
                 m.owner.id.eq(userId).or(
                         JPAExpressions.selectOne()
-                                .from(ma)
+                                .from(maSub)
                                 .where(
-                                        ma.memory.id.eq(m.id),
-                                        ma.user.id.eq(userId)
+                                        maSub.memory.id.eq(m.id),
+                                        maSub.user.id.eq(userId)
                                 )
                                 .exists()
                 );
@@ -78,19 +82,44 @@ public class MemoryRepositoryImpl implements MemoryRepositoryCustom {
 
         BooleanExpression whereClause = accessibleByUser.and(keywordPredicate);
 
-        List<Memory> contents = queryFactory
-                .selectFrom(m)
+        // 우선 id만 페이지네이션
+        List<Long> ids = queryFactory
+                .select(m.id)
+                .from(m)
                 .where(whereClause)
                 .orderBy(m.createdAt.desc(), m.id.desc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
 
+        if (ids.isEmpty()) {
+            return new PageImpl<>(List.of(), pageable, 0);
+        }
+
+        // 전체 개수
         Long total = queryFactory
                 .select(m.id.count())
                 .from(m)
                 .where(whereClause)
                 .fetchOne();
+
+        // 해당 id들에 대해 Memory + accesses fetch join
+        List<Memory> contents = queryFactory
+                .selectDistinct(m)
+                .from(m)
+                .leftJoin(m.accesses, maFetch).fetchJoin()
+                .where(m.id.in(ids))
+                .fetch();
+
+        // ids 순서대로 다시 정렬
+        Map<Long, Integer> order = new HashMap<>();
+        for (int i = 0; i < ids.size(); i++) {
+            order.put(ids.get(i), i);
+        }
+
+        contents.sort(Comparator.comparingInt(mem ->
+                order.getOrDefault(mem.getId(), Integer.MAX_VALUE)
+        ));
 
         return new PageImpl<>(contents, pageable, total == null ? 0 : total);
     }

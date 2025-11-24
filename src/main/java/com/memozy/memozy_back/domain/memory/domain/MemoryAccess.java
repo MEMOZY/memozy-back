@@ -54,4 +54,17 @@ public class MemoryAccess {
                 .permissionLevel(level)
                 .build();
     }
+
+    public boolean isForUser(Long userId) {
+        return user != null && user.getId().equals(userId);
+    }
+
+    public boolean canEdit() {
+        return permissionLevel == PermissionLevel.EDITOR
+                || permissionLevel == PermissionLevel.OWNER;
+    }
+
+    public boolean canView() {
+        return canEdit() || permissionLevel == PermissionLevel.VIEWER;
+    }
 }

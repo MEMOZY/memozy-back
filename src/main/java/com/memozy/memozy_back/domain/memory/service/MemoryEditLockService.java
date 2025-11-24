@@ -1,7 +1,11 @@
 package com.memozy.memozy_back.domain.memory.service;
 
-import com.memozy.memozy_back.domain.memory.dto.request.CreateEditLockResponse;
+import com.memozy.memozy_back.domain.memory.domain.Memory;
+import com.memozy.memozy_back.domain.memory.dto.response.CreateEditLockResponse;
 import com.memozy.memozy_back.domain.memory.dto.response.UpdateEditLockTTLResponse;
+import com.memozy.memozy_back.domain.memory.repository.MemoryRepository;
+import com.memozy.memozy_back.domain.user.domain.User;
+import com.memozy.memozy_back.domain.user.repository.UserRepository;
 import com.memozy.memozy_back.global.exception.ErrorCode;
 import com.memozy.memozy_back.global.exception.GlobalException;
 import java.nio.charset.StandardCharsets;
@@ -12,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.connection.ReturnType;
 import org.springframework.data.redis.core.RedisCallback;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -20,13 +25,15 @@ import org.springframework.stereotype.Service;
 public class MemoryEditLockService {
 
     private final StringRedisTemplate redis;
+    private final UserRepository userRepository;
 
     private static final Duration TTL = Duration.ofMinutes(3);
-    private static final String KEY_FMT = "memory:%d:editlock";
+    private static final String KEY_FMT = "memory:%d:edit-lock";
 
     // Hash 필드명
     private static final byte[] F_USER  = "userId".getBytes(StandardCharsets.UTF_8);
     private static final byte[] F_TOKEN = "token".getBytes(StandardCharsets.UTF_8);
+    private final MemoryRepository memoryRepository;
 
     private String key(Long memoryId) { return KEY_FMT.formatted(memoryId); }
     private byte[] k(Long memoryId) { return key(memoryId).getBytes(StandardCharsets.UTF_8); }
@@ -35,6 +42,12 @@ public class MemoryEditLockService {
      * 락 획득 (편집 진입): 키가 없을 때만 HMSET + PEXPIRE (원자적)
      */
     public CreateEditLockResponse acquire(Long memoryId, Long userId) {
+        Memory memory = memoryRepository.findByIdWithAccesses(memoryId)
+                .orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND_MEMORY));
+        if (!memory.canEdit(userId)) {
+            throw new GlobalException(ErrorCode.INVALID_PERMISSION_LEVEL);
+        }
+
         String token = UUID.randomUUID().toString();
         long now = System.currentTimeMillis();
 
@@ -58,10 +71,22 @@ public class MemoryEditLockService {
                         String.valueOf(TTL.toMillis()).getBytes(StandardCharsets.UTF_8)
                 });
 
-        if (result == null || result == 0L) {
-            throw new GlobalException(ErrorCode.LOCK_ALREADY_HELD);
+        // 락 획득 성공
+        if (result != null && result == 1L) {
+            return CreateEditLockResponse.acquired(token, TTL.toMillis());
         }
-        return new CreateEditLockResponse(token, TTL.toMillis());
+
+        // 이미 락이 있는 경우 → holder 정보 조회
+        Long holderId = getLockHolderUserId(memoryId);
+        String holderNickname = null;
+
+        if (holderId != null) {
+            holderNickname = userRepository.findById(holderId)
+                    .map(User::getNickname)
+                    .orElse(null);
+        }
+
+        return CreateEditLockResponse.lockedBy(holderId, holderNickname);
     }
 
     /**
@@ -160,6 +185,15 @@ public class MemoryEditLockService {
     }
 
     // ---- 내부 유틸 ----
+    private Long getLockHolderUserId(Long memoryId) {
+        String key = key(memoryId); // k(memoryId)와 짝 맞는 String 버전
+
+        Object raw = redis.opsForHash().get(key, "userId");
+        if (raw == null) return null;
+
+        return Long.parseLong(raw.toString());
+    }
+
     private Long evalLong(String script, byte[][] keys, byte[][] args) throws DataAccessException {
         return redis.execute((RedisCallback<Long>) con ->
                 con.scriptingCommands().eval(

@@ -1,6 +1,7 @@
 package com.memozy.memozy_back.domain.memory.service;
 
 import com.memozy.memozy_back.domain.memory.constant.SearchType;
+import com.memozy.memozy_back.domain.memory.domain.Memory;
 import com.memozy.memozy_back.domain.memory.dto.CalendarFilter;
 import com.memozy.memozy_back.domain.memory.dto.MemoryDto;
 import com.memozy.memozy_back.domain.memory.dto.request.CreateMemoryRequest;
@@ -31,4 +32,5 @@ public interface MemoryService {
     PagedResponse<MemoryInfoDto> searchMyMemories(Long userId, SearchType searchType, String keyword, int page, int size);
 
     GetMemoryDetailsResponse getMemoryDetails(Long userId, Long memoryId);
+
 }

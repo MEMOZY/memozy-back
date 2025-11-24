@@ -1,5 +1,7 @@
 package com.memozy.memozy_back.domain.user.constant;
 
+import com.memozy.memozy_back.global.exception.ErrorCode;
+import com.memozy.memozy_back.global.exception.GlobalException;
 import java.util.Arrays;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -20,6 +22,6 @@ public enum SocialPlatform {
         return Arrays.stream(SocialPlatform.values())
                 .filter(socialPlatform -> socialPlatform.name.equals(name))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 소셜 플랫폼입니다."));
+                .orElseThrow(() -> new GlobalException(ErrorCode.UNSUPPORTED_SOCIAL_PLATFORM_EXCEPTION));
     }
 }
