@@ -155,7 +155,7 @@ public class MemoryController {
 
     // 기록 수정 전 편집 락 획득
     @Operation(summary = "기록 편집 락 획득", description = "기록 수정 전 편집 락을 획득합니다.")
-    @PostMapping("/{memoryId}/lock")
+    @PostMapping("/{memoryId}/edit-session")
     public ResponseEntity<CreateEditLockResponse> acquireLock(
             @PathVariable Long memoryId,
             @CurrentUserId Long userId) {
@@ -164,7 +164,7 @@ public class MemoryController {
 
     // 편집 락 연장(하트비트)
     @Operation(summary = "기록 편집 락 연장", description = "기록 수정 중 편집 락을 3분 연장합니다.")
-    @PostMapping("/{memoryId}/lock/heartbeat")
+    @PostMapping("/{memoryId}/edit-session/heartbeat")
     public ResponseEntity<UpdateEditLockTTLResponse> heartbeat(
             @CurrentUserId Long userId,
             @PathVariable Long memoryId,
@@ -175,7 +175,7 @@ public class MemoryController {
     // 기록 수정 후 편집 락 해제
     @Operation(summary = "기록 편집 락 해제",
             description = "기록 수정/취소/비정상 종료 후 편집 락을 해제합니다. (+ 수정 완료되면 자동적으로 해제")
-    @DeleteMapping("/{memoryId}/lock")
+    @DeleteMapping("/{memoryId}/edit-session")
     public ResponseEntity<Void> releaseLock(
             @PathVariable Long memoryId,
             @CurrentUserId Long userId,
