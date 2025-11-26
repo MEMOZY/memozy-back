@@ -7,11 +7,11 @@ public record FriendInfoDto(
         String nickname,
         String profileImageUrl
 ) {
-    public static FriendInfoDto from(User user) {
+    public static FriendInfoDto from(User user, String presignedUrl) {
         return new FriendInfoDto(
                 user.getId(),
                 user.getNickname(),
-                user.getProfileImageUrl()
+                presignedUrl
         );
     }
 }

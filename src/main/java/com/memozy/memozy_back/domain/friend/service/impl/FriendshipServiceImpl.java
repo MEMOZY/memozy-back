@@ -7,6 +7,7 @@ import com.memozy.memozy_back.domain.friend.repository.FriendshipRepository;
 import com.memozy.memozy_back.domain.friend.service.FriendshipService;
 import com.memozy.memozy_back.domain.user.domain.User;
 import com.memozy.memozy_back.domain.user.repository.UserRepository;
+import com.memozy.memozy_back.domain.user.service.UserProfileService;
 import com.memozy.memozy_back.global.exception.GlobalException;
 import com.memozy.memozy_back.global.exception.ErrorCode;
 import java.util.List;
@@ -21,6 +22,7 @@ public class FriendshipServiceImpl implements FriendshipService {
 
     private final FriendshipRepository friendshipRepository;
     private final UserRepository userRepository;
+    private final UserProfileService userProfileService;
 
     @Override
     @Transactional
@@ -70,7 +72,11 @@ public class FriendshipServiceImpl implements FriendshipService {
         List<FriendInfoDto> friends = Stream.concat(sent.stream(), received.stream())
                 .distinct() // 중복 제거
                 .toList().stream()
-                .map(FriendInfoDto::from)
+                .map(user -> FriendInfoDto.from(
+                                user,
+                                userProfileService.generatePresignedUrlToRead(user.getProfileImageUrl())
+                        )
+                )
                 .toList();
         return GetFriendInfoListResponse.from(friends);
     }
@@ -79,7 +85,11 @@ public class FriendshipServiceImpl implements FriendshipService {
     @Transactional(readOnly = true)
     public GetFriendInfoListResponse getSentRequests(Long userId) {
         List<FriendInfoDto> sentRequests = friendshipRepository.findSentRequests(userId).stream()
-                .map(FriendInfoDto::from)
+                .map(user -> FriendInfoDto.from(
+                        user,
+                        userProfileService.generatePresignedUrlToRead(user.getProfileImageUrl())
+                        )
+                )
                 .toList();
         return GetFriendInfoListResponse.from(sentRequests);
     }
@@ -88,7 +98,11 @@ public class FriendshipServiceImpl implements FriendshipService {
     @Transactional(readOnly = true)
     public GetFriendInfoListResponse getReceivedRequests(Long userId) {
         List<FriendInfoDto> receivedRequests = friendshipRepository.findReceivedRequests(userId).stream()
-                .map(FriendInfoDto::from)
+                .map(user -> FriendInfoDto.from(
+                                user,
+                                userProfileService.generatePresignedUrlToRead(user.getProfileImageUrl())
+                        )
+                )
                 .toList();
         return GetFriendInfoListResponse.from(receivedRequests);
     }

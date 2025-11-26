@@ -30,9 +30,14 @@ public class AuthTestController {
     public ResponseEntity<TestTokenResponse> generateTestToken(
             @RequestParam(name = "userId", required = false) Long userId
     ) {
-        User user = userId != null
-                ? userRepository.findById(userId).orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND_USER_EXCEPTION))
-                : userRepository.save(User.create(UserRole.MEMBER, "test-user", "dasdf@gmail.com", "https://example.com/image.jpg"));
+        User user = null;
+        if (userRepository.existsById(userId)) {
+            user = userRepository.findById(userId).orElse(null);
+        }
+        if (user == null) {
+            user = userRepository.save(User.create(UserRole.MEMBER, "test-user", "dasdf@gmail.com", "https://example.com/image.jpg"));
+        }
+
 
         TokenResponse tokenResponse = TokenResponse.from(
                 jwtProvider.createTokenCollection(

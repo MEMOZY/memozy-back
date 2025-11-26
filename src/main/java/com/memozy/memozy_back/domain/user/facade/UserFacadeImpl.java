@@ -62,7 +62,7 @@ public class UserFacadeImpl implements UserFacade {
     @Override
     @Transactional
     public void withdrawUser(Long userId) {
-        userService.withdrawUser(userId);
+        userService.withdraw(userId);
     }
 
     @Override

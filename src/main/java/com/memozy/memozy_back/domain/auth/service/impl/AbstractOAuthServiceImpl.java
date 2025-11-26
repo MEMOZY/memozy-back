@@ -11,7 +11,9 @@ import com.memozy.memozy_back.domain.user.repository.UserRepository;
 import com.memozy.memozy_back.global.exception.GlobalException;
 import com.memozy.memozy_back.global.exception.ErrorCode;
 import java.util.Optional;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public abstract class AbstractOAuthServiceImpl implements OAuthService {
 
     protected final SocialUserInfoRepository socialUserInfoRepository;
@@ -38,9 +40,18 @@ public abstract class AbstractOAuthServiceImpl implements OAuthService {
         }
 
         // 1. 동일한 소셜 계정(socialCode)이 이미 연결돼 있다면 해당 유저로 로그인
-        Optional<SocialUserInfo> existingInfo = socialUserInfoRepository.findBySocialCode(socialCode);
-        if (existingInfo.isPresent()) {
-            return existingInfo.get().getUser();
+        Optional<SocialUserInfo> socialUserInfoOpt = socialUserInfoRepository.findAnyBySocialCode(socialCode);
+        Optional<User> userOpt = userRepository.findAnyBySocialCode(socialCode);
+        if (userOpt.isPresent() && socialUserInfoOpt.isPresent()) {
+            var owner = userOpt.get();
+            var socialUserInfo = socialUserInfoOpt.get();
+            if (owner.isDeleted()) {
+                owner.reactivate(username, email);
+                socialUserInfoRepository.reactivateById(socialUserInfo.getId(), owner.getId());
+                return owner;
+            }
+
+            return owner;
         }
 
         // 2. socialCode는 처음인데, 같은 이메일을 가진 유저가 있다면 그 유저에 연결
