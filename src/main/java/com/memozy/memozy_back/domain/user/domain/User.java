@@ -94,12 +94,11 @@ public class User extends BaseTimeEntity {
                 : profileImageUrl;
     }
 
-    public void reactivate() {
+    public void reactivate(String nickname, String email) {
+        this.nickname = nickname;
+        this.email = email;
         this.isDeleted = false;
         this.deletedAt = null;
     }
 
-    public void updateEmail(String email) {
-        this.email = email;
-    }
 }

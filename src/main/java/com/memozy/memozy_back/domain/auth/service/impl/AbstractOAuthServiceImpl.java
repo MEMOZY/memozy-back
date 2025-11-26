@@ -11,7 +11,9 @@ import com.memozy.memozy_back.domain.user.repository.UserRepository;
 import com.memozy.memozy_back.global.exception.GlobalException;
 import com.memozy.memozy_back.global.exception.ErrorCode;
 import java.util.Optional;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public abstract class AbstractOAuthServiceImpl implements OAuthService {
 
     protected final SocialUserInfoRepository socialUserInfoRepository;
@@ -44,9 +46,8 @@ public abstract class AbstractOAuthServiceImpl implements OAuthService {
             var owner = userOpt.get();
             var socialUserInfo = socialUserInfoOpt.get();
             if (owner.isDeleted()) {
-                owner.reactivate();
+                owner.reactivate(username, email);
                 socialUserInfoRepository.reactivateById(socialUserInfo.getId(), owner.getId());
-                owner.updateEmail(email);
                 return owner;
             }
 
