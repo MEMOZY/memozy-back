@@ -13,9 +13,9 @@ public interface UserService {
     List<UserPolicyAgreement> getPolicyAgreementList(Long userId);
     List<UserPolicyAgreement> updatePolicyAgreement(Long userId, List<PolicyAgreementDto> policyAgreementDtoList);
 
-    void withdrawUser(Long userId);
-
     String getFriendCode(Long userId);
 
     User getUserByFriendCode(String friendCode);
+
+    void withdraw(Long userId);
 }

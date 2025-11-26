@@ -1,0 +1,7 @@
+ALTER TABLE users
+    ADD COLUMN is_deleted BOOLEAN NOT NULL DEFAULT FALSE;
+
+ALTER TABLE users
+    ADD COLUMN deleted_at TIMESTAMP NULL AFTER is_deleted;
+
+ALTER TABLE social_user_infos ADD COLUMN is_deleted BOOLEAN NOT NULL DEFAULT FALSE;

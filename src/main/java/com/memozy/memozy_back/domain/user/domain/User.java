@@ -13,6 +13,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -20,6 +21,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.DynamicInsert;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.Where;
 
 @Entity
 @Getter
@@ -28,8 +31,8 @@ import org.hibernate.annotations.DynamicInsert;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Table(name = "users")
-//@Where(clause = "is_deleted = false")
-//@SQLDelete(sql = "UPDATE user SET is_deleted = true WHERE user_id = ?")
+@SQLDelete(sql = "UPDATE users SET is_deleted = true, deleted_at = NOW() WHERE user_id = ?")
+@Where(clause = "is_deleted = false")
 public class User extends BaseTimeEntity {
 
     @Id
@@ -60,6 +63,11 @@ public class User extends BaseTimeEntity {
     @Column(unique = true, nullable = false)
     private String friendCode;
 
+    @Column(nullable = false)
+    private boolean isDeleted = false;
+
+    private LocalDateTime deletedAt;
+
     public static User create(UserRole userRole, String nickname, String email, String profileImageUrl) {
         return User.builder()
                 .userRole(userRole)
@@ -84,5 +92,14 @@ public class User extends BaseTimeEntity {
         return (profileImageUrl == null || profileImageUrl.isBlank())
                 ? ProfileImage.DEFAULT.getUrl()
                 : profileImageUrl;
+    }
+
+    public void reactivate() {
+        this.isDeleted = false;
+        this.deletedAt = null;
+    }
+
+    public void updateEmail(String email) {
+        this.email = email;
     }
 }

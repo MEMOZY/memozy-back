@@ -2,6 +2,7 @@ package com.memozy.memozy_back.domain.user.service;
 
 import com.memozy.memozy_back.domain.file.service.FileService;
 import com.memozy.memozy_back.domain.memory.repository.MemoryRepository;
+import com.memozy.memozy_back.domain.user.domain.SocialUserInfo;
 import com.memozy.memozy_back.domain.user.domain.User;
 import com.memozy.memozy_back.domain.user.domain.UserPolicyAgreement;
 import com.memozy.memozy_back.domain.user.dto.PolicyAgreementDto;
@@ -12,6 +13,7 @@ import com.memozy.memozy_back.domain.user.repository.UserRepository;
 import com.memozy.memozy_back.global.exception.GlobalException;
 import com.memozy.memozy_back.global.exception.ErrorCode;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -83,17 +85,6 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    @Transactional
-    public void withdrawUser(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND_USER_EXCEPTION));
-
-        memoryRepository.deleteByOwner(user);
-        socialUserInfoRepository.deleteByUser(user);
-        userRepository.delete(user);
-    }
-
-    @Override
     public String getFriendCode(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND_USER_EXCEPTION));
@@ -104,5 +95,22 @@ public class UserServiceImpl implements UserService {
     public User getUserByFriendCode(String friendCode) {
         return userRepository.findByFriendCode(friendCode)
                 .orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND_USER_EXCEPTION));
+    }
+
+    @Override
+    @Transactional
+    public void withdraw(Long userId) {
+        Optional<SocialUserInfo> socialUserInfo = socialUserInfoRepository.findByUserId(userId);
+        if (socialUserInfo.isPresent()) {
+            socialUserInfoRepository.deleteById(socialUserInfo.get().getId());
+        }
+
+        String suffix = String.valueOf(userId);
+        String email = "deleted+" + suffix + "@example.com";
+        String nickname = "탈퇴회원_" + suffix;
+        userRepository.withdraw(userId, email, nickname);
+        userRepository.flush();
+
+        userRepository.deleteById(userId);
     }
 }

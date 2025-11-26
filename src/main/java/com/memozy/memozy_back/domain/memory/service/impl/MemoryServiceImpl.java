@@ -298,7 +298,7 @@ public class MemoryServiceImpl implements MemoryService {
         Memory memory = memoryRepository.findByIdWithAccesses(memoryId)
                 .orElseThrow(() -> new GlobalException(ErrorCode.NOT_FOUND_RESOURCE_EXCEPTION));
 
-        if (!memory.canView(memoryId)) {
+        if (!memory.canView(userId)) {
             throw new GlobalException(ErrorCode.NOT_FOUND_PERMISSION);
         }
 

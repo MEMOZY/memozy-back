@@ -19,6 +19,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.Where;
 
 @Entity
 @Getter
@@ -26,8 +28,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Table(name = "social_user_infos")
-//@Where(clause = "is_deleted = false")
-//@SQLDelete(sql = "UPDATE social_user_info SET is_deleted = true WHERE social_user_info_id = ?")
+@SQLDelete(sql = "UPDATE social_user_infos SET is_deleted = true WHERE social_user_info_id = ?")
+@Where(clause = "is_deleted = false")
 public class SocialUserInfo extends BaseTimeEntity {
 
     @Id
@@ -45,6 +47,9 @@ public class SocialUserInfo extends BaseTimeEntity {
 
     @Column(nullable = false, unique = true)
     private String socialCode;
+
+    @Column(name = "is_deleted", nullable = false)
+    private boolean isDeleted = false;
 
     public static SocialUserInfo newInstance(User user, SocialPlatform socialType,
             String socialCode) {
