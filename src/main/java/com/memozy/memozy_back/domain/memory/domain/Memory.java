@@ -95,13 +95,13 @@ public class Memory extends BaseTimeEntity {
     }
 
     public void changeAccess(Long targetId, PermissionLevel newLevel) {
-        if (!isOwner(targetId)) throw new GlobalException(ErrorCode.CANNOT_MANAGE_OWNER_ACCESS);
+        if (isOwner(targetId)) throw new GlobalException(ErrorCode.CANNOT_MANAGE_OWNER_ACCESS);
         MemoryAccess access = findAccessOrThrow(targetId);
         access.changeLevel(newLevel);
     }
 
     public void revokeAccess(Long targetId) {
-        if (!isOwner(targetId)) throw new GlobalException(ErrorCode.CANNOT_MANAGE_OWNER_ACCESS);
+        if (isOwner(targetId)) throw new GlobalException(ErrorCode.CANNOT_MANAGE_OWNER_ACCESS);
         MemoryAccess access = findAccessOrThrow(targetId);
         this.accesses.remove(access);
     }
