@@ -17,7 +17,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.connection.ReturnType;
 import org.springframework.data.redis.core.RedisCallback;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -86,7 +85,7 @@ public class MemoryEditLockService {
         long now = System.currentTimeMillis();
 
         // 3) Lua 스크립트 실행 → [status, holderUserId] 형태로 결과 수신
-        List<Object> result = evalAcquireScript(memoryId, userId, token, now);
+        List<Object> result = getEditLockInfo(memoryId, userId, token, now);
         log.info("acquire() eval result = {}", result);
         if (result == null || result.size() < 2) {
             throw new GlobalException(ErrorCode.LOCK_OPERATION_FAILED); // 필요시 에러코드 추가
@@ -114,7 +113,7 @@ public class MemoryEditLockService {
     }
 
     @SuppressWarnings("unchecked")
-    private List<Object> evalAcquireScript(Long memoryId, Long userId, String token, long nowMillis) {
+    private List<Object> getEditLockInfo(Long memoryId, Long userId, String token, long nowMillis) {
         byte[] key = k(memoryId);
 
         byte[] aUserId = String.valueOf(userId).getBytes(StandardCharsets.UTF_8);
@@ -123,28 +122,33 @@ public class MemoryEditLockService {
         byte[] aTtl    = String.valueOf(TTL.toMillis()).getBytes(StandardCharsets.UTF_8);
 
         return redis.execute(
+                // 1) RedisCallback 구현체 (con이 바로 Redis connection)
                 (con) -> {
+                    // 2) Lua eval 실행
                     Object raw = con
                             .scriptingCommands()
                             .eval(
                                     ACQUIRE_SCRIPT.getBytes(StandardCharsets.UTF_8),
-                                    ReturnType.MULTI,   // MULTI: 배열 반환
-                                    1,                  // KEYS 수
-                                    key,
+                                    ReturnType.MULTI,   // 배열 반환
+                                    1,                  // key 개수
+                                    key,                // KEYS[1]
                                     aUserId, aToken, aNow, aTtl // ARGV[1..4]
                             );
 
+                    // 3) null이면 에러
                     if (raw == null) {
                         log.error("Redis EVAL returned null");
                         return null;
                     }
 
+                    // 4) 결과가 List가 아니면 이상한 상태
                     if (!(raw instanceof List<?> list)) {
                         log.error("Unexpected EVAL result type: {}", raw.getClass());
                         return null;
                     }
 
-                    // list 요소들이 보통 byte[] / String 섞여 있을 수 있음 → String으로 통일
+                    // 5) 이제 [ elem0, elem1 ] 이런 식이라 가정
+                    // elem은 보통 byte[] 이라서 String으로 바꿔줌
                     List<Object> decoded = list.stream()
                             .map(elem -> {
                                 if (elem instanceof byte[] bytes) {
